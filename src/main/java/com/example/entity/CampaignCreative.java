@@ -12,8 +12,8 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "ab_messages")
-public class CampaignCreative {
+@Table(name = "campaign_creatives")
+public class CampaignCreative extends BaseEntity {
 
     @Id
     @Column(name = "id")
@@ -21,11 +21,11 @@ public class CampaignCreative {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id")
+    @JoinColumn(name = "message_id", nullable = false)
     private Message message;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ab_table_id")
+    @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
     @Column(name = "percent")
@@ -36,8 +36,12 @@ public class CampaignCreative {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         CampaignCreative campaignCreative = (CampaignCreative) o;
         return Objects.equals(id, campaignCreative.id) && Objects.equals(percent, campaignCreative.percent);
     }
@@ -49,10 +53,10 @@ public class CampaignCreative {
 
     @Override
     public String toString() {
-        return "{" +
-                "\"id\": \"" + getId() + "\"," +
-                "\"percent\": " + getPercent() + "," +
-                "\"ordinal\": " + getOrdinal() +
-                "}";
+        return "{"
+                + "\"id\": \"" + getId() + "\","
+                + "\"percent\": " + getPercent() + ","
+                + "\"ordinal\": " + getOrdinal()
+                + "}";
     }
 }

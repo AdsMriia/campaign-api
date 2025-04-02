@@ -1,20 +1,27 @@
 package com.example.entity;
 
-import jakarta.persistence.*;
+import java.util.Objects;
+import java.util.UUID;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @Table(name = "actions")
-public class Action implements Cloneable {
+public class Action extends BaseEntity {
 
     @Id
     @Column(name = "id")
@@ -22,17 +29,17 @@ public class Action implements Cloneable {
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "message_id")
+    @JoinColumn(name = "message_id", nullable = false)
     private Message message;
 
-    @Column(name = "text")
+    @Column(name = "text", nullable = false)
     private String text;
 
     @Column(name = "link")
     private String link;
 
     @Column(name = "ordinal")
-    private Integer ordinal = 0;
+    private Integer ordinal;
 
 //    @OneToMany(
 //            mappedBy = "action",
@@ -40,21 +47,24 @@ public class Action implements Cloneable {
 //            fetch = FetchType.LAZY
 //    )
 //    Set<ActionToSubscriber> actionToSubscribers;
-
     @Override
     public String toString() {
-        return "{" +
-                "\"id\":\"" + id + "\"," +
-                "\"text\":\"" + text + "\"," +
-                "\"link\":\"" + link + "\"," +
-                "\"ordinal\":\"" + ordinal + "\"" +
-                "}";
+        return "{"
+                + "\"id\":\"" + id + "\","
+                + "\"text\":\"" + text + "\","
+                + "\"link\":\"" + link + "\","
+                + "\"ordinal\":\"" + ordinal + "\""
+                + "}";
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         Action action = (Action) o;
         return Objects.equals(id, action.id) && Objects.equals(text, action.text) && Objects.equals(link, action.link);
     }

@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: campaign-api
+  datasource:
+    url: jdbc:postgresql://localhost:5432/campaign_db
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /api
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /api-docs
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+    org.springframework.web: INFO
+    org.hibernate: INFO
+
+tdlib:
+  api:
+    url: http://tdbot:8090/api
+    timeout: 10000 

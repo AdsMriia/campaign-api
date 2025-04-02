@@ -1,0 +1,15 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/campaign_db_dev
+    username: postgres
+    password: postgres
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    com.example: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG 

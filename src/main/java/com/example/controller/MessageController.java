@@ -1,24 +1,31 @@
-package org.example.controller.impl;
+package com.example.controller;
+
+import com.example.model.dto.MessageDto;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
 import java.util.UUID;
 
-import org.example.entity.subscriber.dto.MessageDto;
-import org.example.service.MessageService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
-
-import lombok.RequiredArgsConstructor;
-
+/**
+ * Контроллер для получения базовой информации о сообщениях.
+ */
 @RestController
-@RequiredArgsConstructor
-public class MessageController {
+@RequestMapping("/messages")
+@Tag(name = "Messages API", description = "API для получения информации о сообщениях")
+public interface MessageController {
 
-    private final MessageService messageService;
-
+    /**
+     * Получает информацию о сообщении по его идентификатору.
+     *
+     * @param id идентификатор сообщения
+     * @return информация о сообщении (опционально)
+     */
     @GetMapping("/{id}")
-    public Optional<MessageDto> getMessage(@PathVariable UUID id) {
-        return messageService.getMessage(id);
-    }
+    @Operation(summary = "Получение сообщения по ID", description = "Возвращает базовую информацию о сообщении")
+    Optional<MessageDto> getMessage(@PathVariable UUID id);
 }
