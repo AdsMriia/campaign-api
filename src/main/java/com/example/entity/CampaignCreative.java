@@ -1,0 +1,58 @@
+package com.example.entity;
+
+import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+import java.util.Objects;
+import java.util.UUID;
+
+@Entity
+@Getter
+@Setter
+@NoArgsConstructor
+@Table(name = "ab_messages")
+public class CampaignCreative {
+
+    @Id
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "message_id")
+    private Message message;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ab_table_id")
+    private Campaign campaign;
+
+    @Column(name = "percent")
+    private Integer percent;
+
+    @Column(name = "ordinal")
+    private Integer ordinal;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        CampaignCreative campaignCreative = (CampaignCreative) o;
+        return Objects.equals(id, campaignCreative.id) && Objects.equals(percent, campaignCreative.percent);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, percent);
+    }
+
+    @Override
+    public String toString() {
+        return "{" +
+                "\"id\": \"" + getId() + "\"," +
+                "\"percent\": " + getPercent() + "," +
+                "\"ordinal\": " + getOrdinal() +
+                "}";
+    }
+}
