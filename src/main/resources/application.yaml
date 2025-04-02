@@ -1,17 +1,17 @@
 spring:
   datasource:
-    password: ${SPRING_MRIIA_DATASOURCE_PASSWORD}
-    url: ${SPRING_MRIIA_DATASOURCE_URL}
-    username: ${SPRING_MRIIA_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
     driver-class-name: org.postgresql.Driver
   servlet:
     multipart:
       max-file-size: 1GB
       max-request-size: 1GB
 
-  liquibase:
-    change-log: classpath:db/changelog/changelog-master.xml
-    drop-first: false
+#  liquibase:
+#    change-log: classpath:db/changelog/changelog-master.xml
+#    drop-first: false
 
   jpa:
     hibernate:
@@ -54,5 +54,5 @@ jwt:
   hash:
     secret: ${SPRING_JWT_HASH_SECRET}
 
-services:
-  workspace-api: ${WORKSPACE_API}
+#services:
+#  workspace-api: ${WORKSPACE_API}
