@@ -1,0 +1,58 @@
+spring:
+  datasource:
+    password: ${SPRING_MRIIA_DATASOURCE_PASSWORD}
+    url: ${SPRING_MRIIA_DATASOURCE_URL}
+    username: ${SPRING_MRIIA_DATASOURCE_USERNAME}
+    driver-class-name: org.postgresql.Driver
+  servlet:
+    multipart:
+      max-file-size: 1GB
+      max-request-size: 1GB
+
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
+    drop-first: false
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    defer-datasource-initialization: false
+    open-in-view: false
+    show-sql: true
+  main:
+    banner-mode: off
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${SPRING_EMAIL_ADDRESS}
+    password: ${SPRING_EMAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  error:
+    include-message: always
+    include-binding-errors: always
+  port: 8080
+  servlet:
+    context-path: ${CONTEXT_PATH}
+
+springdoc:
+  api-docs:
+    enabled: true
+#    path: /swagger/docs
+#  swagger-ui:
+#    path: /swagger/index.html
+
+jwt:
+  secret: ${SPRING_JWT_SECRET}
+  hash:
+    secret: ${SPRING_JWT_HASH_SECRET}
+
+services:
+  workspace-api: ${WORKSPACE_API}

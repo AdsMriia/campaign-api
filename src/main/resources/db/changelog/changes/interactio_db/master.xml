@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <include file="db/changelog/changes/interactio_db/v-0.0.1/2024-08-03-create-tables-changelog.sql"/>
+    <include file="db/changelog/changes/interactio_db/v-0.0.1/2024-08-03-add_data.sql"/>
+
+</databaseChangeLog>
