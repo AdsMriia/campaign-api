@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.example.model.enums.CampaignStatus;
-import com.example.model.enums.CampaignType;
+import com.example.model.CampaignStatus;
+import com.example.model.CampaignType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

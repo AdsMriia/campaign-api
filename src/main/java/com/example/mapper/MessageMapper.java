@@ -21,8 +21,6 @@ public interface MessageMapper {
      */
     @Mapping(target = "createdAt", expression = "java(message.getCreatedAt() != null ? message.getCreatedAt().toEpochSecond() : null)")
     @Mapping(target = "updatedAt", expression = "java(message.getUpdatedAt() != null ? message.getUpdatedAt().toEpochSecond() : null)")
-    @Mapping(target = "type", expression = "java(com.example.model.enums.MessageType.valueOf(message.getType().name()))")
-    @Mapping(target = "status", expression = "java(com.example.model.enums.MessageStatus.valueOf(message.getStatus().name()))")
     MessageDto toMessageDto(Message message);
 
     /**
@@ -33,8 +31,6 @@ public interface MessageMapper {
      */
     @Mapping(target = "createdAt", expression = "java(message.getCreatedAt() != null ? message.getCreatedAt().toEpochSecond() : null)")
     @Mapping(target = "updatedAt", expression = "java(message.getUpdatedAt() != null ? message.getUpdatedAt().toEpochSecond() : null)")
-    @Mapping(target = "type", expression = "java(com.example.model.enums.MessageType.valueOf(message.getType().name()))")
-    @Mapping(target = "status", expression = "java(com.example.model.enums.MessageStatus.valueOf(message.getStatus().name()))")
     GetMessageDto toGetMessageDto(Message message);
 
     @Mapping(target = "actions", ignore = true)
@@ -44,8 +40,6 @@ public interface MessageMapper {
     @Mapping(target = "telegramId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    @Mapping(target = "type", expression = "java(com.example.entity.enums.MessageType.valueOf(createMessageDto.getType().name()))")
-    @Mapping(target = "status", expression = "java(com.example.entity.enums.MessageStatus.valueOf(createMessageDto.getStatus().name()))")
     Message toMessage(CreateMessageDto createMessageDto);
 
     @Mapping(target = "actions", ignore = true)
@@ -55,7 +49,5 @@ public interface MessageMapper {
     @Mapping(target = "telegramId", ignore = true)
     @Mapping(target = "createdAt", expression = "java(dto.getCreatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getCreatedAt()), java.time.ZoneOffset.UTC) : null)")
     @Mapping(target = "updatedAt", expression = "java(dto.getUpdatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getUpdatedAt()), java.time.ZoneOffset.UTC) : null)")
-    @Mapping(target = "type", expression = "java(com.example.entity.enums.MessageType.valueOf(dto.getType().name()))")
-    @Mapping(target = "status", expression = "java(com.example.entity.enums.MessageStatus.valueOf(dto.getStatus().name()))")
     Message toMessage(MessageDto dto);
 }

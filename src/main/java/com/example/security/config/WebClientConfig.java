@@ -21,7 +21,7 @@ public class WebClientConfig {
                         )
                         .onErrorResume(e -> {
                             HttpStatus status = (e instanceof WebClientResponseException)
-                                    ? ((WebClientResponseException) e).getStatusCode()
+                                    ? (HttpStatus) ((WebClientResponseException) e).getStatusCode()
                                     : HttpStatus.INTERNAL_SERVER_ERROR; // Визначаємо статус-код
 
                             return Mono.just(ClientResponse.create(status)

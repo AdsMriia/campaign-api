@@ -1,7 +1,7 @@
 package com.example.model.dto;
 
-import com.example.model.enums.MessageStatus;
-import com.example.model.enums.MessageType;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

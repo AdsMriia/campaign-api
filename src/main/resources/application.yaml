@@ -9,8 +9,8 @@ spring:
       max-file-size: 1GB
       max-request-size: 1GB
 
-#  liquibase:
-#    change-log: classpath:db/changelog/changelog-master.xml
+  liquibase:
+    change-log: classpath:db/changelog/changelog-master.xml
 #    drop-first: false
 
   jpa:
@@ -53,6 +53,7 @@ jwt:
   secret: ${SPRING_JWT_SECRET}
   hash:
     secret: ${SPRING_JWT_HASH_SECRET}
+  expiration: 86400000 # 24 hours
 
 #services:
 #  workspace-api: ${WORKSPACE_API}

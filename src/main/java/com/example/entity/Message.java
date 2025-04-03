@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.example.model.enums.MessageStatus;
-import com.example.model.enums.MessageType;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

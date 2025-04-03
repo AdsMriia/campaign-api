@@ -1,6 +1,6 @@
 package com.example.security;
 
-import com.telegram.dto.workspaceDto.WebUserDto;
+import com.example.model.dto.WebUserDto;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +11,7 @@ public class UserProvider {
         return ((CustomUserDetails) SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getPrincipal())
-                .webUser;
+                .getWebUserDto();
     }
 
     public String getCurrentUserToken() {

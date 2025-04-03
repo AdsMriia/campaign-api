@@ -1,8 +1,8 @@
 package com.example.repository;
 
 import com.example.entity.Message;
-import com.example.model.enums.MessageStatus;
-import com.example.model.enums.MessageType;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

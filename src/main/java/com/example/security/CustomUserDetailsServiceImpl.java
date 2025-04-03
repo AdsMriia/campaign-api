@@ -1,10 +1,11 @@
 package com.example.security;
 
-import com.telegram.dto.workspaceDto.WebUserDto;
+import com.example.model.dto.WebUserDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.UUID;
 
 /**
@@ -25,7 +26,11 @@ public class CustomUserDetailsServiceImpl {
      */
     public CustomUserDetails loadUser(UUID userId, String email, UUID currentWorkspace) {
         log.info("Creating stub CustomUserDetails for user ID: {}, email: {}", userId, email);
-        WebUserDto userDto = new WebUserDto(userId, email, currentWorkspace);
+        WebUserDto userDto = new WebUserDto();
+        userDto.setId(userId);
+        userDto.setEmail(email);
+        userDto.setRoles(new ArrayList<>());
+        userDto.setWorkspaceId(currentWorkspace);
         return new CustomUserDetails(userDto);
     }
 }

@@ -1,47 +1,47 @@
-spring:
-  application:
-    name: campaign-api
-  datasource:
-    url: jdbc:postgresql://localhost:5432/campaign_db
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
-    database: postgresql
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
-  liquibase:
-    change-log: classpath:db/changelog/db.changelog-master.xml
-    enabled: true
-
-server:
-  port: 8080
-  servlet:
-    context-path: /api
-
-springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-  api-docs:
-    path: /v3/api-docs
-
-logging:
-  level:
-    root: INFO
-    com.example: DEBUG
-    org.springframework.web: INFO
-    org.hibernate: INFO
-
-tdlib:
-  api:
-    url: http://tdbot:8090/api
-    timeout: 10000
-
-jwt:
-  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
-  expiration: 86400000 # 24 hours 
+#spring:
+#  application:
+#    name: campaign-api
+#  datasource:
+#    url: jdbc:postgresql://localhost:5432/campaign_db
+#    username: postgres
+#    password: postgres
+#    driver-class-name: org.postgresql.Driver
+#  jpa:
+#    hibernate:
+#      ddl-auto: validate
+#    show-sql: true
+#    properties:
+#      hibernate:
+#        format_sql: true
+#    database: postgresql
+#    database-platform: org.hibernate.dialect.PostgreSQLDialect
+#  liquibase:
+#    change-log: classpath:db/changelog/db.changelog-master.xml
+#    enabled: true
+#
+#server:
+#  port: 8080
+#  servlet:
+#    context-path: /api
+#
+#springdoc:
+#  swagger-ui:
+#    path: /swagger-ui.html
+#  api-docs:
+#    path: /v3/api-docs
+#
+#logging:
+#  level:
+#    root: INFO
+#    com.example: DEBUG
+#    org.springframework.web: INFO
+#    org.hibernate: INFO
+#
+#tdlib:
+#  api:
+#    url: http://tdbot:8090/api
+#    timeout: 10000
+#
+#jwt:
+#  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+#  expiration: 86400000 # 24 hours

@@ -1,7 +1,7 @@
 package com.example.controller;
 
-import com.example.model.enums.MessageStatus;
-import com.example.model.enums.MessageType;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;

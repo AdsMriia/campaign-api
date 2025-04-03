@@ -2,6 +2,7 @@ package com.example.controller.impl;
 
 import com.example.controller.MediaController;
 import com.example.model.dto.MediaDto;
+import com.example.security.UserProvider;
 import com.example.service.MediaService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.UUID;
 public class MediaControllerImpl implements MediaController {
 
     private final MediaService mediaService;
+    private final UserProvider userProvider;
 
     @Override
     public Resource getMedia(@PathVariable("id") UUID id) {
@@ -38,7 +40,8 @@ public class MediaControllerImpl implements MediaController {
     @Override
     public MediaDto uploadMedia(@RequestParam("file") MultipartFile file) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
-        return mediaService.uploadMedia(file);
+
+        return mediaService.uploadMedia(file, userProvider.getCurrentUser().getWorkspaceId());
     }
 
     @Override

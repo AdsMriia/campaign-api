@@ -1,0 +1,411 @@
+package com.example.services;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import org.example.entity.enums.ErrorMessage;
+import org.example.entity.enums.MessageStatus;
+import org.example.entity.enums.MessageType;
+import org.example.entity.subscriber.*;
+import org.example.entity.subscriber.dto.*;
+import org.example.exception.NoButtonException;
+import org.example.exception.NoSelectedChannel;
+import org.example.exception.NotFoundException;
+import org.example.exception.RequestRejectedException;
+import org.example.mapper.MessageMapper;
+import org.example.repository.*;
+import org.example.security.UserProvider;
+import org.example.service.*;
+import org.slf4j.Logger;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.http.*;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.client.RestTemplate;
+
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
+
+/**
+ * Реализация сервиса для управления сообщениями.
+ * Содержит операции создания, обновления, удаления и отправки сообщений через Telegram.
+ */
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class MessageServiceImpl implements MessageService {
+    private final UserProvider userProvider;
+    private final MessageRepository messageRepository;
+    private final WebUserService webUserService;
+    private final MessageMapper messageMapper;
+    private final MediaService mediaService;
+    private final ActionRepository actionRepository;
+    private final MediaRepository mediaRepository;
+
+
+    private final TransactionTemplate transactionTemplate;
+    private final RestTemplate restTemplate;
+
+    private final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(MessageServiceImpl.class);
+
+    /**
+     * Получает сообщение по его уникальному идентификатору.
+     *
+     * @param id уникальный идентификатор сообщения (UUID).
+     * @return объект {@link GetMessageDto}, представляющий найденное сообщение.
+     * @throws NotFoundException если сообщение с указанным идентификатором не найдено.
+     */
+    @Override
+    @Transactional
+    public GetMessageDto getById(UUID id) {
+        return messageMapper.mapToDto(
+                webUserService.getWorkspace().getMessages()
+                        .stream()
+                        .filter(message -> message.getId().equals(id))
+                        .findFirst()
+                        .orElseThrow(() -> new NotFoundException(ErrorMessage.DATA_NOT_FOUND)));
+    }
+
+    /**
+     * Возвращает страницу с сообщениями, отфильтрованными по типу и статусу.
+     *
+     * @param type   тип сообщения ({@link MessageType}).
+     * @param status статус сообщения ({@link MessageStatus}).
+     * @param page   номер страницы для пагинации.
+     * @param size   размер страницы (количество записей на странице).
+     * @return страница объектов {@link GetMessageDto}.
+     */
+    @Override
+    public Page<GetMessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size) {
+        size = adjustPageSize(size);
+
+        Page<Message> messagePage = new PageImpl<>(new ArrayList<>());
+
+//        switch (status) {
+//            case ALL:
+//                messagePage = messageRepository.findMessagesByWorkspaceIdOrChannelsAndType(
+//                        webUserService.getWorkspace().getId(),
+//                        webUserService.getWorkspace().getChannelWorkspaces().stream()
+//                                .map(ChannelWorkspace::getChannelId)
+//                                .collect(Collectors.toList()),
+//                        type,
+//                        PageRequest.of(page, size, Sort.by(Sort.Order.desc("updatedAt"))));
+//                break;
+//            default:
+//                messagePage = messageRepository.findMessagesByWorkspaceIdAndTypeAndStatus(
+//                        webUserService.getWorkspace().getId(),
+//                        webUserService.getWorkspace().getChannelWorkspaces().stream()
+//                                .map(ChannelWorkspace::getChannelId)
+//                                .collect(Collectors.toList()),
+//                        type,
+//                        status,
+//                        PageRequest.of(page, size, Sort.by(Sort.Order.desc("updatedAt"))));
+//                break;
+//        }
+
+        return messagePage.map(messageMapper::mapToDto);
+    }
+
+    /**
+     * Обновляет данные существующего сообщения.
+     *
+     * @param createMessageDto объект {@link CreateMessageDto}, содержащий данные для обновления.
+     * @param id               уникальный идентификатор сообщения (UUID).
+     * @return объект {@link GetMessageDto}, представляющий обновленное сообщение.
+     * @throws NotFoundException если сообщение с указанным идентификатором не найдено.
+     */
+    @Override
+    public GetMessageDto update(CreateMessageDto createMessageDto, UUID id) {
+        Message original = getMessageById(id);
+
+        actionRepository.deleteAll(original.getActions());
+        mediaRepository.deleteAll(original.getMedias());
+
+        messageMapper.update(createMessageDto, original);
+        original.setCreatedBy(userProvider.getCurrentUser());
+
+        updateMediaAndActions(createMessageDto, original);
+
+        messageRepository.save(original);
+
+        return messageMapper.mapToDto(original);
+    }
+
+    /**
+     * Создает новое сообщение. Поддерживает асинхронную обработку связанных действий.
+     *
+     * @param markdown          true, если нужно использовать Markdown разметку в сообщении.
+     * @param createMessageDto  объект {@link CreateMessageDto}, содержащий данные для создания сообщения.
+     * @return объект {@link GetMessageDto}, представляющий новое созданное сообщение.
+     */
+    @Override
+    @org.springframework.transaction.annotation.Transactional(propagation = Propagation.REQUIRES_NEW)
+    public GetMessageDto create(boolean markdown, CreateMessageDto createMessageDto) {
+        if (createMessageDto.getStatus().equals(MessageStatus.ACTIVE) && createMessageDto.getChannelIds().isEmpty()) {
+            throw new NoSelectedChannel("No selected Channel");
+        }
+        if (createMessageDto.getStatus().equals(MessageStatus.ACTIVE) && createMessageDto.getActions().isEmpty()) {
+            throw new NoButtonException("No one buttons");
+        }
+
+        Message objectPool = getObjectPool(createMessageDto, markdown);
+
+        if (isPollActive(createMessageDto)) {
+            List<String> errorMessages = postToTelegram(markdown, createMessageDto.getChannelIds(), objectPool.getId());
+            if (!errorMessages.isEmpty()) {
+                deleteObjectPool(objectPool);
+                LOGGER.error("Can't send message to telegram: {}", errorMessages);
+
+                Map<String, List<String>> errorMap = new HashMap<>();
+                errorMap.put(ErrorMessage.UNABLE_NOT_SEND_TO_TELEGRAM.toString(), errorMessages);
+
+                try {
+                    String errorMessage = new ObjectMapper().writeValueAsString(errorMap);
+                    throw new RequestRejectedException(errorMessage);
+                } catch (JsonProcessingException e) {
+                    throw new RequestRejectedException("Error serializing error details", e);
+                }
+            }
+        }
+
+        return messageMapper.mapToDto(objectPool);
+    }
+
+    /**
+     * Удаляет сообщение на основе его идентификатора.
+     *
+     * @param id уникальный идентификатор сообщения (UUID).
+     * @throws NotFoundException если сообщение с указанным идентификатором не найдено.
+     */
+    @Override
+    public void delete(UUID id) {
+        Message message = getMessageById(id);
+        if (message.getStatus().equals(MessageStatus.ACTIVE)) {
+            throw new RequestRejectedException(ErrorMessage.ACTIVE_STATUS, MessageStatus.ACTIVE);
+        }
+        message.setStatus(MessageStatus.ARCHIVED);
+        messageRepository.save(message);
+    }
+
+    @Override
+    public List<MessageDto> getByWorkspaceId(List<UUID> id) {
+        List<Message> messages = messageRepository.findByWorkspaceId(id);
+        List<MessageDto> messageDtos = new ArrayList<>();
+        for (Message message : messages) {
+            MessageDto messageDto = messageMapper.mapToDto(message);
+            messageDtos.add(messageDto);
+            List<ActionDto> actionDtos = new ArrayList<>();
+            for (Action action : message.getActions()) {
+                ActionDto actionDto = new ActionDto();
+                actionDto.setText(action.getText());
+                actionDto.setLink(action.getLink());
+                actionDtos.add(actionDto);
+            }
+            messageDto.setActions(actionDtos);
+
+            messageDtos.add(messageDto);
+        }
+        return messageDtos;
+    }
+
+//            Optional<Campaign> optionalABTable = campaignRepository.findById(campaign.getId());
+//            if (optionalABTable.isEmpty()) {
+//                throw new NotFoundException(ErrorMessage.DATA_NOT_FOUND);
+//            }
+
+
+//        if (submitABDto.getTitle() == null || submitABDto.getTitle().isEmpty()) {
+//            throw new RequestRejectedException(ErrorMessage.NULL_TITLE);
+//        } else {
+
+//        // Проверка, что сообщение существует и не активно
+//        Optional<Message> optionalMessage = messageRepository.findById();
+//        if (optionalMessage.isEmpty()) {
+//            throw new NotFoundException(ErrorMessage.DATA_NOT_FOUND);
+//        }
+////
+//        // Проверка, что сообщение не активно
+//        Message message = optionalMessage.get();
+//        if (!message.getStatus().equals(MessageStatus.DRAFT)) {
+//            throw new RequestRejectedException(ErrorMessage.CANNOT_SEND_IN_THIS_STATUS, message.getStatus());
+//        }
+//
+//        // Проверка, что сообщение является сообщением
+//        if (!message.getType().equals(MessageType.MESSAGE)) {
+//            throw new NoButtonException("Only message can be sent immediately");
+//        }
+//
+//        // Проверка, что канал существует и принадлежит текущему пользователю
+//        Optional<ChannelWorkspace> optionalChannelWorkspace = channelWorkspaceRepository.findById(channelId);
+//        if (optionalChannelWorkspace.isEmpty()) {
+//            throw new NotFoundException(ErrorMessage.DATA_NOT_FOUND);
+//        }
+//
+//        // Проверка, что канал принадлежит текущему пользователю
+//        ChannelWorkspace channelWorkspace = optionalChannelWorkspace.get();
+//        if (!channelWorkspace.getWorkspace().getId().equals(workspace.getId())) {
+//            throw new NotFoundException(ErrorMessage.DATA_NOT_FOUND);
+//        }
+//
+//        if (!channelWorkspace.isTracking()) {
+//            throw new NotFoundException(ErrorMessage.CHANNEL_NOT_TRACKING);
+//        }
+
+//        return sendImmediateMessage(creativeId, channelId);
+
+// Вспомогательные методы
+
+    /**
+     * Возвращает сообщение по его уникальному идентификатору.
+     *
+     * @param id уникальный идентификатор сообщения.
+     * @return объект {@link Message}, представляющий сообщение.
+     * @throws NotFoundException если сообщение не найдено.
+     */
+    private Message getMessageById(UUID id) {
+        return webUserService.getWorkspace().getMessages().stream()
+                .filter(message -> message.getId().equals(id))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException(ErrorMessage.DATA_NOT_FOUND));
+    }
+
+    /**
+     * Обновляет медиа и действия сообщения.
+     *
+     * @param createMessageDto объект с данными для обновления.
+     * @param message          объект {@link Message}, представляющий сообщение.
+     */
+    private void updateMediaAndActions(CreateMessageDto createMessageDto, Message message) {
+        if (createMessageDto.getMediaNames() != null) {
+            for (String mediaName : createMessageDto.getMediaNames()) {
+                message.addMedia(mediaService.getByFileNameAndExtension(mediaName));
+            }
+        }
+
+        Set<Action> actions = new HashSet<>();
+        for (ActionDto actionDto : createMessageDto.getActions()) {
+            Action action = new Action();
+            action.setText(actionDto.getText());
+            action.setLink(actionDto.getLink());
+            action.setObjectPool(message);
+            action.setOrdinal(createMessageDto.getActions().indexOf(actionDto) + 1);
+            actionRepository.save(action);
+            actions.add(action);
+        }
+
+        message.setActions(actions);
+    }
+
+    /**
+     * Асинхронно создает сообщение и добавляет действия.
+     *
+     * @param createMessageDto объект с данными для создания.
+     * @return объект {@link Message}, представляющий созданное сообщение.
+     */
+    private Message getObjectPool(CreateMessageDto createMessageDto, boolean markdown) {
+        System.out.println(OffsetDateTime.now());
+        Message objectPool = messageMapper.mapToEntity(createMessageDto);
+        objectPool.setWorkspace(webUserService.getWorkspace());
+        objectPool.setCreatedBy(userProvider.getCurrentUser());
+        objectPool.setTitle(createMessageDto.getTitle());
+        objectPool.setActions(new HashSet<>());
+        objectPool.setMedias(new HashSet<>());
+        objectPool.setMarkDown(markdown);
+
+        return CompletableFuture.supplyAsync(() -> transactionTemplate.execute(status -> {
+            messageRepository.save(objectPool);
+            updateMediaAndActions(createMessageDto, objectPool);
+            return objectPool;
+        })).join();
+    }
+
+    private void deleteObjectPool(Message objectPool) {
+        CompletableFuture.supplyAsync(() -> transactionTemplate.execute(status -> {
+            actionRepository.deleteAll(objectPool.getActions());
+            mediaRepository.deleteAll(objectPool.getMedias());
+            messageRepository.delete(objectPool);
+            return null;
+        })).join();
+    }
+
+    /**
+     * Отправляет сообщение в Telegram и возвращает ошибки, если таковые есть.
+     *
+     * @param channelIds список идентификаторов каналов.
+     * @param messageId  идентификатор сообщения.
+     * @return список строк с ошибками (если есть).
+     */
+    private List<String> postToTelegram(boolean markdown, List<UUID> channelIds, UUID messageId) {
+        List<String> errorMessages = new ArrayList<>();
+        for (UUID channelId : channelIds) {
+            Optional<String> errorMessage = sendPostRequest(markdown, channelId, messageId);
+            errorMessage.ifPresent(errorMessages::add);
+        }
+        return errorMessages;
+    }
+
+    /**
+     * Отправляет POST-запрос в Telegram API.
+     *
+     * @param channelId идентификатор канала.
+     * @param messageId идентификатор сообщения.
+     * @return объект {@link Optional}, содержащий строку с ошибкой, если таковая есть.
+     */
+    private Optional<String> sendPostRequest(boolean markdown, UUID channelId, UUID messageId) {
+        String url = "http://tdbot:8090/api/send/post?channelId=" + channelId + "&messageId=" + messageId + "&markdown=" + markdown;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("X-Request-Timeout", "10000");
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+        ResponseEntity<String> response;
+        try {
+            response = restTemplate.exchange(url, HttpMethod.POST, entity, String.class);
+        } catch (Exception e) {
+            String message = e.getMessage();
+            LOGGER.error("Error while sending POST request to Telegram API: {}", message);
+            return Optional.of(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase());
+        }
+
+        LOGGER.info("Response status: {}", response.getStatusCode());
+        if (response.getStatusCode() == HttpStatus.OK) {
+            return Optional.empty();
+        } else if (response.getStatusCode() == HttpStatus.NOT_FOUND) {
+            return Optional.of("not found");
+        } else if (response.getStatusCode() == HttpStatus.INTERNAL_SERVER_ERROR) {
+            return Optional.of("Sending Service is not available");
+        }
+
+        return Optional.of("Unknown error: " + response.getStatusCode());
+    }
+
+    /**
+     * Корректирует размер страницы, если он равен 0.
+     *
+     * @param size размер страницы.
+     * @return скорректированный размер страницы.
+     */
+    private Integer adjustPageSize(Integer size) {
+        if (size == 0) {
+            size = webUserService.getWorkspace().getMessages().size();
+            if (size == 0) {
+                size = 10;
+            }
+        }
+        return size;
+    }
+
+    /**
+     * Проверяет, является ли сообщение активным опросом.
+     *
+     * @param createMessageDto объект с данными для сообщения.
+     * @return true, если сообщение является активным опросом, иначе false.
+     */
+    private boolean isPollActive(CreateMessageDto createMessageDto) {
+        return createMessageDto.getStatus().equals(MessageStatus.ACTIVE) && createMessageDto.getMessageType().equals(MessageType.POLL);
+    }
+}

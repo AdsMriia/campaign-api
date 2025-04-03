@@ -1,7 +1,7 @@
 package com.example.model.dto;
 
-import com.example.model.enums.CampaignStatus;
-import com.example.model.enums.CampaignType;
+import com.example.model.CampaignStatus;
+import com.example.model.CampaignType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
