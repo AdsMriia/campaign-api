@@ -138,8 +138,31 @@ public class Message extends BaseEntity {
         message.setUpdatedAt(OffsetDateTime.now());
         message.setMarkDown(markDown);
         message.setTitle(title);
-        message.setActions(actions.stream().map(Action::clone).collect(Collectors.toSet()));
-        message.setMedias(medias.stream().map(Media::clone).collect(Collectors.toSet()));
+
+        // Копирование Action без использования clone()
+        Set<Action> newActions = new HashSet<>();
+        for (Action action : actions) {
+            Action newAction = new Action();
+            newAction.setText(action.getText());
+            newAction.setLink(action.getLink());
+            newAction.setMessage(message);
+            newAction.setOrdinal(action.getOrdinal());
+            newActions.add(newAction);
+        }
+        message.setActions(newActions);
+
+        // Копирование Media без использования clone()
+        Set<Media> newMedias = new HashSet<>();
+        for (Media media : medias) {
+            Media newMedia = new Media();
+            newMedia.setFileName(media.getFileName());
+            newMedia.setFileExtension(media.getFileExtension());
+            newMedia.setWorkspaceId(media.getWorkspaceId());
+            newMedia.setMessage(message);
+            newMedias.add(newMedia);
+        }
+        message.setMedias(newMedias);
+
         return message;
     }
 

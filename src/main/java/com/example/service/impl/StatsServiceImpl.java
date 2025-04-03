@@ -69,11 +69,13 @@ public class StatsServiceImpl implements StatsService {
         // Рассчитываем количество периодов в зависимости от диапазона и интервала
         int totalPeriods = (int) Math.ceil(range / interval);
 
-        // Формируем список дат на основе диапазона и интервала
-        List<String> dates = new ArrayList<>();
+        // Формируем список временных меток на основе диапазона и интервала
+        List<Long> dates = new ArrayList<>();
         for (int i = 0; i < totalPeriods; i++) {
             LocalDate date = currentDate.minusDays((long) (i * interval));
-            dates.add(date.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            // Преобразуем дату в миллисекунды (временную метку)
+            long timestamp = date.atStartOfDay(zoneId).toInstant().toEpochMilli();
+            dates.add(timestamp);
         }
 
         SimpleDate result = new SimpleDate();
@@ -149,7 +151,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     @Override
-    public List<ChartDto> getChart(MessageType type, List<Long> interval, Integer granularity) {
+    public List<ChartDto> getChart(com.example.model.MessageType type, List<Long> interval, Integer granularity) {
         log.info("Получение графика: тип={}, интервал={}, гранулярность={}", type, interval, granularity);
 
         if (interval == null || interval.size() != 2) {
@@ -163,19 +165,33 @@ public class StatsServiceImpl implements StatsService {
         OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(interval.get(0), ZoneOffset.UTC);
         OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(interval.get(1), ZoneOffset.UTC);
 
+        // Преобразуем тип из модели в тип сущности
+        MessageType entityType = MessageType.valueOf(type.name());
+
         // Рассчитываем интервалы для графика
         List<ChartDto> chartData = new ArrayList<>();
 
         // Получаем сырые данные из репозитория
         List<Map<String, Object>> rawData = statsRepository.getChartData(
-                type.name(), startDate, endDate, workspaceId);
+                entityType.name(), startDate, endDate, workspaceId);
 
         // Преобразуем сырые данные в формат графика
-        // Здесь может быть сложная логика преобразования и группировки данных
         for (Map<String, Object> dataPoint : rawData) {
             ChartDto chartDto = new ChartDto();
-            chartDto.setDate((String) dataPoint.get("date"));
-            chartDto.setValue((Number) dataPoint.get("value"));
+
+            // Создаем списки для временных меток и значений
+            List<Long> timestamps = new ArrayList<>();
+            List<Long> values = new ArrayList<>();
+
+            // Добавляем данные в списки
+            timestamps.add(((Number) dataPoint.get("date")).longValue());
+            values.add(((Number) dataPoint.get("value")).longValue());
+
+            // Устанавливаем данные в DTO
+            chartDto.setTimestamps(timestamps);
+            chartDto.setValues(values);
+            chartDto.setType(entityType.name());
+
             chartData.add(chartDto);
         }
 

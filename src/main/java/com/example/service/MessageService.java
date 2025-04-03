@@ -76,4 +76,12 @@ public interface MessageService {
      * @return сообщение (опционально)
      */
     Optional<MessageDto> getMessage(UUID id);
+
+    /**
+     * Находит сообщения по списку идентификаторов рабочих пространств.
+     *
+     * @param workspaceIds список идентификаторов рабочих пространств
+     * @return список сообщений
+     */
+    List<MessageDto> findByWorkspaceIds(List<UUID> workspaceIds);
 }

@@ -97,7 +97,7 @@ public class MediaServiceImpl implements MediaService {
 
             // Сохраняем информацию о файле в базе данных
             Media media = new Media();
-            media.setFileName(fileId);
+            media.setFileName(fileId.toString());
             media.setFileExtension("." + outputFormat);
             media.setWorkspaceId(webUserService.getCurrentWorkspaceId());
 
@@ -115,7 +115,7 @@ public class MediaServiceImpl implements MediaService {
     public Resource getMedia(UUID id) {
         log.info("Получение медиафайла с ID: {}", id);
 
-        Media media = mediaRepository.findById(id)
+        Media media = (Media) mediaRepository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("Медиафайл с ID " + id + " не найден"));
 
         String filePath = UPLOAD_DIR + "/" + media.getFileName() + media.getFileExtension();
@@ -133,7 +133,9 @@ public class MediaServiceImpl implements MediaService {
         log.info("Получение всех медиафайлов пользователя");
 
         UUID workspaceId = webUserService.getCurrentWorkspaceId();
-        List<Media> medias = mediaRepository.findByWorkspaceId(workspaceId);
+        List<Media> medias = mediaRepository.findByWorkspaceId(workspaceId).stream()
+                .map(m -> (Media) m)
+                .collect(Collectors.toList());
 
         List<MediaDto> mediaDtos = medias.stream()
                 .map(mediaMapper::toMediaDto)
@@ -146,7 +148,9 @@ public class MediaServiceImpl implements MediaService {
     public List<MediaDto> getByWorkspaceId(List<UUID> workspaceIds) {
         log.info("Получение медиафайлов для рабочих пространств: {}", workspaceIds);
 
-        List<Media> medias = mediaRepository.findByWorkspaceIdIn(workspaceIds);
+        List<Media> medias = mediaRepository.findByWorkspaceIdIn(workspaceIds).stream()
+                .map(m -> (Media) m)
+                .collect(Collectors.toList());
 
         return medias.stream()
                 .map(mediaMapper::toMediaDto)

@@ -5,6 +5,7 @@ import com.example.model.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -48,4 +49,10 @@ public class MessageDto {
      */
     @JsonProperty("created_at")
     private Long createdAt;
+
+    /**
+     * Список действий/кнопок сообщения.
+     */
+    @JsonProperty("actions")
+    private List<ActionDto> actions;
 }

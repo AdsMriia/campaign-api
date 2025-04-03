@@ -2,6 +2,7 @@ package com.example.repository;
 
 import com.example.entity.Message;
 import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -28,6 +29,16 @@ public interface MessageRepository extends JpaRepository<Message, UUID> {
             Pageable pageable);
 
     List<Message> findByWorkspaceIdAndChannelId(UUID workspaceId, UUID channelId);
+
+    List<Message> findByWorkspaceIdIn(List<UUID> workspaceIds);
+
+    Page<Message> findByWorkspaceIdAndType(UUID workspaceId, MessageType type, Pageable pageable);
+
+    Page<Message> findByWorkspaceIdAndTypeAndStatus(UUID workspaceId, MessageType type, MessageStatus status, Pageable pageable);
+
+    Page<Message> findByWorkspaceIdAndStatus(UUID workspaceId, MessageStatus status, Pageable pageable);
+
+    Page<Message> findByWorkspaceId(UUID workspaceId, Pageable pageable);
 
     Message findByTelegramId(Integer telegramId);
 }

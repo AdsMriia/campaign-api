@@ -1,6 +1,6 @@
 package com.example.repository;
 
-import com.example.model.Action;
+import com.example.entity.Action;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

@@ -25,7 +25,7 @@ public interface StatsMapper {
      * @param webStats объект WebStats
      * @return объект WebStatsDto
      */
-    @Mapping(source = "timestamp", target = "value", qualifiedByName = "toEpochSeconds")
+    @Mapping(target = "timestamp", expression = "java(webStats.getTimestamp() != null ? webStats.getTimestamp().toEpochSecond() : null)")
     WebStatsDto toWebStatsDto(WebStats webStats);
 
     /**
@@ -74,10 +74,11 @@ public interface StatsMapper {
      * @param value значение
      * @return объект ChartDto
      */
-    default ChartDto toChartDto(String date, Number value) {
+    default ChartDto toChartDto(String type, List<Long> timestamps, List<Long> values) {
         ChartDto chartDto = new ChartDto();
-        chartDto.setDate(date);
-        chartDto.setValue(value);
+        chartDto.setType(type);
+        chartDto.setTimestamps(timestamps);
+        chartDto.setValues(values);
         return chartDto;
     }
 }

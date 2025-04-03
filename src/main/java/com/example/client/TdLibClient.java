@@ -70,4 +70,22 @@ public interface TdLibClient {
      */
     @PostMapping("/api/retarget/stop")
     ResponseEntity<String> stopRetarget(@RequestParam("campaignId") UUID campaignId);
+
+    /**
+     * Получение статуса кампании
+     *
+     * @param campaignId идентификатор кампании
+     * @return ответ с информацией о статусе
+     */
+    @PostMapping("/api/campaign/checkStatus")
+    ResponseEntity<String> checkStatus(@RequestParam("campaignId") UUID campaignId);
+
+    /**
+     * Получение статистики кампании
+     *
+     * @param campaignId идентификатор кампании
+     * @return ответ со статистикой
+     */
+    @PostMapping("/api/campaign/getStats")
+    ResponseEntity<String> getStats(@RequestParam("campaignId") UUID campaignId);
 }
