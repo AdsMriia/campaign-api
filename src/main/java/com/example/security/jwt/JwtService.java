@@ -1,103 +1,79 @@
 package com.example.security.jwt;
 
-import com.telegram.exception.token.*;
-import io.jsonwebtoken.*;
-import io.jsonwebtoken.io.Decoders;
+import com.example.exception.TokenValidationException;
+import com.example.model.dto.WebUserDto;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
-import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import io.jsonwebtoken.security.SignatureException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
-import javax.crypto.SecretKey;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Arrays;
+import java.security.Key;
 import java.util.Date;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
 
-
-@Component
-@RequiredArgsConstructor
+@Service
+@Slf4j
 public class JwtService {
-
-    private final static Logger LOGGER = LoggerFactory.getLogger(JwtService.class);
 
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    public boolean verifyToken(String token) {
+    @Value("${jwt.expiration}")
+    private long jwtExpiration;
+
+    public String generateToken(WebUserDto user) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtExpiration);
+
+        return Jwts.builder()
+                .setSubject(user.getId().toString())
+                .claim("email", user.getEmail())
+                .claim("roles", user.getRoles())
+                .claim("workspace_id", user.getWorkspaceId())
+                .setIssuedAt(now)
+                .setExpiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    public WebUserDto validateToken(String token) {
         try {
-            if (getTokenType(token).equals("access")) {
-                return true;
-            }
-            throw new InvalidTokenException("Invalid access token");
-        } catch (ExpiredJwtException expEx) {
-            throw new TokenExpiredException("Token expired");
-        } catch (UnsupportedJwtException unsEx) {
-            throw new UnsupportedTokenException("Unsupported token");
-        } catch (MalformedJwtException mjEx) {
-            throw new MalformedTokenException("Malformed token");
-        } catch (SecurityException sEx) {
-            throw new InvalidTokenSignatureException("Invalid signature");
-        } catch (TokenDeprecatedException tdEx) {
-            throw tdEx;
-        } catch (Exception e) {
-            LoggerFactory.getLogger(JwtService.class).error(e.getMessage());
-            LoggerFactory.getLogger(JwtService.class).error(String.join("\n", Arrays.toString(e.getStackTrace())));
-            throw new InvalidTokenException("Unknown error");
+            Claims claims = Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+
+            WebUserDto userDto = new WebUserDto();
+            userDto.setId(UUID.fromString(claims.getSubject()));
+            userDto.setEmail(claims.get("email", String.class));
+            userDto.setRoles(claims.get("roles", List.class));
+            userDto.setWorkspaceId(UUID.fromString(claims.get("workspace_id", String.class)));
+            userDto.setIsActive(true);
+
+            return userDto;
+        } catch (SignatureException ex) {
+            throw new TokenValidationException("Invalid JWT signature");
+        } catch (MalformedJwtException ex) {
+            throw new TokenValidationException("Invalid JWT token");
+        } catch (ExpiredJwtException ex) {
+            throw new TokenValidationException("Expired JWT token");
+        } catch (UnsupportedJwtException ex) {
+            throw new TokenValidationException("Unsupported JWT token");
+        } catch (IllegalArgumentException ex) {
+            throw new TokenValidationException("JWT claims string is empty");
         }
     }
 
-    public String getEmailFromToken(String token) {
-        Claims claims = Jwts
-                .parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return claims.getSubject();
-    }
-
-    private SecretKey getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
+    private Key getSigningKey() {
+        byte[] keyBytes = jwtSecret.getBytes();
         return Keys.hmacShaKeyFor(keyBytes);
-    }
-
-    public String getTokenType(String token) {
-        Claims claims = Jwts
-                .parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return claims.get("tokenType", String.class);
-    }
-
-    public UUID getUserIdFromToken(String token) {
-        Claims claims = Jwts
-                .parser()
-                .verifyWith(getSignInKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-
-        return UUID.fromString(claims.get("userId", String.class));
-    }
-
-    public String generateApiToken() {
-        Date date = Date.from(LocalDateTime.now().plusMinutes(1).atZone(ZoneId.systemDefault()).toInstant());
-        return Jwts.builder()
-                .subject("Telegram-api")
-                .expiration(date)
-                .signWith(getSignInKey())
-                .claims(
-                        Map.of(
-                                "tokenType", "access"
-                        ))
-                .compact();
     }
 }

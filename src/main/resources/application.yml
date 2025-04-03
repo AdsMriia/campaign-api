@@ -7,13 +7,14 @@ spring:
     password: postgres
     driver-class-name: org.postgresql.Driver
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
     show-sql: true
     properties:
       hibernate:
         format_sql: true
+    database: postgresql
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
@@ -27,7 +28,7 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
   api-docs:
-    path: /api-docs
+    path: /v3/api-docs
 
 logging:
   level:
@@ -39,4 +40,8 @@ logging:
 tdlib:
   api:
     url: http://tdbot:8090/api
-    timeout: 10000 
+    timeout: 10000
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
+  expiration: 86400000 # 24 hours 

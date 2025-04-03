@@ -25,9 +25,10 @@ public interface MediaService {
      * Загружает медиа-файл.
      *
      * @param file загружаемый файл
+     * @param workspaceId идентификатор рабочего пространства
      * @return информация о загруженном медиа-файле
      */
-    MediaDto uploadMedia(MultipartFile file);
+    MediaDto uploadMedia(MultipartFile file, UUID workspaceId);
 
     /**
      * Получает все медиа-файлы текущего пользователя.
@@ -43,4 +44,19 @@ public interface MediaService {
      * @return список медиа-файлов
      */
     List<MediaDto> getByWorkspaceId(List<UUID> workspaceIds);
+
+    /**
+     * Получает медиа-файл по имени файла.
+     *
+     * @param fileName имя файла
+     * @return массив байтов, представляющий медиа-файл
+     */
+    byte[] getMediaContent(UUID fileName);
+
+    /**
+     * Удаляет медиа-файл по идентификатору.
+     *
+     * @param id идентификатор медиа-файла
+     */
+    void deleteMedia(UUID id);
 }

@@ -16,8 +16,7 @@ import java.util.UUID;
 public class CampaignCreative extends BaseEntity {
 
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -28,10 +27,10 @@ public class CampaignCreative extends BaseEntity {
     @JoinColumn(name = "campaign_id", nullable = false)
     private Campaign campaign;
 
-    @Column(name = "percent")
+    @Column
     private Integer percent;
 
-    @Column(name = "ordinal")
+    @Column(nullable = false)
     private Integer ordinal;
 
     @Override

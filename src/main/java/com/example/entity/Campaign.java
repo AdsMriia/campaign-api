@@ -6,8 +6,8 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
-import com.example.model.CampaignStatus;
-import com.example.model.CampaignType;
+import com.example.model.enums.CampaignStatus;
+import com.example.model.enums.CampaignType;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -19,12 +19,16 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
+@Table(name = "campaigns")
 @Getter
 @Setter
-@Table(name = "ab_tables")
-public class Campaign extends BaseEntity {
+public class Campaign {
 
-    @Column(name = "title", nullable = false)
+    @jakarta.persistence.Id
+    @jakarta.persistence.GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
+    private UUID id;
+
+    @Column(nullable = false)
     private String title;
 
     @Column(name = "start_date")
@@ -33,15 +37,18 @@ public class Campaign extends BaseEntity {
     @Column(name = "end_date")
     private OffsetDateTime endDate;
 
-    @Column(name = "created_by")
+    @Column(name = "created_at", nullable = false)
+    private OffsetDateTime createdAt;
+
+    @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
-    @Enumerated(EnumType.STRING)
     @Column(name = "campaign_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private CampaignType campaignType;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private CampaignStatus status;
 
     @Column(name = "workspace_id", nullable = false)
@@ -56,8 +63,8 @@ public class Campaign extends BaseEntity {
     @Column(name = "max_retargeted")
     private Long maxRetargeted;
 
-    @Column(name = "audience_percent", nullable = false)
-    private Integer audiencePercent = 100;
+    @Column(name = "audience_percent")
+    private Integer audiencePercent;
 
     @Column(name = "max_cost")
     private BigDecimal maxCost;
@@ -65,6 +72,6 @@ public class Campaign extends BaseEntity {
     @Column(name = "table_name", unique = true)
     private String tableName;
 
-    @OneToMany(mappedBy = "campaign")
-    private Set<CampaignCreative> campaignCreatives = new HashSet<>();
+    @OneToMany(mappedBy = "campaign", cascade = jakarta.persistence.CascadeType.ALL)
+    private Set<CampaignCreative> creatives = new HashSet<>();
 }

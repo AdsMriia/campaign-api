@@ -1,12 +1,13 @@
 package com.example.service;
 
-import com.example.model.CampaignStatus;
+import com.example.model.enums.CampaignStatus;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.ExpectedRetargetDto;
 import com.example.model.dto.RetargetStatsDto;
 import com.example.model.dto.SubmitABDto;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -16,6 +17,14 @@ import java.util.UUID;
  * Сервис для работы с кампаниями.
  */
 public interface CampaignService {
+
+    /**
+     * Создает новую кампанию.
+     *
+     * @param campaignDto данные кампании
+     * @return созданная кампания
+     */
+    CampaignDto createCampaign(CampaignDto campaignDto);
 
     /**
      * Создает и отправляет немедленную кампанию.
@@ -76,7 +85,7 @@ public interface CampaignService {
     boolean stopRetarget(UUID campaignId);
 
     /**
-     * Останавливает активную кампанию.
+     * Останавливает кампанию.
      *
      * @param campaignId идентификатор кампании
      * @return true, если кампания успешно остановлена
@@ -96,6 +105,22 @@ public interface CampaignService {
      * @return страница с кампаниями
      */
     Page<CampaignDto> getAll(List<UUID> channelIds, Integer page, CampaignStatus status, Integer size, Boolean asc, String sort, Boolean isArchived);
+
+    /**
+     * Получает все кампании с пагинацией.
+     *
+     * @param pageable параметры пагинации
+     * @return страница с кампаниями
+     */
+    Page<CampaignDto> getCampaigns(Pageable pageable);
+
+    /**
+     * Получает кампанию по идентификатору.
+     *
+     * @param id идентификатор кампании
+     * @return информация о кампании
+     */
+    Optional<CampaignDto> getCampaign(UUID id);
 
     /**
      * Получает кампанию по идентификатору.
@@ -136,4 +161,20 @@ public interface CampaignService {
      * @return список кампаний
      */
     List<CampaignDto> getAllCampaign(List<UUID> workspaceIds);
+
+    /**
+     * Обновляет кампанию.
+     *
+     * @param id идентификатор кампании
+     * @param campaignDto новые данные кампании
+     * @return обновленная информация о кампании
+     */
+    CampaignDto updateCampaign(UUID id, CampaignDto campaignDto);
+
+    /**
+     * Удаляет кампанию.
+     *
+     * @param id идентификатор кампании
+     */
+    void deleteCampaign(UUID id);
 }

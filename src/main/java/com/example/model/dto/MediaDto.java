@@ -18,10 +18,16 @@ public class MediaDto {
     private UUID id;
 
     /**
+     * Идентификатор рабочего пространства.
+     */
+    @JsonProperty("workspace_id")
+    private UUID workspaceId;
+
+    /**
      * Имя файла.
      */
     @JsonProperty("file_name")
-    private String fileName;
+    private UUID fileName;
 
     /**
      * Расширение файла.

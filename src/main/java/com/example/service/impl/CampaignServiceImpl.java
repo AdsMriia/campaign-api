@@ -13,7 +13,7 @@ import com.example.exception.NotFoundException;
 import com.example.exception.RequestRejectedException;
 import com.example.exception.ServiceUnavailableException;
 import com.example.mapper.CampaignMapper;
-import com.example.model.CampaignStatus;
+import com.example.model.enums.CampaignStatus;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.ExpectedRetargetDto;
@@ -26,11 +26,13 @@ import com.example.repository.RetargetStatsRepository;
 import com.example.service.CampaignService;
 import com.example.service.WebUserService;
 import com.example.util.DateTimeUtil;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
@@ -88,7 +90,7 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setTitle(submitABDto.getTitle());
             campaign.setStartDate(OffsetDateTime.now());
             campaign.setCreatedBy(userId);
-            campaign.setCampaignType(com.example.model.CampaignType.IMMEDIATE);
+            campaign.setCampaignType(com.example.model.enums.CampaignType.IMMEDIATE);
             campaign.setStatus(CampaignStatus.RUNNING);
             campaign.setWorkspaceId(workspaceId);
             campaign.setChannelId(channelId);
@@ -166,7 +168,7 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setStartDate(startDate);
             campaign.setEndDate(endDate);
             campaign.setCreatedBy(userId);
-            campaign.setCampaignType(com.example.model.CampaignType.BROADCAST);
+            campaign.setCampaignType(com.example.model.enums.CampaignType.BROADCAST);
             campaign.setStatus(CampaignStatus.SCHEDULED);
             campaign.setWorkspaceId(workspaceId);
             campaign.setChannelId(channelId);
@@ -426,13 +428,10 @@ public class CampaignServiceImpl implements CampaignService {
     }
 
     @Override
-    public CampaignDto getByCampaignId(UUID campaignId) {
-        log.info("Получение кампании по ID: {}", campaignId);
-
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
-
-        return campaignMapper.mapToDto(campaign);
+    public Optional<CampaignDto> getCampaign(UUID id) {
+        log.info("Получение кампании по ID: {}", id);
+        return campaignRepository.findById(id)
+                .map(campaignMapper::mapToDto);
     }
 
     @Override
@@ -516,6 +515,54 @@ public class CampaignServiceImpl implements CampaignService {
         return campaigns.stream()
                 .map(campaignMapper::mapToDto)
                 .toList();
+    }
+
+    @Override
+    public void deleteCampaign(UUID id) {
+        log.info("Удаление кампании с ID: {}", id);
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Кампания с ID " + id + " не найдена"));
+        campaignRepository.delete(campaign);
+    }
+
+    @Override
+    public CampaignDto updateCampaign(UUID id, CampaignDto campaignDto) {
+        log.info("Обновление кампании с ID: {}", id);
+        Campaign campaign = campaignRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Кампания с ID " + id + " не найдена"));
+
+        campaign.setTitle(campaignDto.getTitle());
+        campaign.setStatus(campaignDto.getStatus());
+        campaign.setMaxRetargeted(campaignDto.getMaxRetargeted());
+        campaign.setAudiencePercent(campaignDto.getAudiencePercent());
+
+        return campaignMapper.mapToDto(campaignRepository.save(campaign));
+    }
+
+    @Override
+    public Page<CampaignDto> getCampaigns(Pageable pageable) {
+        log.info("Получение страницы кампаний с параметрами: {}", pageable);
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+        return campaignRepository.findByWorkspaceId(workspaceId, pageable)
+                .map(campaignMapper::mapToDto);
+    }
+
+    @Override
+    public CampaignDto createCampaign(CampaignDto campaignDto) {
+        log.info("Создание новой кампании: {}", campaignDto);
+        Campaign campaign = campaignMapper.toCampaign(campaignDto);
+        campaign.setCreatedAt(OffsetDateTime.now());
+        campaign.setCreatedBy(webUserService.getCurrentUserId());
+        campaign.setWorkspaceId(webUserService.getCurrentWorkspaceId());
+        return campaignMapper.mapToDto(campaignRepository.save(campaign));
+    }
+
+    @Override
+    public CampaignDto getByCampaignId(UUID campaignId) {
+        log.info("Получение кампании по ID: {}", campaignId);
+        return campaignRepository.findById(campaignId)
+                .map(campaignMapper::mapToDto)
+                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
     }
 
     // Вспомогательные методы

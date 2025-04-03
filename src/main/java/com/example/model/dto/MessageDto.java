@@ -1,7 +1,7 @@
 package com.example.model.dto;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -19,6 +19,12 @@ public class MessageDto {
      */
     @JsonProperty("id")
     private UUID id;
+
+    @JsonProperty("mark_down")
+    private Boolean markDown;
+
+    @JsonProperty("workspace_id")
+    private UUID workspaceId;
 
     /**
      * Заголовок сообщения.
@@ -38,6 +44,15 @@ public class MessageDto {
     @JsonProperty("status")
     private MessageStatus status;
 
+    @JsonProperty("telegram_id")
+    private Long telegramId;
+
+    @JsonProperty("text")
+    private String text;
+
+    @JsonProperty("created_by")
+    private UUID createdBy;
+
     /**
      * Идентификатор канала.
      */
@@ -49,6 +64,12 @@ public class MessageDto {
      */
     @JsonProperty("created_at")
     private Long createdAt;
+
+    @JsonProperty("updated_at")
+    private Long updatedAt;
+
+    @JsonProperty("medias")
+    private List<MediaDto> medias;
 
     /**
      * Список действий/кнопок сообщения.

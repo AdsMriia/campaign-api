@@ -8,7 +8,8 @@ import com.example.model.dto.MediaDto;
 import com.example.repository.MediaRepository;
 import com.example.service.MediaService;
 import com.example.service.WebUserService;
-import jakarta.transaction.Transactional;
+import jakarta.persistence.EntityNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.FileSystemResource;
@@ -39,75 +40,67 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MediaServiceImpl implements MediaService {
 
+    private static final String UPLOAD_DIR = "uploads";
+
     private final MediaRepository mediaRepository;
     private final WebUserService webUserService;
     private final MediaMapper mediaMapper;
 
-    private static final String UPLOAD_DIR = "/uploads";
-
     @Override
-    public MediaDto uploadMedia(MultipartFile file) {
-        log.info("Загрузка медиафайла: {}", file.getOriginalFilename());
-
-        if (file.isEmpty()) {
-            throw new FileUploadException("Файл пуст");
-        }
-
-        String originalFilename = file.getOriginalFilename();
-        if (originalFilename == null || originalFilename.isEmpty()) {
-            throw new FileUploadException("Имя файла отсутствует");
-        }
-
-        String contentType = file.getContentType();
-        if (contentType == null) {
-            throw new FileUploadException("Не удалось определить тип файла");
-        }
-
-        // Определяем выходной формат в зависимости от типа файла
-        String outputFormat;
-        if (contentType.startsWith("video/")) {
-            outputFormat = "webm";
-        } else if (contentType.startsWith("image/")) {
-            outputFormat = "webp";
-        } else {
-            throw new FileUploadException("Неподдерживаемый тип файла: " + contentType);
-        }
-
+    @Transactional
+    public MediaDto uploadMedia(MultipartFile file, UUID workspaceId) {
         try {
-            // Генерируем уникальный идентификатор для файла
-            UUID fileId = UUID.randomUUID();
+            String originalFilename = file.getOriginalFilename();
+            String fileExtension = originalFilename != null
+                    ? originalFilename.substring(originalFilename.lastIndexOf(".") + 1)
+                    : "";
 
-            // Создаем временный файл
-            Path tempDir = Files.createTempDirectory("media-upload");
-            Path tempFilePath = tempDir.resolve(fileId.toString() + getFileExtension(originalFilename));
-            Files.copy(file.getInputStream(), tempFilePath, StandardCopyOption.REPLACE_EXISTING);
-
-            // Обрабатываем файл, если требуется конвертация
-            Path outputFilePath = processFile(tempFilePath, fileId, outputFormat);
-
-            // Создаем директорию для загрузок, если она не существует
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
+            UUID fileName = UUID.randomUUID();
+            Path uploadPath = Paths.get(UPLOAD_DIR);
+            if (!Files.exists(uploadPath)) {
+                Files.createDirectories(uploadPath);
             }
 
-            // Перемещаем файл в постоянное хранилище
-            Path finalPath = Paths.get(UPLOAD_DIR, fileId.toString() + "." + outputFormat);
-            Files.move(outputFilePath, finalPath, StandardCopyOption.REPLACE_EXISTING);
+            Path filePath = uploadPath.resolve(fileName.toString() + "." + fileExtension);
+            Files.write(filePath, file.getBytes());
 
-            // Сохраняем информацию о файле в базе данных
             Media media = new Media();
-            media.setFileName(fileId.toString());
-            media.setFileExtension("." + outputFormat);
-            media.setWorkspaceId(webUserService.getCurrentWorkspaceId());
+            media.setWorkspaceId(workspaceId);
+            media.setFileName(fileName);
+            media.setFileExtension(fileExtension);
 
-            Media savedMedia = mediaRepository.save(media);
-
-            return mediaMapper.toMediaDto(savedMedia);
-
+            return mediaMapper.toMediaDto(mediaRepository.save(media));
         } catch (IOException e) {
-            log.error("Ошибка при обработке файла", e);
-            throw new FileUploadException("Ошибка при обработке файла: " + e.getMessage());
+            throw new RuntimeException("Failed to store file", e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] getMediaContent(UUID fileName) {
+        try {
+            Media media = mediaRepository.findById(fileName)
+                    .orElseThrow(() -> new EntityNotFoundException("Media not found with fileName: " + fileName));
+
+            Path filePath = Paths.get(UPLOAD_DIR, fileName + "." + media.getFileExtension());
+            return Files.readAllBytes(filePath);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to read file", e);
+        }
+    }
+
+    @Override
+    @Transactional
+    public void deleteMedia(UUID id) {
+        Media media = mediaRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Media not found with id: " + id));
+
+        try {
+            Path filePath = Paths.get(UPLOAD_DIR, media.getFileName() + "." + media.getFileExtension());
+            Files.deleteIfExists(filePath);
+            mediaRepository.delete(media);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file", e);
         }
     }
 

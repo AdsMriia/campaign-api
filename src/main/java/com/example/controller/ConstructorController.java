@@ -1,7 +1,7 @@
 package com.example.controller;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
@@ -17,12 +17,13 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
 
-@RestController
+/**
+ * Интерфейс для управления конструктором сообщений.
+ */
 @RequestMapping("/constructor")
 @Tag(name = "Constructor API", description = "API для создания и управления креативами (сообщениями)")
 public interface ConstructorController {
@@ -57,10 +58,11 @@ public interface ConstructorController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
-    @Operation(summary = "Удаление креатива", description = "Удаляет креатив по его ID")
+    @Operation(summary = "Удаление креатива", description = "Удаляет существующий креатив")
     void delete(@PathVariable("id") UUID id);
 
     @GetMapping("/workspace")
-    @Operation(summary = "Получение креативов по рабочему пространству", description = "Возвращает креативы для указанных рабочих пространств")
+    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
+    @Operation(summary = "Получение креативов по рабочим пространствам", description = "Возвращает список креативов по указанным рабочим пространствам")
     List<MessageDto> getByWorkspaceId(@RequestParam List<UUID> workspaceIds);
 }

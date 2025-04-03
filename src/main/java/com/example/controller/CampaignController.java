@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.model.CampaignStatus;
+import com.example.model.enums.CampaignStatus;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.ExpectedRetargetDto;

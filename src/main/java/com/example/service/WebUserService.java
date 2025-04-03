@@ -1,6 +1,7 @@
 package com.example.service;
 
-import com.example.model.Media;
+import com.example.entity.Media;
+import com.example.model.dto.WebUserDto;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,4 +31,11 @@ public interface WebUserService {
      * @return список медиафайлов
      */
     List<Media> getWorkspaceWithMedia();
+
+    /**
+     * Получает текущего пользователя.
+     *
+     * @return объект пользователя
+     */
+    WebUserDto getCurrentUser();
 }

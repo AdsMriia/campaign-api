@@ -6,8 +6,8 @@ import com.example.entity.Message;
 import com.example.exception.NotFoundException;
 import com.example.exception.RequestRejectedException;
 import com.example.mapper.MessageMapper;
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 import com.example.model.dto.ActionDto;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
@@ -307,7 +307,7 @@ public class MessageServiceImpl implements MessageService {
                 .filter(m -> {
                     if (m instanceof Media) {
                         Media media = (Media) m;
-                        return media.getFileName() != null && media.getFileName().contains(fileName);
+                        return media.getFileName() != null && media.getFileName().toString().contains(fileName);
                     }
                     return false;
                 })
@@ -316,7 +316,7 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public void delete(UUID id) {
+    public void deleteMessage(UUID id) {
         log.info("Удаление сообщения с ID: {}", id);
 
         Message message = messageRepository.findById(id)
@@ -373,5 +373,45 @@ public class MessageServiceImpl implements MessageService {
         return messages.stream()
                 .map(messageMapper::toMessageDto)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public MessageDto createMessage(MessageDto messageDto) {
+        log.info("Создание нового сообщения из MessageDto");
+        Message message = messageMapper.toMessage(messageDto);
+        message.setCreatedAt(OffsetDateTime.now());
+        message.setUpdatedAt(OffsetDateTime.now());
+        Message savedMessage = messageRepository.save(message);
+        return messageMapper.toMessageDto(savedMessage);
+    }
+
+    @Override
+    public Page<MessageDto> getMessages(Pageable pageable) {
+        log.info("Получение страницы сообщений");
+        return messageRepository.findAll(pageable)
+                .map(messageMapper::toMessageDto);
+    }
+
+    @Override
+    public MessageDto updateMessage(UUID id, MessageDto messageDto) {
+        log.info("Обновление сообщения с ID: {}", id);
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Сообщение с ID " + id + " не найдено"));
+
+        message.setTitle(messageDto.getTitle());
+        message.setText(messageDto.getText());
+        message.setType(messageDto.getType());
+        message.setStatus(messageDto.getStatus());
+        message.setMarkDown(messageDto.getMarkDown());
+        message.setChannelId(messageDto.getChannelId());
+        message.setUpdatedAt(OffsetDateTime.now());
+
+        Message updatedMessage = messageRepository.save(message);
+        return messageMapper.toMessageDto(updatedMessage);
+    }
+
+    @Override
+    public void delete(UUID id) {
+        deleteMessage(id);
     }
 }

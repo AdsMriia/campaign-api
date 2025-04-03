@@ -1,7 +1,7 @@
 package com.example.controller.impl;
 
 import com.example.controller.CampaignController;
-import com.example.model.CampaignStatus;
+import com.example.model.enums.CampaignStatus;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.ExpectedRetargetDto;

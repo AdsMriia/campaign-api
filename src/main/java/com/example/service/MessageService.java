@@ -1,11 +1,12 @@
 package com.example.service;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 
 import java.util.List;
@@ -84,4 +85,12 @@ public interface MessageService {
      * @return список сообщений
      */
     List<MessageDto> findByWorkspaceIds(List<UUID> workspaceIds);
+
+    MessageDto createMessage(MessageDto messageDto);
+
+    Page<MessageDto> getMessages(Pageable pageable);
+
+    MessageDto updateMessage(UUID id, MessageDto messageDto);
+
+    void deleteMessage(UUID id);
 }

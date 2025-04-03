@@ -1,6 +1,6 @@
 package com.example.mapper;
 
-import com.example.model.Media;
+import com.example.entity.Media;
 import com.example.model.dto.MediaDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -18,7 +18,8 @@ public interface MediaMapper {
      * @param media сущность медиафайла
      * @return DTO медиафайла
      */
-    @Mapping(target = "fullName", expression = "java(getFullName(media))")
+    @Mapping(target = "url", expression = "java(String.format(\"/api/v1/media/%s\", media.getFileName()))")
+    @Mapping(target = "size", ignore = true)
     MediaDto toMediaDto(Media media);
 
     /**
@@ -27,7 +28,18 @@ public interface MediaMapper {
      * @param mediaDto DTO медиафайла
      * @return сущность медиафайла
      */
+    @Mapping(target = "message", ignore = true)
     Media toMedia(MediaDto mediaDto);
+
+    /**
+     * Преобразует MediaDto в Media.
+     *
+     * @param fileName имя файла
+     * @param fileExtension расширение файла
+     * @return сущность медиафайла
+     */
+    @Mapping(target = "message", ignore = true)
+    Media toMedia(String fileName, String fileExtension);
 
     /**
      * Вспомогательный метод для формирования полного имени файла.

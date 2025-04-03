@@ -18,16 +18,10 @@ public class CampaignCreativeDto {
     private UUID id;
 
     /**
-     * Идентификатор сообщения.
-     */
-    @JsonProperty("message_id")
-    private UUID messageId;
-
-    /**
      * Информация о сообщении.
      */
     @JsonProperty("message")
-    private GetMessageDto message;
+    private MessageDto message;
 
     /**
      * Процент аудитории для данного креатива (для A/B тестирования).

@@ -1,53 +1,52 @@
 package com.example.security;
 
-import com.telegram.dto.workspaceDto.WebUserDto;
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import com.example.model.dto.WebUserDto;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.HashSet;
-import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Заглушка для пользовательских деталей
  */
-@AllArgsConstructor
-@Slf4j
+@RequiredArgsConstructor
 public class CustomUserDetails implements UserDetails {
 
-    final WebUserDto webUser;
+    private final WebUserDto webUserDto;
 
     /**
-     * Возвращает роли и разрешения пользователя
-     * В этой заглушке возвращает пустой набор
-     * 
+     * Возвращает роли и разрешения пользователя В этой заглушке возвращает
+     * пустой набор
+     *
      * @return Пустой набор ролей/разрешений
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        log.debug("Getting authorities for user: {}", webUser.getEmail());
-        return new HashSet<>();
+        return webUserDto.getRoles().stream()
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
     }
 
     @Override
     public String getPassword() {
-        return null;
+        return null; // Пароль не используется, так как аутентификация через JWT
     }
 
     @Override
     public String getUsername() {
-        return webUser.getEmail();
+        return webUserDto.getUsername();
     }
-    
+
     /**
      * Получить ID пользователя
-     * 
+     *
      * @return ID пользователя
      */
-    public UUID getUserId() {
-        return webUser.getId();
+    public WebUserDto getWebUserDto() {
+        return webUserDto;
     }
 
     @Override
@@ -67,6 +66,6 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return webUserDto.getIsActive();
     }
 }

@@ -24,8 +24,7 @@ import lombok.Setter;
 public class Action extends BaseEntity {
 
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -35,10 +34,10 @@ public class Action extends BaseEntity {
     @Column(name = "text", nullable = false)
     private String text;
 
-    @Column(name = "link")
+    @Column(name = "link", nullable = false)
     private String link;
 
-    @Column(name = "ordinal")
+    @Column(name = "ordinal", nullable = false)
     private Integer ordinal;
 
 //    @OneToMany(

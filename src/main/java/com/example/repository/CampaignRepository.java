@@ -13,7 +13,7 @@ import org.springframework.stereotype.Repository;
 
 import com.example.entity.Campaign;
 import com.example.entity.enums.CompanyStatus;
-import com.example.model.CampaignStatus;
+import com.example.model.enums.CampaignStatus;
 import com.example.model.CampaignType;
 
 import java.time.OffsetDateTime;

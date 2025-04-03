@@ -1,11 +1,12 @@
 package com.example.repository;
 
 import com.example.entity.Message;
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -15,7 +16,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Repository
-public interface MessageRepository extends JpaRepository<Message, UUID> {
+public interface MessageRepository extends JpaRepository<Message, UUID>, JpaSpecificationExecutor<Message> {
 
     Optional<Message> findByIdAndWorkspaceId(UUID id, UUID workspaceId);
 

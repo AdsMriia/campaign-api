@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
+import com.example.model.enums.MessageStatus;
+import com.example.model.enums.MessageType;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -29,54 +29,56 @@ import lombok.Setter;
 @Getter
 @Setter
 @NoArgsConstructor
-@Table(name = "ab_messages")
+@Table(name = "messages")
 public class Message extends BaseEntity {
 
     @Id
-    @Column(name = "id")
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(name = "mark_down")
-    private Boolean markDown = false;
+    @Column(name = "mark_down", nullable = false)
+    private Boolean markDown;
 
     @Column(name = "workspace_id", nullable = false)
     private UUID workspaceId;
 
-    @Column(name = "title", nullable = false)
+    @Column(nullable = false)
     private String title;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
     private MessageType type;
 
+    @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
     private MessageStatus status;
 
     @Column(name = "telegram_id")
-    private Integer telegramId;
+    private Long telegramId;
 
-    @Column(name = "text", columnDefinition = "TEXT")
+    @Column(nullable = false)
     private String text;
 
-    @Column(name = "created_by")
+    @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
     @Column(name = "channel_id", nullable = false)
     private UUID channelId;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private OffsetDateTime createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private OffsetDateTime updatedAt;
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<Media> medias = new HashSet<>();
+
+    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Action> actions = new HashSet<>();
 
-    @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<Media> medias = new HashSet<>();
+    @OneToMany(mappedBy = "message")
+    private Set<CampaignCreative> campaigns = new HashSet<>();
 
     public void addMedia(Media media) {
         medias.add(media);
@@ -127,41 +129,34 @@ public class Message extends BaseEntity {
     @Override
     public Message clone() {
         Message message = new Message();
-        message.setWorkspaceId(workspaceId);
-        message.setType(type);
-        message.setStatus(status);
-        message.setTelegramId(telegramId);
-        message.setText(text);
-        message.setCreatedBy(createdBy);
-        message.setChannelId(channelId);
+        message.setMarkDown(this.markDown);
+        message.setTitle(this.title);
+        message.setType(this.type);
+        message.setStatus(MessageStatus.DRAFT);
+        message.setText(this.text);
+        message.setCreatedBy(this.createdBy);
+        message.setChannelId(this.channelId);
+        message.setWorkspaceId(this.workspaceId);
         message.setCreatedAt(OffsetDateTime.now());
         message.setUpdatedAt(OffsetDateTime.now());
-        message.setMarkDown(markDown);
-        message.setTitle(title);
 
-        // Копирование Action без использования clone()
-        Set<Action> newActions = new HashSet<>();
-        for (Action action : actions) {
+        for (Action action : this.actions) {
             Action newAction = new Action();
+            newAction.setMessage(message);
             newAction.setText(action.getText());
             newAction.setLink(action.getLink());
-            newAction.setMessage(message);
             newAction.setOrdinal(action.getOrdinal());
-            newActions.add(newAction);
+            message.getActions().add(newAction);
         }
-        message.setActions(newActions);
 
-        // Копирование Media без использования clone()
-        Set<Media> newMedias = new HashSet<>();
-        for (Media media : medias) {
+        for (Media media : this.medias) {
             Media newMedia = new Media();
+            newMedia.setMessage(message);
             newMedia.setFileName(media.getFileName());
             newMedia.setFileExtension(media.getFileExtension());
             newMedia.setWorkspaceId(media.getWorkspaceId());
-            newMedia.setMessage(message);
-            newMedias.add(newMedia);
+            message.getMedias().add(newMedia);
         }
-        message.setMedias(newMedias);
 
         return message;
     }
