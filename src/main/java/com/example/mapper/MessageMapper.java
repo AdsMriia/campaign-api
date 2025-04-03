@@ -6,8 +6,6 @@ import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.ValueMapping;
-import org.mapstruct.ValueMappings;
 
 /**
  * Маппер для преобразования между сущностью Message и DTO объектами.
@@ -23,6 +21,8 @@ public interface MessageMapper {
      */
     @Mapping(target = "createdAt", expression = "java(message.getCreatedAt() != null ? message.getCreatedAt().toEpochSecond() : null)")
     @Mapping(target = "updatedAt", expression = "java(message.getUpdatedAt() != null ? message.getUpdatedAt().toEpochSecond() : null)")
+    @Mapping(target = "type", expression = "java(com.example.model.enums.MessageType.valueOf(message.getType().name()))")
+    @Mapping(target = "status", expression = "java(com.example.model.enums.MessageStatus.valueOf(message.getStatus().name()))")
     MessageDto toMessageDto(Message message);
 
     /**
@@ -33,22 +33,29 @@ public interface MessageMapper {
      */
     @Mapping(target = "createdAt", expression = "java(message.getCreatedAt() != null ? message.getCreatedAt().toEpochSecond() : null)")
     @Mapping(target = "updatedAt", expression = "java(message.getUpdatedAt() != null ? message.getUpdatedAt().toEpochSecond() : null)")
+    @Mapping(target = "type", expression = "java(com.example.model.enums.MessageType.valueOf(message.getType().name()))")
+    @Mapping(target = "status", expression = "java(com.example.model.enums.MessageStatus.valueOf(message.getStatus().name()))")
     GetMessageDto toGetMessageDto(Message message);
 
     @Mapping(target = "actions", ignore = true)
     @Mapping(target = "medias", ignore = true)
-    @ValueMappings({
-        @ValueMapping(source = "PHOTO", target = "MEDIA", source = com.example.model.enums.MessageType.class, target = com.example.entity.enums.MessageType.class),
-        @ValueMapping(source = "VOICE", target = "MEDIA", source = com.example.model.enums.MessageType.class, target = com.example.entity.enums.MessageType.class),
-        @ValueMapping(source = "ANIMATION", target = "MEDIA", source = com.example.model.enums.MessageType.class, target = com.example.entity.enums.MessageType.class)
-    })
+    @Mapping(target = "campaigns", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "telegramId", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "type", expression = "java(com.example.entity.enums.MessageType.valueOf(createMessageDto.getType().name()))")
+    @Mapping(target = "status", expression = "java(com.example.entity.enums.MessageStatus.valueOf(createMessageDto.getStatus().name()))")
     Message toMessage(CreateMessageDto createMessageDto);
 
+    @Mapping(target = "actions", ignore = true)
+    @Mapping(target = "medias", ignore = true)
+    @Mapping(target = "campaigns", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "telegramId", ignore = true)
     @Mapping(target = "createdAt", expression = "java(dto.getCreatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getCreatedAt()), java.time.ZoneOffset.UTC) : null)")
     @Mapping(target = "updatedAt", expression = "java(dto.getUpdatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getUpdatedAt()), java.time.ZoneOffset.UTC) : null)")
-    @Mapping(target = "campaigns", ignore = true)
-    @ValueMappings({
-        @ValueMapping(source = "PUBLISHED", target = "ACTIVE", source = com.example.model.enums.MessageStatus.class, target = com.example.entity.enums.MessageStatus.class)
-    })
+    @Mapping(target = "type", expression = "java(com.example.entity.enums.MessageType.valueOf(dto.getType().name()))")
+    @Mapping(target = "status", expression = "java(com.example.entity.enums.MessageStatus.valueOf(dto.getStatus().name()))")
     Message toMessage(MessageDto dto);
 }
