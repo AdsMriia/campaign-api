@@ -9,6 +9,7 @@ import com.example.model.dto.SubmitABDto;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -34,6 +35,17 @@ public interface CampaignService {
     List<CampaignDto> campaignBasicSubmit(SubmitABDto submitABDto, String timezone);
 
     /**
+     * Запускает ретаргетинг для кампании.
+     *
+     * @param channelId идентификатор канала
+     * @param timestamp метка времени
+     * @param campaignId идентификатор кампании
+     * @param timezone часовой пояс
+     * @return опциональная строка с ошибкой или пустой, если операция успешна
+     */
+    Optional<String> retarget(UUID channelId, Long timestamp, UUID campaignId, String timezone);
+
+    /**
      * Получает статистику кампании.
      *
      * @param campaignId идентификатор кампании
@@ -56,12 +68,20 @@ public interface CampaignService {
     Page<RetargetStatsDto> getAllStats(Integer page, Integer size, Boolean asc, String sort, Long startDate, Long endDate, List<UUID> channelId);
 
     /**
-     * Останавливает кампанию.
+     * Останавливает ретаргетинг для кампании.
+     *
+     * @param campaignId идентификатор кампании
+     * @return true, если ретаргетинг успешно остановлен
+     */
+    boolean stopRetarget(UUID campaignId);
+
+    /**
+     * Останавливает активную кампанию.
      *
      * @param campaignId идентификатор кампании
      * @return true, если кампания успешно остановлена
      */
-    boolean stopRetarget(UUID campaignId);
+    boolean stopCampaign(UUID campaignId);
 
     /**
      * Получает список кампаний с возможностью фильтрации.

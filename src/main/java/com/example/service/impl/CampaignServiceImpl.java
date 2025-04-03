@@ -1,5 +1,6 @@
 package com.example.service.impl;
 
+import com.example.client.ChannelClient;
 import com.example.client.TdLibClient;
 import com.example.entity.Campaign;
 import com.example.entity.CampaignCreative;
@@ -20,13 +21,11 @@ import com.example.model.dto.RetargetStatsDto;
 import com.example.model.dto.SubmitABDto;
 import com.example.repository.CampaignCreativeRepository;
 import com.example.repository.CampaignRepository;
-import com.example.repository.ChannelRepository;
 import com.example.repository.MessageRepository;
 import com.example.repository.RetargetStatsRepository;
 import com.example.service.CampaignService;
 import com.example.service.WebUserService;
 import com.example.util.DateTimeUtil;
-import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -59,11 +58,11 @@ public class CampaignServiceImpl implements CampaignService {
     private final CampaignRepository campaignRepository;
     private final CampaignCreativeRepository campaignCreativeRepository;
     private final MessageRepository messageRepository;
-    private final ChannelRepository channelRepository;
     private final RetargetStatsRepository retargetStatsRepository;
     private final WebUserService webUserService;
     private final CampaignMapper campaignMapper;
     private final TdLibClient tdLibClient;
+    private final ChannelClient channelClient;
 
     @Override
     public List<CampaignDto> immediateSubmit(SubmitABDto submitABDto) {
@@ -79,7 +78,7 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            if (!channelRepository.existsByIdAndWorkspaceId(channelId, workspaceId)) {
+            if (!channelClient.existsByIdAndWorkspaceId(channelId, workspaceId)) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
             }
@@ -156,7 +155,7 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            if (!channelRepository.existsByIdAndWorkspaceId(channelId, workspaceId)) {
+            if (!channelClient.existsByIdAndWorkspaceId(channelId, workspaceId)) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
             }
@@ -229,7 +228,7 @@ public class CampaignServiceImpl implements CampaignService {
             }
 
             return Optional.of("Unknown error: " + response.getStatusCode());
-        } catch (FeignException e) {
+        } catch (Exception e) {
             log.error("Ошибка при вызове TdLib сервиса: {}", e.getMessage(), e);
             return Optional.of(HttpStatus.SERVICE_UNAVAILABLE.getReasonPhrase());
         }
@@ -242,11 +241,15 @@ public class CampaignServiceImpl implements CampaignService {
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
 
-        List<RetargetStats> retargetStatsList = retargetStatsRepository.findAllByCampaignId(campaignId);
+        List<RetargetStats> retargetStatsList = retargetStatsRepository.findByCampaignId(campaignId);
 
         // Если статистики нет, возвращаем пустой объект
         if (retargetStatsList.isEmpty()) {
-            return new RetargetStatsDto();
+            RetargetStatsDto emptyStats = new RetargetStatsDto();
+            emptyStats.setCampaignId(campaignId);
+            emptyStats.setCampaignTitle(campaign.getTitle());
+            emptyStats.setChannelId(campaign.getChannelId());
+            return emptyStats;
         }
 
         // Получаем самую последнюю статистику
@@ -255,7 +258,11 @@ public class CampaignServiceImpl implements CampaignService {
                 .orElse(null);
 
         if (latestStats == null) {
-            return new RetargetStatsDto();
+            RetargetStatsDto emptyStats = new RetargetStatsDto();
+            emptyStats.setCampaignId(campaignId);
+            emptyStats.setCampaignTitle(campaign.getTitle());
+            emptyStats.setChannelId(campaign.getChannelId());
+            return emptyStats;
         }
 
         // Преобразуем в DTO
@@ -267,7 +274,7 @@ public class CampaignServiceImpl implements CampaignService {
         statsDto.setClickCount(latestStats.getClickCount());
         statsDto.setCampaignTitle(campaign.getTitle());
         statsDto.setChannelId(campaign.getChannelId());
-        statsDto.setCreatedAt(latestStats.getCreatedAt());
+        statsDto.setCreatedAt(DateTimeUtil.toEpochSeconds(latestStats.getCreatedAt()));
 
         return statsDto;
     }
@@ -279,7 +286,7 @@ public class CampaignServiceImpl implements CampaignService {
         try {
             ResponseEntity<String> response = tdLibClient.stopRetarget(campaignId);
             return response.getStatusCode() == HttpStatus.OK;
-        } catch (FeignException e) {
+        } catch (Exception e) {
             log.error("Ошибка при вызове TdLib сервиса для остановки ретаргетинга: {}", e.getMessage(), e);
             throw new ServiceUnavailableException("Сервис TdLib недоступен");
         }
@@ -307,28 +314,34 @@ public class CampaignServiceImpl implements CampaignService {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sort));
 
         // Создаем условия фильтрации
-        OffsetDateTime startDateTime = startDate != null
-                ? DateTimeUtil.toOffsetDateTime(startDate, ZoneId.systemDefault())
-                : null;
-        OffsetDateTime endDateTime = endDate != null
-                ? DateTimeUtil.toOffsetDateTime(endDate, ZoneId.systemDefault())
-                : null;
+        ZoneId zoneId = ZoneId.systemDefault();
+        OffsetDateTime startDateTime = startDate != null ? DateTimeUtil.toOffsetDateTime(startDate, zoneId) : null;
+        OffsetDateTime endDateTime = endDate != null ? DateTimeUtil.toOffsetDateTime(endDate, zoneId) : null;
 
         // Получаем статистику с фильтрацией
-        Page<RetargetStats> statsPage = retargetStatsRepository.findAllWithFilters(
-                channelIds, startDateTime, endDateTime, pageRequest);
+        Page<RetargetStats> statsPage;
+        if (channelIds != null && !channelIds.isEmpty() && startDateTime != null && endDateTime != null) {
+            statsPage = retargetStatsRepository.findByChannelIdsAndDateRange(channelIds, startDateTime, endDateTime, pageRequest);
+        } else if (channelIds != null && !channelIds.isEmpty()) {
+            statsPage = retargetStatsRepository.findByChannelIds(channelIds, pageRequest);
+        } else if (startDateTime != null && endDateTime != null) {
+            statsPage = retargetStatsRepository.findByDateRange(startDateTime, endDateTime, pageRequest);
+        } else {
+            statsPage = retargetStatsRepository.findAll(pageRequest);
+        }
 
         // Преобразуем в DTO
         return statsPage.map(stats -> {
+            Campaign campaign = stats.getCampaign();
             RetargetStatsDto dto = new RetargetStatsDto();
             dto.setId(stats.getId());
-            dto.setCampaignId(stats.getCampaign().getId());
+            dto.setCampaignId(campaign.getId());
             dto.setTargetCount(stats.getTargetCount());
             dto.setDeliveredCount(stats.getDeliveredCount());
             dto.setClickCount(stats.getClickCount());
-            dto.setCampaignTitle(stats.getCampaign().getTitle());
-            dto.setChannelId(stats.getCampaign().getChannelId());
-            dto.setCreatedAt(stats.getCreatedAt());
+            dto.setCampaignTitle(campaign.getTitle());
+            dto.setChannelId(campaign.getChannelId());
+            dto.setCreatedAt(DateTimeUtil.toEpochSeconds(stats.getCreatedAt()));
             return dto;
         });
     }
@@ -382,8 +395,31 @@ public class CampaignServiceImpl implements CampaignService {
         UUID workspaceId = webUserService.getCurrentWorkspaceId();
 
         // Создаем запрос с фильтрами
-        Page<Campaign> campaignsPage = campaignRepository.findByWorkspaceIdWithFilters(
-                workspaceId, status, channelIds != null && !channelIds.isEmpty() ? channelIds.get(0) : null, isArchived, pageRequest);
+        Page<Campaign> campaignsPage;
+        if (channelIds != null && !channelIds.isEmpty() && status != null && isArchived != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndChannelIdsAndStatusAndIsArchived(
+                    workspaceId, channelIds, status, isArchived, pageRequest);
+        } else if (channelIds != null && !channelIds.isEmpty() && status != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndChannelIdsAndStatus(
+                    workspaceId, channelIds, status, pageRequest);
+        } else if (channelIds != null && !channelIds.isEmpty() && isArchived != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndChannelIdsAndIsArchived(
+                    workspaceId, channelIds, isArchived, pageRequest);
+        } else if (status != null && isArchived != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndStatusAndIsArchived(
+                    workspaceId, status, isArchived, pageRequest);
+        } else if (channelIds != null && !channelIds.isEmpty()) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndChannelIds(
+                    workspaceId, channelIds, pageRequest);
+        } else if (status != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndStatus(
+                    workspaceId, status, pageRequest);
+        } else if (isArchived != null) {
+            campaignsPage = campaignRepository.findByWorkspaceIdAndIsArchived(
+                    workspaceId, isArchived, pageRequest);
+        } else {
+            campaignsPage = campaignRepository.findByWorkspaceId(workspaceId, pageRequest);
+        }
 
         // Преобразуем в DTO
         return campaignsPage.map(campaignMapper::mapToDto);
@@ -433,7 +469,7 @@ public class CampaignServiceImpl implements CampaignService {
             dto.setChannelId(channelId);
 
             // Получаем даты кампаний для канала
-            List<Object[]> intervals = campaignRepository.findDistinctCampaignIntervals(channelId);
+            List<Object[]> intervals = campaignRepository.findCampaignDatesByChannelId(channelId);
 
             // Преобразуем результаты в нужный формат
             List<String> dateIntervals = new ArrayList<>();
@@ -457,8 +493,8 @@ public class CampaignServiceImpl implements CampaignService {
         List<ExpectedRetargetDto> result = new ArrayList<>();
 
         for (UUID channelId : channelIds) {
-            // Получаем количество подписчиков для канала
-            Long subscribersCount = channelRepository.countSubscribersById(channelId);
+            // Получаем количество подписчиков для канала через Feign клиент
+            Long subscribersCount = channelClient.countSubscribersById(channelId);
 
             if (subscribersCount != null && subscribersCount > 0) {
                 ExpectedRetargetDto dto = new ExpectedRetargetDto();
@@ -475,7 +511,7 @@ public class CampaignServiceImpl implements CampaignService {
     public List<CampaignDto> getAllCampaign(List<UUID> workspaceIds) {
         log.info("Получение всех кампаний для рабочих пространств: {}", workspaceIds);
 
-        List<Campaign> campaigns = campaignRepository.findAllByWorkspaceIdIn(workspaceIds);
+        List<Campaign> campaigns = campaignRepository.findByWorkspaceIdIn(workspaceIds);
 
         return campaigns.stream()
                 .map(campaignMapper::mapToDto)
@@ -518,7 +554,7 @@ public class CampaignServiceImpl implements CampaignService {
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Ошибка при отправке кампании в TdLib: {}", response.getBody());
             }
-        } catch (FeignException e) {
+        } catch (Exception e) {
             log.error("Ошибка при отправке кампании в TdLib: {}", e.getMessage(), e);
         }
     }
@@ -538,7 +574,7 @@ public class CampaignServiceImpl implements CampaignService {
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Ошибка при планировании кампании в TdLib: {}", response.getBody());
             }
-        } catch (FeignException e) {
+        } catch (Exception e) {
             log.error("Ошибка при планировании кампании в TdLib: {}", e.getMessage(), e);
         }
     }
@@ -549,7 +585,7 @@ public class CampaignServiceImpl implements CampaignService {
         try {
             ResponseEntity<String> response = tdLibClient.stopCampaign(campaignId);
             return response.getStatusCode() == HttpStatus.OK;
-        } catch (FeignException e) {
+        } catch (Exception e) {
             log.error("Ошибка при остановке кампании в TdLib: {}", e.getMessage(), e);
             return false;
         }

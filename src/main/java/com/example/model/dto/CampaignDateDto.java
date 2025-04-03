@@ -1,29 +1,21 @@
 package com.example.model.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 /**
- * DTO для передачи информации об интервале дат кампаний.
+ * DTO для представления интервала дат кампаний в формате год-месяц.
  */
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class CampaignDateDto {
 
     /**
-     * Год.
+     * Интервал дат в формате "YYYY-MM".
      */
-    @JsonProperty("year")
-    private Integer year;
-
-    /**
-     * Месяц (1-12).
-     */
-    @JsonProperty("month")
-    private Integer month;
-
-    /**
-     * Количество кампаний в данном интервале.
-     */
-    @JsonProperty("count")
-    private Long count;
+    @JsonProperty("date_interval")
+    private String dateInterval;
 }

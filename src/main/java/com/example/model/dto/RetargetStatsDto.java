@@ -36,6 +36,30 @@ public class RetargetStatsDto {
     private Integer sentMessageCount;
 
     /**
+     * Целевое количество пользователей.
+     */
+    @JsonProperty("target_count")
+    private Integer targetCount;
+
+    /**
+     * Количество доставленных сообщений.
+     */
+    @JsonProperty("delivered_count")
+    private Integer deliveredCount;
+
+    /**
+     * Количество кликов на сообщения.
+     */
+    @JsonProperty("click_count")
+    private Integer clickCount;
+
+    /**
+     * Идентификатор канала.
+     */
+    @JsonProperty("channel_id")
+    private UUID channelId;
+
+    /**
      * Количество ретаргетированных пользователей.
      */
     @JsonProperty("retarget_count")
