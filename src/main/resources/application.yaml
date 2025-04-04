@@ -21,6 +21,7 @@ spring:
     show-sql: true
   main:
     banner-mode: off
+    allow-bean-definition-overriding: true
 
   mail:
     host: smtp.gmail.com

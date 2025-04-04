@@ -1,16 +1,16 @@
 package com.example.client;
 
+import java.util.UUID;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.UUID;
-
 /**
  * Feign клиент для взаимодействия с сервисом каналов.
  */
-@FeignClient(name = "channel-service", url = "${channel.service.url:http://channel-service:8080}")
+@FeignClient(name = "channel-api-service", url = "${channel.service.url:http://channel-service:8080}")
 public interface ChannelClient {
 
     /**

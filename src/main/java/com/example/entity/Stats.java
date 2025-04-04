@@ -14,26 +14,35 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 /**
- * Сущность истории статистики.
+ * Сущность статистики.
  */
 @Entity
-@Table(name = "stats_history")
+@Table(name = "stats")
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class StatsHistory {
+public class Stats {
 
     @Id
     @GeneratedValue
     private UUID id;
 
-    @Column(name = "stats_id")
-    private UUID statsId;
+    @Column(name = "channel_id")
+    private UUID channelId;
+
+    @Column(name = "channel_title")
+    private String channelTitle;
+
+    @Column(name = "workspace_id")
+    private UUID workspaceId;
+
+    @Column(name = "type")
+    private String type;
 
     @Column(name = "value")
     private String value;
 
-    @Column(name = "timestamp")
-    private OffsetDateTime timestamp;
+    @Column(name = "created_at")
+    private OffsetDateTime createdAt;
 }

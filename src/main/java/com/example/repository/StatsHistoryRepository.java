@@ -1,5 +1,6 @@
 package com.example.repository;
 
+import com.example.entity.StatsHistory;
 import com.example.model.dto.HistoryDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -13,7 +14,7 @@ import java.util.UUID;
  * Репозиторий для работы с историей статистики.
  */
 @Repository
-public interface StatsHistoryRepository extends JpaRepository<Object, UUID> {
+public interface StatsHistoryRepository extends JpaRepository<StatsHistory, UUID> {
 
     /**
      * Найти историю по ID статистики.

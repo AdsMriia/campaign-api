@@ -1,10 +1,10 @@
 package com.example.repository;
 
-import com.example.model.dto.GroupedWebStats;
-import com.example.model.dto.HistoryDto;
-import com.example.model.dto.PollStatsDto;
-import com.example.model.dto.StatsDto;
-import com.example.model.dto.WebStatsDto;
+import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,16 +12,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.OffsetDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import com.example.entity.Stats;
+import com.example.model.dto.GroupedWebStats;
+import com.example.model.dto.PollStatsDto;
+import com.example.model.dto.StatsDto;
+import com.example.model.dto.WebStatsDto;
 
 /**
  * Репозиторий для работы со статистикой.
  */
 @Repository
-public interface StatsRepository extends JpaRepository<Object, UUID> {
+public interface StatsRepository extends JpaRepository<Stats, UUID> {
 
     /**
      * Найти статистику по типу и ID канала.

@@ -18,6 +18,8 @@
 #  liquibase:
 #    change-log: classpath:db/changelog/db.changelog-master.xml
 #    enabled: true
+#  main:
+#    allow-bean-definition-overriding: true
 #
 #server:
 #  port: 8080
