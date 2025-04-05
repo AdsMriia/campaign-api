@@ -1,10 +1,13 @@
 package com.example.security.config;
 
-import com.example.security.jwt.JwtFilter;
-import lombok.RequiredArgsConstructor;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -13,12 +16,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+
+import com.example.security.jwt.JwtFilter;
 
 import jakarta.annotation.PostConstruct;
-import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
 
 @Configuration
 @RequiredArgsConstructor
@@ -46,7 +48,9 @@ public class SecurityConfig {
                 "/api/v1/messages/**",
                 "/telegram/webhook/**",
                 "/campaigns/**",
-                "/api/v1/constructor/**"
+                "/api/v1/constructor/**",
+                "/constructor/**",
+                "/api/constructor/**"
         )
                 .flatMap(p -> Stream.of(
                 contextPath + p, p)

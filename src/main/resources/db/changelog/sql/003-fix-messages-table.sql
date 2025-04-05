@@ -15,17 +15,21 @@ $$;
 -- Проверка существования столбца channel_id в таблице messages
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'messages') 
-    AND NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                   WHERE table_name = 'messages' AND column_name = 'channel_id') THEN
-        -- Добавление колонки channel_id в таблицу messages
-        ALTER TABLE messages ADD COLUMN channel_id UUID;
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'messages') THEN
+        -- Проверяем существование column_id в таблице
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                      WHERE table_name = 'messages' AND column_name = 'channel_id') THEN
+            -- Добавление колонки channel_id в таблицу messages
+            ALTER TABLE messages ADD COLUMN channel_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid;
+        ELSE
+            -- Проверка, что колонка channel_id не может быть NULL
+            ALTER TABLE messages ALTER COLUMN channel_id SET NOT NULL;
+            -- Устанавливаем значение по умолчанию для NULL значений
+            UPDATE messages SET channel_id = '00000000-0000-0000-0000-000000000000'::uuid WHERE channel_id IS NULL;
+        END IF;
     END IF;
 END
 $$;
-
--- Принудительное добавление колонки channel_id для решения ошибки
-ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel_id UUID;
 
 -- Обновление ссылок в таблице медиа
 DO $$
@@ -63,8 +67,4 @@ BEGIN
             ON DELETE CASCADE;
     END IF;
 END
-$$;
-
--- Запись в DATABASECHANGELOG для отслеживания миграции
-INSERT INTO DATABASECHANGELOG (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, MD5SUM, DESCRIPTION, COMMENTS, EXECTYPE, CONTEXTS, LABELS, LIQUIBASE, DEPLOYMENT_ID)
-VALUES ('003', 'fix-messages-schema', 'classpath:db/changelog/sql/003-fix-messages-table.sql', NOW(), 3, '8:1234567890abcdef', 'sql', 'Исправление таблицы messages и связанных таблиц', 'EXECUTED', NULL, NULL, '4.20.0', CONCAT('SQL-', CAST(NOW() AS VARCHAR))); 
+$$; 

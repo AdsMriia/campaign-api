@@ -10,8 +10,9 @@ spring:
       max-request-size: 1GB
 
   liquibase:
-    change-log: classpath:db/changelog/sql/db.changelog-master.sql
-#    drop-first: false
+    change-log: classpath:db/changelog/db.changelog-master.xml
+    enabled: true
+    drop-first: true
 
   jpa:
     hibernate:

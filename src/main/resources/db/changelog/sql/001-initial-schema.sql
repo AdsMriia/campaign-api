@@ -75,8 +75,4 @@ ALTER TABLE media
 
 ALTER TABLE actions
     ADD CONSTRAINT fk_action_message
-    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE;
-
--- Запись в DATABASECHANGELOG для отслеживания миграции
-INSERT INTO DATABASECHANGELOG (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, MD5SUM, DESCRIPTION, COMMENTS, EXECTYPE, CONTEXTS, LABELS, LIQUIBASE, DEPLOYMENT_ID)
-VALUES ('001', 'vladislav.mosuyk', 'classpath:db/changelog/sql/001-initial-schema.sql', NOW(), 1, '8:1234567890abcdef', 'sql', 'Creating initial database schema', 'EXECUTED', NULL, NULL, '4.20.0', CONCAT('SQL-', CAST(NOW() AS VARCHAR))); 
+    FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE; 

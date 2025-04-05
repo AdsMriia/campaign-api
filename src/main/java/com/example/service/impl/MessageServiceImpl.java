@@ -1,5 +1,19 @@
 package com.example.service.impl;
 
+import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
 import com.example.entity.Action;
 import com.example.entity.Media;
 import com.example.entity.Message;
@@ -19,24 +33,10 @@ import com.example.service.MediaService;
 import com.example.service.MessageService;
 import com.example.service.WebUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Реализация сервиса для управления сообщениями. Предоставляет методы для
@@ -191,8 +191,13 @@ public class MessageServiceImpl implements MessageService {
         // Если указан канал, устанавливаем его
         if (createMessageDto.getChannelIds() != null && !createMessageDto.getChannelIds().isEmpty()) {
             message.setChannelId(createMessageDto.getChannelIds().get(0));
+            log.info("Установлен channelId из channelIds: {}", message.getChannelId());
         } else if (createMessageDto.getChannelId() != null) {
             message.setChannelId(createMessageDto.getChannelId());
+            log.info("Установлен channelId: {}", message.getChannelId());
+        } else {
+            log.error("ChannelId не указан в запросе. Это обязательное поле.");
+            throw new RequestRejectedException("ChannelId обязателен для создания сообщения");
         }
 
         // Интеграция с воркспейс-микросервисом для получения дополнительной информации
@@ -363,8 +368,31 @@ public class MessageServiceImpl implements MessageService {
     public Optional<MessageDto> getMessage(UUID id) {
         log.info("Получение базовой информации о сообщении по ID: {}", id);
 
-        return messageRepository.findById(id)
-                .map(messageMapper::toMessageDto);
+        // Проверяем, что ID не null
+        if (id == null) {
+            log.error("Передан null ID для получения сообщения");
+            return Optional.empty();
+        }
+
+        try {
+            Optional<Message> messageOpt = messageRepository.findById(id);
+
+            if (messageOpt.isPresent()) {
+                Message message = messageOpt.get();
+                log.info("Сообщение найдено в БД: {} (тип: {}, статус: {})",
+                        message.getId(), message.getType(), message.getStatus());
+                return Optional.of(messageMapper.toMessageDto(message));
+            } else {
+                log.warn("Сообщение с ID {} не найдено в БД", id);
+                // Дополнительная проверка, есть ли другие сообщения в БД
+                long count = messageRepository.count();
+                log.info("Всего сообщений в БД: {}", count);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при получении сообщения с ID {}: {}", id, e.getMessage(), e);
+            return Optional.empty();
+        }
     }
 
     @Override

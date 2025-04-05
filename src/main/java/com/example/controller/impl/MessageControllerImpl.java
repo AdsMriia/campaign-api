@@ -1,11 +1,8 @@
 package com.example.controller.impl;
 
-import com.example.controller.MessageController;
-import com.example.model.dto.MessageDto;
-import com.example.service.MessageService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +11,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
+import com.example.controller.MessageController;
+import com.example.model.dto.MessageDto;
+import com.example.service.MessageService;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Контроллер для получения базовой информации о сообщениях.
@@ -37,9 +40,15 @@ public class MessageControllerImpl implements MessageController {
     @Override
     public ResponseEntity<MessageDto> getMessage(@PathVariable UUID id) {
         log.info("Получение сообщения по ID: {}", id);
-        return messageService.getMessage(id)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+        Optional<MessageDto> messageOptional = messageService.getMessage(id);
+
+        if (messageOptional.isPresent()) {
+            log.info("Сообщение найдено: {}", messageOptional.get());
+            return ResponseEntity.ok(messageOptional.get());
+        } else {
+            log.warn("Сообщение с ID {} не найдено", id);
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @Override

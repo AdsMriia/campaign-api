@@ -86,8 +86,4 @@ BEGIN
         END IF;
     END IF;
 END
-$$;
-
--- Запись в DATABASECHANGELOG для отслеживания миграции
-INSERT INTO DATABASECHANGELOG (ID, AUTHOR, FILENAME, DATEEXECUTED, ORDEREXECUTED, MD5SUM, DESCRIPTION, COMMENTS, EXECTYPE, CONTEXTS, LABELS, LIQUIBASE, DEPLOYMENT_ID)
-VALUES ('004', 'vladislav.mosuyk', 'classpath:db/changelog/sql/004-check-correct-structure.sql', NOW(), 4, '8:1234567890abcdef', 'sql', 'Проверка и исправление структуры базы данных', 'EXECUTED', NULL, NULL, '4.20.0', CONCAT('SQL-', CAST(NOW() AS VARCHAR))); 
+$$; 

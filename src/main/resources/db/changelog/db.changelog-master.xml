@@ -11,5 +11,6 @@
     <include file="classpath:db/changelog/sql/002-add-campaign-fields.sql"/>
     <include file="classpath:db/changelog/sql/003-fix-messages-table.sql"/>
     <include file="classpath:db/changelog/sql/004-check-correct-structure.sql"/>
+    <include file="classpath:db/changelog/sql/005-add-base-entity-columns.sql"/>
 
 </databaseChangeLog> 
