@@ -15,18 +15,24 @@ $$;
 -- Проверка существования столбца channel_id в таблице messages
 DO $$
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
-                  WHERE table_name = 'messages' AND column_name = 'channel_id') THEN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'messages') 
+    AND NOT EXISTS (SELECT 1 FROM information_schema.columns 
+                   WHERE table_name = 'messages' AND column_name = 'channel_id') THEN
         -- Добавление колонки channel_id в таблицу messages
         ALTER TABLE messages ADD COLUMN channel_id UUID;
     END IF;
 END
 $$;
 
+-- Принудительное добавление колонки channel_id для решения ошибки
+ALTER TABLE messages ADD COLUMN IF NOT EXISTS channel_id UUID;
+
 -- Обновление ссылок в таблице медиа
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_media_message') THEN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'medias')
+    AND EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'messages')
+    AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_media_message') THEN
         -- Удаление существующего внешнего ключа
         ALTER TABLE medias DROP CONSTRAINT IF EXISTS fk_media_message;
         
@@ -43,7 +49,9 @@ $$;
 -- Обновление ссылок в таблице действий
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_action_message') THEN
+    IF EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'actions')
+    AND EXISTS (SELECT 1 FROM pg_tables WHERE tablename = 'messages')
+    AND EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fk_action_message') THEN
         -- Удаление существующего внешнего ключа
         ALTER TABLE actions DROP CONSTRAINT IF EXISTS fk_action_message;
         

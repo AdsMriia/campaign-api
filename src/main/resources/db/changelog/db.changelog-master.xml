@@ -6,9 +6,10 @@
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
     <!-- SQL миграции вместо XML -->
-    <include file="classpath:db/changelog/sql/001-init-schema.sql"/>
+    <include file="classpath:db/changelog/sql/000-init-liquibase.sql"/>
     <include file="classpath:db/changelog/sql/001-initial-schema.sql"/>
     <include file="classpath:db/changelog/sql/002-add-campaign-fields.sql"/>
     <include file="classpath:db/changelog/sql/003-fix-messages-table.sql"/>
+    <include file="classpath:db/changelog/sql/004-check-correct-structure.sql"/>
 
 </databaseChangeLog> 
