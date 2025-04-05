@@ -13,6 +13,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 
 import jakarta.annotation.PostConstruct;
 import java.util.List;
@@ -22,7 +23,7 @@ import java.util.stream.Stream;
 @Configuration
 @RequiredArgsConstructor
 @EnableWebSecurity
-//@EnableMethodSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Value("${server.servlet.context-path}")
@@ -43,7 +44,9 @@ public class SecurityConfig {
                 "/ping",
                 "/api/v1/bots/**",
                 "/api/v1/messages/**",
-                "/telegram/webhook/**"
+                "/telegram/webhook/**",
+                "/campaigns/**",
+                "/api/v1/constructor/**"
         )
                 .flatMap(p -> Stream.of(
                 contextPath + p, p)

@@ -16,8 +16,10 @@ public class CorsConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOriginPatterns(List.of("*")); // Allow all origins
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH")); // Allow all HTTP methods
-        configuration.setAllowedHeaders(List.of("*")); // Allow all headers
+        configuration.setAllowedHeaders(List.of("*", "Authorization", "Content-Type", "Cache-Control")); // Explicitly mentioning Authorization
+        configuration.setExposedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
         configuration.setAllowCredentials(true); // Allow credentials
+        configuration.setMaxAge(3600L); // 1 hour
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

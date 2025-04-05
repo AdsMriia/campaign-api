@@ -10,7 +10,7 @@ spring:
       max-request-size: 1GB
 
   liquibase:
-    change-log: classpath:db/changelog/changelog-master.xml
+    change-log: classpath:db/changelog/db.changelog-master.xml
 #    drop-first: false
 
   jpa:
@@ -46,9 +46,9 @@ server:
 springdoc:
   api-docs:
     enabled: true
-#    path: /swagger/docs
-#  swagger-ui:
-#    path: /swagger/index.html
+    path: /swagger/docs
+  swagger-ui:
+    path: /swagger/index.html
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
