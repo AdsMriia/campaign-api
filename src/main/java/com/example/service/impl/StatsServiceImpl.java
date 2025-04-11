@@ -1,7 +1,20 @@
 package com.example.service.impl;
 
-import com.example.entity.Campaign;
-import com.example.entity.RetargetStats;
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.domain.Sort.Direction;
+import org.springframework.stereotype.Service;
+
 import com.example.entity.enums.MessageType;
 import com.example.exception.NotFoundException;
 import com.example.mapper.StatsMapper;
@@ -19,28 +32,10 @@ import com.example.repository.StatsRepository;
 import com.example.service.StatsService;
 import com.example.service.WebUserService;
 import com.example.util.DateTimeUtil;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.domain.Sort.Direction;
-import org.springframework.stereotype.Service;
-
-import java.time.LocalDate;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Реализация сервиса для работы со статистикой. Предоставляет методы для
@@ -262,7 +257,6 @@ public class StatsServiceImpl implements StatsService {
         // Получаем ID рабочего пространства
         UUID workspaceId = webUserService.getCurrentWorkspaceId();
 
-        // Проверяем, принадлежит ли канал текущему рабочему пространству
         return true; // В реальном коде тут должна быть проверка из репозитория
     }
 }

@@ -1,12 +1,8 @@
 package com.example.controller;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
-import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
-import com.example.model.dto.MessageDto;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,8 +14,14 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.List;
-import java.util.UUID;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
+import com.example.model.dto.CreateMessageDto;
+import com.example.model.dto.GetMessageDto;
+import com.example.model.dto.MessageDto;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 /**
  * Интерфейс для управления конструктором сообщений.
@@ -34,7 +36,7 @@ public interface ConstructorController {
     GetMessageDto getById(@PathVariable("id") UUID id);
 
     @GetMapping
-    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
+//     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     @Operation(summary = "Получение списка креативов", description = "Возвращает список креативов с возможностью фильтрации")
     Page<GetMessageDto> getAllByType(
             @RequestParam(required = false) MessageType type,
