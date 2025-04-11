@@ -28,7 +28,7 @@ public class Campaign {
     @jakarta.persistence.GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String title;
 
     @Column(name = "start_date")

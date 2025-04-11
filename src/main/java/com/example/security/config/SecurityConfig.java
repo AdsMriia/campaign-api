@@ -44,13 +44,8 @@ public class SecurityConfig {
                 "/swagger-ui/**",
                 "/v3/api-docs/**",
                 "/ping",
-                "/api/v1/bots/**",
-                "/api/v1/messages/**",
                 "/telegram/webhook/**",
-                "/campaigns/**",
-                "/api/v1/constructor/**",
-                "/constructor/**",
-                "/api/constructor/**"
+                "/ananas/**"
         )
                 .flatMap(p -> Stream.of(
                 contextPath + p, p)

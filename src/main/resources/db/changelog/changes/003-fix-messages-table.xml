@@ -19,9 +19,7 @@
 
         <!-- Добавление колонки channel_id в таблицу messages -->
         <addColumn tableName="messages">
-            <column name="channel_id" type="uuid">
-                <constraints nullable="true"/>
-            </column>
+            <column name="channel_id" type="uuid"/>
         </addColumn>
 
         <!-- Обновление ссылок в таблице медиа -->

@@ -34,13 +34,6 @@ public class SubmitABDto {
     private CampaignType campaignType;
 
     /**
-     * Флаг немедленного запуска кампании.
-     */
-    @NotNull(message = "Immediate flag cannot be null")
-    @JsonProperty("immediate")
-    private Boolean immediate;
-
-    /**
      * Дата начала кампании (в миллисекундах).
      */
     @JsonProperty("start_date")
@@ -75,32 +68,37 @@ public class SubmitABDto {
      * Процент аудитории для охвата.
      */
     @JsonProperty("audience_percent")
-    private Integer audiencePercent = 100;
+    private Integer audiencePercent;
 
     /**
      * Максимальная стоимость кампании.
      */
-    @JsonProperty("max_cost")
-    private BigDecimal maxCost;
+//    @JsonProperty("max_cost")
+//    private BigDecimal maxCost;
 
-    /**
-     * Список креативов кампании.
-     */
-    @NotEmpty(message = "Creatives list cannot be empty")
-    @JsonProperty("creatives")
-    private List<CreateCampaignCreativeDto> creatives;
+//    /**
+//     * Список креативов кампании.
+//     */
+//    @NotEmpty(message = "Creatives list cannot be empty")
+//    @JsonProperty("creatives")
+//    private List<CreateCampaignCreativeDto> creatives;
 
-    /**
-     * Список идентификаторов сообщений.
-     */
-    @JsonProperty("message_ids")
-    private List<UUID> messageIds;
+//    /**
+//     * Список идентификаторов сообщений.
+//     */
 
-    /**
-     * Список процентов для A/B тестирования.
-     */
+//    @NotEmpty(message = "Creatives list cannot be empty")
+//    @JsonProperty("creative_ids")
+//    private List<UUID> creatives;
+
     @JsonProperty("percents")
-    private List<Integer> percents;
+    private List<CreativePercentDto> percents;
+
+//    /**
+//     * Список процентов для A/B тестирования.
+//     */
+//    @JsonProperty("percents")
+//    private List<Integer> percents;
 
     /**
      * Преобразует поле channel_id в список channelIds, если channelIds пуст.
@@ -111,39 +109,5 @@ public class SubmitABDto {
             return List.of(channelId);
         }
         return channelIds;
-    }
-
-    /**
-     * Извлекает messageIds из списка креативов, если messageIds пуст.
-     */
-    public List<UUID> getMessageIds() {
-        if (messageIds != null && !messageIds.isEmpty()) {
-            return messageIds;
-        }
-
-        if (creatives != null && !creatives.isEmpty()) {
-            return creatives.stream()
-                    .map(CreateCampaignCreativeDto::getMessageId)
-                    .toList();
-        }
-
-        return List.of();
-    }
-
-    /**
-     * Извлекает проценты из списка креативов, если percents пуст.
-     */
-    public List<Integer> getPercents() {
-        if (percents != null && !percents.isEmpty()) {
-            return percents;
-        }
-
-        if (creatives != null && !creatives.isEmpty()) {
-            return creatives.stream()
-                    .map(CreateCampaignCreativeDto::getPercent)
-                    .toList();
-        }
-
-        return List.of();
     }
 }

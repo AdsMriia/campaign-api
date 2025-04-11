@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS messages (
     telegram_id BIGINT,
     text TEXT NOT NULL,
     created_by UUID NOT NULL,
-    channel_id UUID NOT NULL,
+    channel_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS actions (
     id UUID PRIMARY KEY NOT NULL,
     message_id UUID NOT NULL,
     text VARCHAR(255) NOT NULL,
-    link VARCHAR(2048) NOT NULL,
+    link VARCHAR(2048),
     ordinal INTEGER NOT NULL
 );
 

@@ -3,6 +3,7 @@ package com.example.controller.impl;
 import java.util.Optional;
 import java.util.UUID;
 
+import com.example.model.dto.CreateMessageDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -24,7 +25,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/constructor")
 @Tag(name = "Messages API", description = "API для получения информации о сообщениях")
 @Slf4j
 public class MessageControllerImpl implements MessageController {
@@ -32,7 +32,7 @@ public class MessageControllerImpl implements MessageController {
     private final MessageService messageService;
 
     @Override
-    public ResponseEntity<MessageDto> createMessage(@RequestBody MessageDto messageDto) {
+    public ResponseEntity<MessageDto> createMessage(@RequestBody CreateMessageDto messageDto) {
         log.info("Создание нового сообщения: {}", messageDto);
         return ResponseEntity.ok(messageService.createMessage(messageDto));
     }

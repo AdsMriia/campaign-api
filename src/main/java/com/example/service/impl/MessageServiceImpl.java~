@@ -1,13 +1,25 @@
 package com.example.service.impl;
 
+import java.time.OffsetDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import com.example.mapper.ActionMapper;
+import com.example.security.UserProvider;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Service;
+
 import com.example.entity.Action;
 import com.example.entity.Media;
 import com.example.entity.Message;
 import com.example.exception.NotFoundException;
 import com.example.exception.RequestRejectedException;
 import com.example.mapper.MessageMapper;
-import com.example.model.enums.MessageStatus;
-import com.example.model.enums.MessageType;
+import com.example.model.MessageStatus;
+import com.example.model.MessageType;
 import com.example.model.dto.ActionDto;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
@@ -19,24 +31,10 @@ import com.example.service.MediaService;
 import com.example.service.MessageService;
 import com.example.service.WebUserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.stereotype.Service;
-
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 /**
  * Реализация сервиса для управления сообщениями. Предоставляет методы для
@@ -48,6 +46,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class MessageServiceImpl implements MessageService {
 
+    private final UserProvider userProvider;
     private final MessageRepository messageRepository;
     private final ActionRepository actionRepository;
     private final MediaRepository mediaRepository;
@@ -55,6 +54,7 @@ public class MessageServiceImpl implements MessageService {
     private final WebUserService webUserService;
     private final MessageMapper messageMapper;
     private final ObjectMapper objectMapper;
+    private final ActionMapper actionMapper;
 
     @Override
     public GetMessageDto getById(UUID id) {
@@ -191,8 +191,13 @@ public class MessageServiceImpl implements MessageService {
         // Если указан канал, устанавливаем его
         if (createMessageDto.getChannelIds() != null && !createMessageDto.getChannelIds().isEmpty()) {
             message.setChannelId(createMessageDto.getChannelIds().get(0));
+            log.info("Установлен channelId из channelIds: {}", message.getChannelId());
         } else if (createMessageDto.getChannelId() != null) {
             message.setChannelId(createMessageDto.getChannelId());
+            log.info("Установлен channelId: {}", message.getChannelId());
+        } else {
+            log.error("ChannelId не указан в запросе. Это обязательное поле.");
+            throw new RequestRejectedException("ChannelId обязателен для создания сообщения");
         }
 
         // Интеграция с воркспейс-микросервисом для получения дополнительной информации
@@ -363,8 +368,31 @@ public class MessageServiceImpl implements MessageService {
     public Optional<MessageDto> getMessage(UUID id) {
         log.info("Получение базовой информации о сообщении по ID: {}", id);
 
-        return messageRepository.findById(id)
-                .map(messageMapper::toMessageDto);
+        // Проверяем, что ID не null
+        if (id == null) {
+            log.error("Передан null ID для получения сообщения");
+            return Optional.empty();
+        }
+
+        try {
+            Optional<Message> messageOpt = messageRepository.findById(id);
+
+            if (messageOpt.isPresent()) {
+                Message message = messageOpt.get();
+                log.info("Сообщение найдено в БД: {} (тип: {}, статус: {})",
+                        message.getId(), message.getType(), message.getStatus());
+                return Optional.of(messageMapper.toMessageDto(message));
+            } else {
+                log.warn("Сообщение с ID {} не найдено в БД", id);
+                // Дополнительная проверка, есть ли другие сообщения в БД
+                long count = messageRepository.count();
+                log.info("Всего сообщений в БД: {}", count);
+                return Optional.empty();
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при получении сообщения с ID {}: {}", id, e.getMessage(), e);
+            return Optional.empty();
+        }
     }
 
     @Override
@@ -376,12 +404,31 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public MessageDto createMessage(MessageDto messageDto) {
+    public MessageDto createMessage(CreateMessageDto messageDto) {
         log.info("Создание нового сообщения из MessageDto");
         Message message = messageMapper.toMessage(messageDto);
         message.setCreatedAt(OffsetDateTime.now());
         message.setUpdatedAt(OffsetDateTime.now());
+
+
+
+
+        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
+        message.setCreatedBy(userProvider.getCurrentUser().getId());
         Message savedMessage = messageRepository.save(message);
+
+        for (ActionDto actionDto : messageDto.getActions()) {
+            Action action = new Action();
+            action.setText(actionDto.getText());
+            action.setLink(actionDto.getLink());
+            action.setMessage(savedMessage);
+            action.setOrdinal(messageDto.getActions().indexOf(actionDto) + 1);
+            action.setCreatedAt(OffsetDateTime.now());
+            action.setUpdatedAt(OffsetDateTime.now());
+            actionRepository.save(action);
+            savedMessage.getActions().add(action);
+        }
+
         return messageMapper.toMessageDto(savedMessage);
     }
 

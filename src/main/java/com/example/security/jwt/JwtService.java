@@ -37,8 +37,8 @@ public class JwtService {
         Date expiryDate = new Date(now.getTime() + jwtExpiration);
 
         return Jwts.builder()
-                .setSubject(user.getId().toString())
-                .claim("email", user.getEmail())
+                .setSubject(user.getEmail())
+                .claim("user_id", user.getId().toString())
                 .claim("roles", user.getRoles())
                 .claim("workspace_id", user.getWorkspaceId())
                 .setIssuedAt(now)
@@ -56,8 +56,8 @@ public class JwtService {
                     .getPayload();
 
             WebUserDto userDto = new WebUserDto();
-            userDto.setId(UUID.fromString(claims.getSubject()));
-            userDto.setEmail(claims.get("email", String.class));
+            userDto.setEmail(claims.getSubject());
+            userDto.setId(UUID.fromString(claims.get("user_id", String.class)));
             userDto.setRoles(claims.get("roles", List.class));
             userDto.setWorkspaceId(UUID.fromString(claims.get("workspace_id", String.class)));
             userDto.setIsActive(true);

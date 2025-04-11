@@ -2,6 +2,7 @@ package com.example.controller.impl;
 
 import com.example.controller.CampaignController;
 import com.example.model.CampaignStatus;
+import com.example.model.CampaignType;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.ExpectedRetargetDto;
@@ -39,7 +40,7 @@ public class CampaignControllerImpl implements CampaignController {
     public List<CampaignDto> campaignSubmit(@Valid @RequestBody SubmitABDto submitABDto, @RequestParam(required = false) String timezone) {
         log.info("Получен запрос на создание кампании: {}, часовой пояс: {}", submitABDto, timezone);
 
-        if (submitABDto.getImmediate()) {
+        if (submitABDto.getCampaignType() == CampaignType.IMMEDIATE) {
             log.info("Обработка немедленной кампании");
             return campaignService.immediateSubmit(submitABDto);
         } else {

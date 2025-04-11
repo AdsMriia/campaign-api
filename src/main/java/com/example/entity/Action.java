@@ -34,7 +34,7 @@ public class Action extends BaseEntity {
     @Column(name = "text", nullable = false)
     private String text;
 
-    @Column(name = "link", nullable = false)
+    @Column(name = "link")
     private String link;
 
     @Column(name = "ordinal", nullable = false)

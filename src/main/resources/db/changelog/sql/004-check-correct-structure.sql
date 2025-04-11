@@ -19,7 +19,7 @@ BEGIN
             telegram_id BIGINT,
             text TEXT NOT NULL,
             created_by UUID NOT NULL,
-            channel_id UUID NOT NULL,
+            channel_id UUID,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
         );
@@ -27,7 +27,7 @@ BEGIN
         -- Проверка и добавление недостающих колонок в таблицу messages
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns 
                       WHERE table_name = 'messages' AND column_name = 'channel_id') THEN
-            ALTER TABLE messages ADD COLUMN channel_id UUID NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'::uuid;
+            ALTER TABLE messages ADD COLUMN channel_id UUID;
         END IF;
         
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns 

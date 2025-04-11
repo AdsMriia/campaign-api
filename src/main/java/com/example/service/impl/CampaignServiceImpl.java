@@ -13,11 +13,7 @@ import com.example.exception.RequestRejectedException;
 import com.example.exception.ServiceUnavailableException;
 import com.example.mapper.CampaignMapper;
 import com.example.model.CampaignType;
-import com.example.model.dto.CampaignDto;
-import com.example.model.dto.ChannelCampaignDatesDto;
-import com.example.model.dto.ExpectedRetargetDto;
-import com.example.model.dto.RetargetStatsDto;
-import com.example.model.dto.SubmitABDto;
+import com.example.model.dto.*;
 import com.example.repository.CampaignCreativeRepository;
 import com.example.repository.CampaignRepository;
 import com.example.repository.MessageRepository;
@@ -100,8 +96,8 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Создаем креативы для кампании
             List<CampaignCreative> creatives = new ArrayList<>();
-            for (int i = 0; i < submitABDto.getMessageIds().size(); i++) {
-                UUID messageId = submitABDto.getMessageIds().get(i);
+            for (int i = 0; i < submitABDto.getPercents().size(); i++) {
+                UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
                 Message message = messageRepository.findById(messageId)
                         .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
 
@@ -112,10 +108,10 @@ public class CampaignServiceImpl implements CampaignService {
 
                 // Если указаны проценты для A/B тестирования
                 if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
-                    creative.setPercent(submitABDto.getPercents().get(i));
+                    creative.setPercent(submitABDto.getPercents().get(i).getPercent());
                 } else {
                     // Равное распределение
-                    creative.setPercent(100 / submitABDto.getMessageIds().size());
+                    creative.setPercent(100 / submitABDto.getPercents().size());
                 }
 
                 creatives.add(campaignCreativeRepository.save(creative));
@@ -178,8 +174,8 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Создаем креативы для кампании
             List<CampaignCreative> creatives = new ArrayList<>();
-            for (int i = 0; i < submitABDto.getMessageIds().size(); i++) {
-                UUID messageId = submitABDto.getMessageIds().get(i);
+            for (int i = 0; i < submitABDto.getPercents().size(); i++) {
+                UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
                 Message message = messageRepository.findById(messageId)
                         .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
 
@@ -190,10 +186,10 @@ public class CampaignServiceImpl implements CampaignService {
 
                 // Если указаны проценты для A/B тестирования
                 if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
-                    creative.setPercent(submitABDto.getPercents().get(i));
+                    creative.setPercent(submitABDto.getPercents().get(i).getPercent());
                 } else {
                     // Равное распределение
-                    creative.setPercent(100 / submitABDto.getMessageIds().size());
+                    creative.setPercent(100 / submitABDto.getPercents().size());
                 }
 
                 creatives.add(campaignCreativeRepository.save(creative));
@@ -573,17 +569,17 @@ public class CampaignServiceImpl implements CampaignService {
             throw new IllegalArgumentException("Необходимо выбрать хотя бы один канал");
         }
 
-        if (submitABDto.getMessageIds() == null || submitABDto.getMessageIds().isEmpty()) {
+        if (submitABDto.getPercents() == null || submitABDto.getPercents().isEmpty()) {
             throw new IllegalArgumentException("Необходимо выбрать хотя бы одно сообщение");
         }
 
         // Если указаны проценты для A/B тестирования, проверяем их
         if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
-            if (submitABDto.getPercents().size() != submitABDto.getMessageIds().size()) {
-                throw new IllegalArgumentException("Количество процентов должно соответствовать количеству сообщений");
-            }
+//            if (submitABDto.getPercents().size() != submitABDto.getMessageIds().size()) {
+//                throw new IllegalArgumentException("Количество процентов должно соответствовать количеству сообщений");
+//            }
 
-            int totalPercent = submitABDto.getPercents().stream().mapToInt(Integer::intValue).sum();
+            int totalPercent = submitABDto.getPercents().stream().map(CreativePercentDto::getPercent).mapToInt(Integer::intValue).sum();
             if (totalPercent != 100) {
                 throw new IllegalArgumentException("Сумма процентов должна равняться 100");
             }

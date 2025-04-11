@@ -62,7 +62,7 @@ public class Message extends BaseEntity {
     @Column(name = "created_by", nullable = false)
     private UUID createdBy;
 
-    @Column(name = "channel_id", nullable = false)
+    @Column(name = "channel_id")
     private UUID channelId;
 
     @Column(name = "created_at", nullable = false)

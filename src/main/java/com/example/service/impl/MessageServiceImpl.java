@@ -1,13 +1,11 @@
 package com.example.service.impl;
 
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.mapper.ActionMapper;
+import com.example.security.UserProvider;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -48,6 +46,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MessageServiceImpl implements MessageService {
 
+    private final UserProvider userProvider;
     private final MessageRepository messageRepository;
     private final ActionRepository actionRepository;
     private final MediaRepository mediaRepository;
@@ -55,6 +54,7 @@ public class MessageServiceImpl implements MessageService {
     private final WebUserService webUserService;
     private final MessageMapper messageMapper;
     private final ObjectMapper objectMapper;
+    private final ActionMapper actionMapper;
 
     @Override
     public GetMessageDto getById(UUID id) {
@@ -404,12 +404,27 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public MessageDto createMessage(MessageDto messageDto) {
+    public MessageDto createMessage(CreateMessageDto messageDto) {
         log.info("Создание нового сообщения из MessageDto");
         Message message = messageMapper.toMessage(messageDto);
         message.setCreatedAt(OffsetDateTime.now());
         message.setUpdatedAt(OffsetDateTime.now());
+        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
+        message.setCreatedBy(userProvider.getCurrentUser().getId());
         Message savedMessage = messageRepository.save(message);
+
+        for (ActionDto actionDto : messageDto.getActions()) {
+            Action action = new Action();
+            action.setText(actionDto.getText());
+            action.setLink(actionDto.getLink());
+            action.setMessage(savedMessage);
+            action.setOrdinal(messageDto.getActions().indexOf(actionDto) + 1);
+            action.setCreatedAt(OffsetDateTime.now());
+            action.setUpdatedAt(OffsetDateTime.now());
+            actionRepository.save(action);
+            savedMessage.getActions().add(action);
+        }
+
         return messageMapper.toMessageDto(savedMessage);
     }
 

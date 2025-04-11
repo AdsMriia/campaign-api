@@ -86,7 +86,7 @@ public interface MessageService {
      */
     List<MessageDto> findByWorkspaceIds(List<UUID> workspaceIds);
 
-    MessageDto createMessage(MessageDto messageDto);
+    MessageDto createMessage(CreateMessageDto messageDto);
 
     Page<MessageDto> getMessages(Pageable pageable);
 
