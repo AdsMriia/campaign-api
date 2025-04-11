@@ -61,6 +61,7 @@ public class JwtService {
             userDto.setRoles(claims.get("roles", List.class));
             userDto.setWorkspaceId(UUID.fromString(claims.get("workspace_id", String.class)));
             userDto.setIsActive(true);
+            userDto.setToken(token);
 
             return userDto;
         } catch (SignatureException ex) {

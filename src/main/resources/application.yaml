@@ -40,7 +40,7 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-  port: 8080
+  port: 8082
   servlet:
     context-path: ${CONTEXT_PATH}
 
@@ -57,5 +57,10 @@ jwt:
     secret: ${SPRING_JWT_HASH_SECRET}
   expiration: 86400000 # 24 hours
 
-#services:
+services:
+  telegram: ${TELEGRAM_URL:http://localhost:8080}
 #  workspace-api: ${WORKSPACE_API}
+
+channel:
+  service:
+    url: ${CHANNEL_SERVICE_URL:http://localhost:8080}

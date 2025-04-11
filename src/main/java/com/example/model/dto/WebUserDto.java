@@ -1,10 +1,11 @@
 package com.example.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-
 import java.util.List;
 import java.util.UUID;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Data;
 
 @Data
 public class WebUserDto {
@@ -17,6 +18,9 @@ public class WebUserDto {
 
     @JsonProperty("email")
     private String email;
+
+    @JsonProperty("token")
+    private String token;
 
     @JsonProperty("workspace_id")
     private UUID workspaceId;

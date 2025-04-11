@@ -1,29 +1,13 @@
 package com.example.service.impl;
 
-import com.example.client.ChannelClient;
-import com.example.client.TdLibClient;
-import com.example.entity.Campaign;
-import com.example.entity.CampaignCreative;
-import com.example.entity.Message;
-import com.example.entity.RetargetStats;
-import com.example.model.CampaignStatus;
-import com.example.exception.IllegalArgumentException;
-import com.example.exception.NotFoundException;
-import com.example.exception.RequestRejectedException;
-import com.example.exception.ServiceUnavailableException;
-import com.example.mapper.CampaignMapper;
-import com.example.model.CampaignType;
-import com.example.model.dto.*;
-import com.example.repository.CampaignCreativeRepository;
-import com.example.repository.CampaignRepository;
-import com.example.repository.MessageRepository;
-import com.example.repository.RetargetStatsRepository;
-import com.example.service.CampaignService;
-import com.example.service.WebUserService;
-import com.example.util.DateTimeUtil;
-import jakarta.transaction.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,13 +17,36 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import com.example.client.ChannelClient;
+import com.example.client.TdLibClient;
+import com.example.entity.Campaign;
+import com.example.entity.CampaignCreative;
+import com.example.entity.Message;
+import com.example.entity.RetargetStats;
+import com.example.exception.IllegalArgumentException;
+import com.example.exception.NotFoundException;
+import com.example.exception.RequestRejectedException;
+import com.example.exception.ServiceUnavailableException;
+import com.example.mapper.CampaignMapper;
+import com.example.model.CampaignStatus;
+import com.example.model.CampaignType;
+import com.example.model.dto.CampaignDto;
+import com.example.model.dto.ChannelCampaignDatesDto;
+import com.example.model.dto.CreativePercentDto;
+import com.example.model.dto.ExpectedRetargetDto;
+import com.example.model.dto.RetargetStatsDto;
+import com.example.model.dto.SubmitABDto;
+import com.example.repository.CampaignCreativeRepository;
+import com.example.repository.CampaignRepository;
+import com.example.repository.MessageRepository;
+import com.example.repository.RetargetStatsRepository;
+import com.example.service.CampaignService;
+import com.example.service.WebUserService;
+import com.example.util.DateTimeUtil;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Реализация сервиса для управления кампаниями. Предоставляет операции
@@ -74,7 +81,12 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            if (!channelClient.existsByIdAndWorkspaceId(channelId, workspaceId)) {
+            // if (!channelClient.existsByIdAndWorkspaceId(channelId)) {
+            //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
+            //     continue;
+            // }
+            ResponseEntity<Object> response = channelClient.getById(webUserService.getCurrentUser().getToken(), channelId);
+            if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
             }
@@ -140,9 +152,8 @@ public class CampaignServiceImpl implements CampaignService {
         List<CampaignDto> results = new ArrayList<>();
 
         // Получаем текущего пользователя и его рабочее пространство
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
-        UUID userId = webUserService.getCurrentUserId();
-
+        // UUID workspaceId = webUserService.getCurrentWorkspaceId();
+        // UUID userId = webUserService.getCurrentUserId();
         // Преобразуем даты с учетом часового пояса, если указан
         ZoneId zoneId = timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
         OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate(), zoneId);
@@ -151,7 +162,12 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            if (!channelClient.existsByIdAndWorkspaceId(channelId, workspaceId)) {
+            // if (!channelClient.existsByIdAndWorkspaceId(channelId, webUserService.getCurrentWorkspaceId())) {
+            //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
+            //     continue;
+            // }
+            ResponseEntity<Object> response = channelClient.getById(webUserService.getCurrentUser().getToken(), channelId);
+            if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
             }
@@ -161,10 +177,10 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setTitle(submitABDto.getTitle());
             campaign.setStartDate(startDate);
             campaign.setEndDate(endDate);
-            campaign.setCreatedBy(userId);
+            campaign.setCreatedBy(webUserService.getCurrentUserId());
             campaign.setCampaignType(CampaignType.BROADCAST);
             campaign.setStatus(CampaignStatus.SCHEDULED);
-            campaign.setWorkspaceId(workspaceId);
+            campaign.setWorkspaceId(webUserService.getCurrentWorkspaceId());
             campaign.setChannelId(channelId);
             campaign.setIsArchived(false);
             campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());

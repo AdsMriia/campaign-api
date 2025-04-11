@@ -3,15 +3,28 @@ package com.example.client;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import com.example.config.FeignConfiguration;
 
 /**
  * Feign клиент для взаимодействия с сервисом каналов.
  */
-@FeignClient(name = "channel-api-service", url = "${channel.service.url:http://channel-service:8080}")
+@FeignClient(name = "channel", url = "${channel.service.url}", configuration = FeignConfiguration.class)
 public interface ChannelClient {
+
+    /**
+     * Получает информацию о канале по его ID.
+     *
+     * @param id идентификатор канала
+     * @return информация о канале
+     */
+    @GetMapping("/api/channels/{id}")
+    ResponseEntity<Object> getById(@RequestHeader("Authorization") String authorization, @PathVariable("id") UUID id);
 
     /**
      * Проверяет существование канала по его ID и ID рабочего пространства.

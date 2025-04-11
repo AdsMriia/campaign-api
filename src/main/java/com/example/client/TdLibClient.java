@@ -5,13 +5,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.example.config.FeignConfiguration;
+
 import java.util.UUID;
 
 /**
  * Feign клиент для взаимодействия с TdLib сервисом. Предоставляет методы для
  * запуска, планирования и остановки рекламных кампаний.
  */
-@FeignClient(name = "tdlib", url = "${tdlib.url:http://tdlib:8090}")
+@FeignClient(name = "telegram", url = "${services.telegram}", configuration = FeignConfiguration.class)
 public interface TdLibClient {
 
     /**
