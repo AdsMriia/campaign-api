@@ -1,13 +1,19 @@
 package com.example.client;
 
+import java.util.UUID;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import com.example.config.FeignConfiguration;
-
-import java.util.UUID;
+import com.example.dto.CampaignDto;
+import com.example.dto.ChannelMember;
 
 /**
  * Feign клиент для взаимодействия с TdLib сервисом. Предоставляет методы для
@@ -19,15 +25,19 @@ public interface TdLibClient {
     /**
      * Запускает немедленную кампанию.
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
     @PostMapping("/api/campaign/start")
-    ResponseEntity<String> startCampaign(@RequestParam("campaignId") UUID campaignId);
+    ResponseEntity<String> startCampaign(
+            @RequestHeader("Authorization") String authorization,
+            @RequestParam("campaignId") UUID campaignId);
 
     /**
      * Планирует запуск кампании на определенное время.
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId ID кампании
      * @param startTimestamp timestamp начала кампании
      * @param timezone часовой пояс
@@ -35,6 +45,7 @@ public interface TdLibClient {
      */
     @PostMapping("/api/campaign/schedule")
     ResponseEntity<String> scheduleCampaign(
+            @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId,
             @RequestParam("startTimestamp") Long startTimestamp,
             @RequestParam("timezone") String timezone);
@@ -42,15 +53,19 @@ public interface TdLibClient {
     /**
      * Останавливает активную кампанию.
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
     @PostMapping("/api/campaign/stop")
-    ResponseEntity<String> stopCampaign(@RequestParam("campaignId") UUID campaignId);
+    ResponseEntity<String> stopCampaign(
+            @RequestHeader("Authorization") String authorization,
+            @RequestParam("campaignId") UUID campaignId);
 
     /**
      * Инициализирует ретаргетинг для кампании.
      *
+     * @param authorization JWT токен авторизации
      * @param channelId ID канала
      * @param timestamp timestamp начала ретаргетинга
      * @param campaignId ID кампании
@@ -59,6 +74,7 @@ public interface TdLibClient {
      */
     @PostMapping("/api/initialize/cycle")
     ResponseEntity<String> initializeRetarget(
+            @RequestHeader("Authorization") String authorization,
             @RequestParam("channelId") UUID channelId,
             @RequestParam("timestamp") Long timestamp,
             @RequestParam("campaignId") UUID campaignId,
@@ -67,27 +83,41 @@ public interface TdLibClient {
     /**
      * Останавливает ретаргетинг для кампании.
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
     @PostMapping("/api/retarget/stop")
-    ResponseEntity<String> stopRetarget(@RequestParam("campaignId") UUID campaignId);
+    ResponseEntity<String> stopRetarget(
+            @RequestHeader("Authorization") String authorization,
+            @RequestParam("campaignId") UUID campaignId);
 
     /**
      * Получение статуса кампании
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId идентификатор кампании
      * @return ответ с информацией о статусе
      */
     @PostMapping("/api/campaign/checkStatus")
-    ResponseEntity<String> checkStatus(@RequestParam("campaignId") UUID campaignId);
+    ResponseEntity<String> checkStatus(
+            @RequestHeader("Authorization") String authorization,
+            @RequestParam("campaignId") UUID campaignId);
 
     /**
      * Получение статистики кампании
      *
+     * @param authorization JWT токен авторизации
      * @param campaignId идентификатор кампании
      * @return ответ со статистикой
      */
     @PostMapping("/api/campaign/getStats")
-    ResponseEntity<String> getStats(@RequestParam("campaignId") UUID campaignId);
+    ResponseEntity<String> getStats(
+            @RequestHeader("Authorization") String authorization,
+            @RequestParam("campaignId") UUID campaignId);
+
+    @PostMapping("/split")
+    ResponseEntity<Map<UUID, List<ChannelMember>>> splitAudienceByPercentages(
+            @RequestHeader("Authorization") String authorization,
+            @RequestBody CampaignDto campaignDto);
 }

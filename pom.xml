@@ -238,6 +238,11 @@
             <artifactId>byte-buddy</artifactId>
             <version>1.15.2</version>
         </dependency>
+        <dependency>
+            <groupId>io.github.openfeign</groupId>
+            <artifactId>feign-core</artifactId>
+            <version>13.1</version>
+        </dependency>
     </dependencies>
     <dependencyManagement>
         <dependencies>

@@ -94,6 +94,12 @@ public class CampaignDto {
     private BigDecimal maxCost;
 
     /**
+     * Сообщение об ошибке в случае неудачного запуска кампании.
+     */
+    @JsonProperty("error_message")
+    private String errorMessage;
+
+    /**
      * Дата создания кампании (в миллисекундах).
      */
     @JsonProperty("created_at")

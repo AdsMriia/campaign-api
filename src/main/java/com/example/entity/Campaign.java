@@ -59,6 +59,9 @@ public class Campaign extends BaseEntity {
     @Column(name = "max_cost")
     private BigDecimal maxCost;
 
+    @Column(name = "error_message")
+    private String errorMessage;
+
     @OneToMany(mappedBy = "campaign", cascade = jakarta.persistence.CascadeType.ALL)
     private Set<CampaignCreative> creatives = new HashSet<>();
 }

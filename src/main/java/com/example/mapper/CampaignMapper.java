@@ -40,6 +40,11 @@ public interface CampaignMapper {
     @Mapping(target = "startDate", expression = "java(campaign.getStartDate() != null ? campaign.getStartDate().toEpochSecond() : null)")
     @Mapping(target = "endDate", expression = "java(campaign.getEndDate() != null ? campaign.getEndDate().toEpochSecond() : null)")
     @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(campaign.getUpdatedAt()))")
+    @Mapping(target = "channelId", source = "channelId")
+    @Mapping(target = "maxRetargeted", source = "maxRetargeted")
+    @Mapping(target = "audiencePercent", source = "audiencePercent")
+    @Mapping(target = "maxCost", source = "maxCost")
+    @Mapping(target = "errorMessage", source = "errorMessage")
     CampaignDto mapToDto(Campaign campaign);
 
     /**

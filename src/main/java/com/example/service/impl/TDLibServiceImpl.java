@@ -1,16 +1,19 @@
 package com.example.service.impl;
 
-import com.example.client.TdLibClient;
-import com.example.exception.FeignException;
-import com.example.exception.ServiceUnavailableException;
-import com.example.service.TDLibService;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.UUID;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
+import com.example.client.TdLibClient;
+import com.example.exception.ServiceUnavailableException;
+import com.example.repository.CampaignRepository;
+import com.example.service.TDLibService;
+import com.example.service.WebUserService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Реализация сервиса для взаимодействия с TdLib клиентом.
@@ -21,6 +24,8 @@ import java.util.UUID;
 public class TDLibServiceImpl implements TDLibService {
 
     private final TdLibClient tdLibClient;
+    private final WebUserService webUserService;
+    private final CampaignRepository campaignRepository;
 
     /**
      * {@inheritDoc}
@@ -30,7 +35,8 @@ public class TDLibServiceImpl implements TDLibService {
         log.info("Отправка кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.startCampaign(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.startCampaign(token, campaignId);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("Кампания {} успешно отправлена", campaignId);
@@ -54,7 +60,8 @@ public class TDLibServiceImpl implements TDLibService {
         log.info("Остановка кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.stopCampaign(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.stopCampaign(token, campaignId);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("Кампания {} успешно остановлена", campaignId);
@@ -79,7 +86,10 @@ public class TDLibServiceImpl implements TDLibService {
                 campaignId, timestamp, timezone);
 
         try {
-            ResponseEntity<String> response = tdLibClient.scheduleCampaign(campaignId, timestamp, timezone);
+            String token = webUserService.getCurrentUser().getToken();
+
+            ResponseEntity<String> response = tdLibClient.scheduleCampaign(
+                    token, campaignId, timestamp, timezone);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("Кампания {} успешно запланирована на {}", campaignId, timestamp);
@@ -103,7 +113,8 @@ public class TDLibServiceImpl implements TDLibService {
         log.info("Проверка статуса кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.checkStatus(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.checkStatus(token, campaignId);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("Получен статус кампании {}: {}", campaignId, response.getBody());
@@ -127,7 +138,8 @@ public class TDLibServiceImpl implements TDLibService {
         log.info("Получение статистики кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.getStats(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.getStats(token, campaignId);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 log.info("Получена статистика кампании {}", campaignId);

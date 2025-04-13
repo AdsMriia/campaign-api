@@ -17,5 +17,6 @@
     <include file="classpath:db/changelog/sql/008-add-updated-at-to-campaigns.sql"/>
     <include file="classpath:db/changelog/sql/009-add-audit-fields-to-media.sql"/>
     <include file="classpath:db/changelog/sql/010-update-retarget-stats-table.sql"/>
+    <include file="classpath:db/changelog/sql/011-add-error-message-to-campaigns.sql"/>
 
 </databaseChangeLog> 

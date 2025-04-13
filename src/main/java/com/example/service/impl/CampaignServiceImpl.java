@@ -16,6 +16,7 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.client.ChannelClient;
 import com.example.client.TdLibClient;
@@ -23,10 +24,11 @@ import com.example.entity.Campaign;
 import com.example.entity.CampaignCreative;
 import com.example.entity.Message;
 import com.example.entity.RetargetStats;
-import com.example.exception.IllegalArgumentException;
+import com.example.exception.FeignException;
 import com.example.exception.NotFoundException;
 import com.example.exception.RequestRejectedException;
 import com.example.exception.ServiceUnavailableException;
+import com.example.exception.TdLibException;
 import com.example.mapper.CampaignMapper;
 import com.example.model.CampaignStatus;
 import com.example.model.CampaignType;
@@ -44,7 +46,6 @@ import com.example.service.CampaignService;
 import com.example.service.WebUserService;
 import com.example.util.DateTimeUtil;
 
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -233,9 +234,15 @@ public class CampaignServiceImpl implements CampaignService {
                 campaignId, channelId, timestamp, timezone);
 
         try {
+            String token = webUserService.getCurrentUser().getToken();
+
             // Вызываем TdLib сервис для инициализации ретаргетинга
             ResponseEntity<String> response = tdLibClient.initializeRetarget(
-                    channelId, timestamp, campaignId, timezone);
+                    token,
+                    channelId,
+                    timestamp,
+                    campaignId,
+                    timezone);
 
             if (response.getStatusCode() == HttpStatus.OK) {
                 return Optional.empty();
@@ -258,6 +265,19 @@ public class CampaignServiceImpl implements CampaignService {
 
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+
+        // Получение статистики из TdLib
+        try {
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.getStats(token, campaignId);
+
+            if (response.getStatusCode() == HttpStatus.OK) {
+                log.info("Получена статистика из TdLib: {}", response.getBody());
+                // Дальнейшая обработка ответа...
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при получении статистики из TdLib: {}", e.getMessage(), e);
+        }
 
         List<RetargetStats> retargetStatsList = retargetStatsRepository.findByCampaignId(campaignId);
 
@@ -302,7 +322,8 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Остановка ретаргетинга для кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.stopRetarget(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.stopRetarget(token, campaignId);
             return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
             log.error("Ошибка при вызове TdLib сервиса для остановки ретаргетинга: {}", e.getMessage(), e);
@@ -370,6 +391,18 @@ public class CampaignServiceImpl implements CampaignService {
 
         Campaign campaign = campaignRepository.findById(campaignId)
                 .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+
+        // Проверяем текущий статус кампании в TdLib
+        try {
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> statusResponse = tdLibClient.checkStatus(token, campaignId);
+
+            if (statusResponse.getStatusCode() == HttpStatus.OK) {
+                log.info("Текущий статус кампании в TdLib: {}", statusResponse.getBody());
+            }
+        } catch (Exception e) {
+            log.warn("Не удалось получить статус кампании из TdLib: {}", e.getMessage());
+        }
 
         // Проверяем, что кампания активна и её можно остановить
         if (campaign.getStatus() != CampaignStatus.RUNNING) {
@@ -611,7 +644,9 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Отправка немедленной кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.startCampaign(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+
+            ResponseEntity<String> response = tdLibClient.startCampaign(token, campaignId);
 
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Ошибка при отправке кампании в TdLib: {}", response.getBody());
@@ -625,19 +660,131 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Планирование кампании с ID: {}, время начала: {}, часовой пояс: {}",
                 campaignId, startDate, timezone);
 
-        try {
-            String effectiveTimezone = timezone != null ? timezone : ZoneId.systemDefault().getId();
+        // Максимальное количество попыток
+        final int MAX_RETRIES = 3;
+        // Начальная задержка в миллисекундах
+        final long INITIAL_BACKOFF = 1000;
 
-            ResponseEntity<String> response = tdLibClient.scheduleCampaign(
-                    campaignId,
-                    startDate.toEpochSecond(),
-                    effectiveTimezone);
+        String effectiveTimezone = timezone != null ? timezone : ZoneId.systemDefault().getId();
+        String token = webUserService.getCurrentUser().getToken();
 
-            if (response.getStatusCode() != HttpStatus.OK) {
-                log.error("Ошибка при планировании кампании в TdLib: {}", response.getBody());
+        // Получаем channelId для этой кампании
+        Campaign campaign = campaignRepository.findById(campaignId)
+                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+
+        // Информационное сообщение о канале
+        log.info("Планирование кампании для канала: {}", campaign.getChannelId());
+
+        // Реализация с повторными попытками
+        int attempts = 0;
+        while (attempts < MAX_RETRIES) {
+            attempts++;
+            try {
+                ResponseEntity<String> response = tdLibClient.scheduleCampaign(
+                        token,
+                        campaignId,
+                        startDate.toEpochSecond(),
+                        effectiveTimezone);
+
+                if (response.getStatusCode() == HttpStatus.OK) {
+                    log.info("Кампания с ID {} успешно запланирована, попытка {}", campaignId, attempts);
+                    return; // Успешное завершение
+                } else {
+                    log.error("Ошибка при планировании кампании в TdLib: код статуса {}, тело ответа: {}, попытка {}",
+                            response.getStatusCode(), response.getBody(), attempts);
+
+                    // Если последняя попытка, обновляем статус
+                    if (attempts >= MAX_RETRIES) {
+                        updateCampaignStatusAfterError(campaignId,
+                                "Ошибка планирования: " + response.getStatusCode() + " " + response.getBody());
+                    } else {
+                        // Ждем перед следующей попыткой (увеличение задержки в 2 раза с каждой попыткой)
+                        Thread.sleep(INITIAL_BACKOFF * (1L << (attempts - 1)));
+                    }
+                }
+            } catch (FeignException e) {
+                int status = e.getStatus();
+                String message = e.getMessage();
+
+                log.error("Ошибка при планировании кампании в TdLib: статус: {}, сообщение: {}, попытка: {}",
+                        status, message, attempts);
+
+                // Если ошибка 403, то повторные попытки бессмысленны
+                if (status == 403 || attempts >= MAX_RETRIES) {
+                    String errorMessage = "Ошибка доступа к TdLib: "
+                            + (status == 403 ? "Отказано в доступе" : message);
+                    updateCampaignStatusAfterError(campaignId, errorMessage);
+                    return;
+                }
+
+                try {
+                    Thread.sleep(INITIAL_BACKOFF * (1L << (attempts - 1)));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.error("Прервано ожидание перед повторной попыткой", ie);
+                }
+            } catch (TdLibException e) {
+                log.error("Ошибка TdLib при планировании кампании: {}, код: {}, попытка: {}",
+                        e.getMessage(), e.getStatusCode(), attempts);
+
+                if (attempts >= MAX_RETRIES) {
+                    updateCampaignStatusAfterError(campaignId, "Ошибка в TdLib: " + e.getMessage());
+                    return;
+                }
+
+                try {
+                    Thread.sleep(INITIAL_BACKOFF * (1L << (attempts - 1)));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.error("Прервано ожидание перед повторной попыткой", ie);
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Прервано ожидание перед повторной попыткой", e);
+                updateCampaignStatusAfterError(campaignId, "Прервано ожидание: " + e.getMessage());
+                return;
+            } catch (Exception e) {
+                log.error("Непредвиденная ошибка при планировании кампании в TdLib: {}, попытка: {}",
+                        e.getMessage(), attempts, e);
+
+                if (attempts >= MAX_RETRIES) {
+                    updateCampaignStatusAfterError(campaignId, "Непредвиденная ошибка: " + e.getMessage());
+                    return;
+                }
+
+                try {
+                    Thread.sleep(INITIAL_BACKOFF * (1L << (attempts - 1)));
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    log.error("Прервано ожидание перед повторной попыткой", ie);
+                }
             }
+        }
+    }
+
+    /**
+     * Обновляет статус кампании после ошибки.
+     *
+     * @param campaignId ID кампании
+     * @param errorMessage сообщение об ошибке
+     */
+    private void updateCampaignStatusAfterError(UUID campaignId, String errorMessage) {
+        try {
+            Campaign campaign = campaignRepository.findById(campaignId)
+                    .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+
+            // Изменяем статус на FAILED
+            campaign.setStatus(CampaignStatus.FAILED);
+
+            // Сохраняем информацию об ошибке в дополнительное поле
+            campaign.setErrorMessage(errorMessage);
+
+            // Сохраняем обновленную кампанию
+            campaignRepository.save(campaign);
+
+            log.info("Статус кампании {} изменен на FAILED из-за ошибки: {}", campaignId, errorMessage);
         } catch (Exception e) {
-            log.error("Ошибка при планировании кампании в TdLib: {}", e.getMessage(), e);
+            log.error("Ошибка при обновлении статуса кампании после ошибки: {}", e.getMessage(), e);
         }
     }
 
@@ -645,7 +792,8 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Вызов TdLib для остановки кампании с ID: {}", campaignId);
 
         try {
-            ResponseEntity<String> response = tdLibClient.stopCampaign(campaignId);
+            String token = webUserService.getCurrentUser().getToken();
+            ResponseEntity<String> response = tdLibClient.stopCampaign(token, campaignId);
             return response.getStatusCode() == HttpStatus.OK;
         } catch (Exception e) {
             log.error("Ошибка при остановке кампании в TdLib: {}", e.getMessage(), e);
