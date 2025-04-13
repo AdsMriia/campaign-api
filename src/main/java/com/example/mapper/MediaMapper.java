@@ -1,10 +1,10 @@
 package com.example.mapper;
 
-import com.example.entity.Media;
-import com.example.model.dto.MediaDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Named;
+
+import com.example.entity.Media;
+import com.example.model.dto.MediaDto;
 
 /**
  * Маппер для преобразования между сущностью Media и DTO MediaDto.
@@ -29,6 +29,10 @@ public interface MediaMapper {
      * @return сущность медиафайла
      */
     @Mapping(target = "message", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
     Media toMedia(MediaDto mediaDto);
 
     /**
@@ -39,6 +43,12 @@ public interface MediaMapper {
      * @return сущность медиафайла
      */
     @Mapping(target = "message", ignore = true)
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "createdAt", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "workspaceId", ignore = true)
     Media toMedia(String fileName, String fileExtension);
 
     /**

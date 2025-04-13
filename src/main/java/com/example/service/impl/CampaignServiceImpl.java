@@ -129,7 +129,7 @@ public class CampaignServiceImpl implements CampaignService {
                 creatives.add(campaignCreativeRepository.save(creative));
             }
 
-            // Отправка кампании в TdLib сервис
+            // Немедленная отправка сообщений через TdLib сервис
             sendImmediateCampaign(savedCampaign.getId());
 
             // Преобразуем в DTO и добавляем в результаты
@@ -152,8 +152,18 @@ public class CampaignServiceImpl implements CampaignService {
         List<CampaignDto> results = new ArrayList<>();
 
         // Получаем текущего пользователя и его рабочее пространство
-        // UUID workspaceId = webUserService.getCurrentWorkspaceId();
-        // UUID userId = webUserService.getCurrentUserId();
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+        UUID userId = webUserService.getCurrentUserId();
+
+        // Проверка на null
+        if (workspaceId == null) {
+            throw new IllegalStateException("WorkspaceId не может быть null");
+        }
+
+        if (userId == null) {
+            throw new IllegalStateException("UserId не может быть null");
+        }
+
         // Преобразуем даты с учетом часового пояса, если указан
         ZoneId zoneId = timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
         OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate(), zoneId);
@@ -162,10 +172,6 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            // if (!channelClient.existsByIdAndWorkspaceId(channelId, webUserService.getCurrentWorkspaceId())) {
-            //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
-            //     continue;
-            // }
             ResponseEntity<Object> response = channelClient.getById(webUserService.getCurrentUser().getToken(), channelId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
@@ -177,10 +183,10 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setTitle(submitABDto.getTitle());
             campaign.setStartDate(startDate);
             campaign.setEndDate(endDate);
-            campaign.setCreatedBy(webUserService.getCurrentUserId());
+            campaign.setCreatedBy(userId);
             campaign.setCampaignType(CampaignType.BROADCAST);
             campaign.setStatus(CampaignStatus.SCHEDULED);
-            campaign.setWorkspaceId(webUserService.getCurrentWorkspaceId());
+            campaign.setWorkspaceId(workspaceId);
             campaign.setChannelId(channelId);
             campaign.setIsArchived(false);
             campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
@@ -561,7 +567,6 @@ public class CampaignServiceImpl implements CampaignService {
     public CampaignDto createCampaign(CampaignDto campaignDto) {
         log.info("Создание новой кампании: {}", campaignDto);
         Campaign campaign = campaignMapper.toCampaign(campaignDto);
-        campaign.setCreatedAt(OffsetDateTime.now());
         campaign.setCreatedBy(webUserService.getCurrentUserId());
         campaign.setWorkspaceId(webUserService.getCurrentWorkspaceId());
         return campaignMapper.mapToDto(campaignRepository.save(campaign));

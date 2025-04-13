@@ -22,11 +22,7 @@ import lombok.Setter;
 @Table(name = "campaigns")
 @Getter
 @Setter
-public class Campaign {
-
-    @jakarta.persistence.Id
-    @jakarta.persistence.GeneratedValue(strategy = jakarta.persistence.GenerationType.UUID)
-    private UUID id;
+public class Campaign extends BaseEntity {
 
     @Column(nullable = false, unique = true)
     private String title;
@@ -36,12 +32,6 @@ public class Campaign {
 
     @Column(name = "end_date")
     private OffsetDateTime endDate;
-
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "created_by", nullable = false)
-    private UUID createdBy;
 
     @Column(name = "campaign_type", nullable = false)
     @Enumerated(EnumType.STRING)
@@ -68,9 +58,6 @@ public class Campaign {
 
     @Column(name = "max_cost")
     private BigDecimal maxCost;
-
-    @Column(name = "table_name", unique = true)
-    private String tableName;
 
     @OneToMany(mappedBy = "campaign", cascade = jakarta.persistence.CascadeType.ALL)
     private Set<CampaignCreative> creatives = new HashSet<>();

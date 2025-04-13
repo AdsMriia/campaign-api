@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 
 import com.example.entity.Action;
@@ -231,20 +232,30 @@ public class MessageServiceImpl implements MessageService {
 
         // Добавляем медиа
         if (createMessageDto.getMediaIds() != null && !createMessageDto.getMediaIds().isEmpty()) {
+            log.info("Начинаем привязку {} медиафайлов к сообщению по ID", createMessageDto.getMediaIds().size());
+            int successCount = 0;
             for (UUID mediaId : createMessageDto.getMediaIds()) {
-                Media media = (Media) mediaRepository.findById(mediaId)
-                        .orElseThrow(() -> new NotFoundException("Медиа с ID " + mediaId + " не найдено"));
+                try {
+                    Media media = (Media) mediaRepository.findById(mediaId)
+                            .orElseThrow(() -> new NotFoundException("Медиа с ID " + mediaId + " не найдено"));
 
-                media.setMessage(savedMessage);
-                Media savedMedia = mediaRepository.save(media);
-                // Используем helper метод для добавления в Set
-                addMediaToMessage(savedMessage, savedMedia);
+                    log.debug("Привязка медиафайла с ID {} к сообщению с ID {}", mediaId, savedMessage.getId());
+                    media.setMessage(savedMessage);
+                    Media savedMedia = mediaRepository.save(media);
+                    // Используем helper метод для добавления в Set
+                    addMediaToMessage(savedMessage, savedMedia);
+                    successCount++;
+                } catch (Exception e) {
+                    log.error("Ошибка при привязке медиафайла с ID {} к сообщению: {}", mediaId, e.getMessage(), e);
+                }
             }
-            log.debug("Добавлено {} медиафайлов к сообщению по ID", createMessageDto.getMediaIds().size());
+            log.info("Успешно привязано {} из {} медиафайлов к сообщению по ID",
+                    successCount, createMessageDto.getMediaIds().size());
         }
 
         // Обработка mediaNames (если предоставлены)
         if (createMessageDto.getMediaNames() != null && !createMessageDto.getMediaNames().isEmpty()) {
+            log.info("Начинаем привязку {} медиафайлов к сообщению по имени", createMessageDto.getMediaNames().size());
             int added = 0;
             for (String mediaName : createMessageDto.getMediaNames()) {
                 try {
@@ -253,17 +264,21 @@ public class MessageServiceImpl implements MessageService {
 
                     if (!mediaList.isEmpty()) {
                         Media media = mediaList.get(0);
+                        log.debug("Найден медиафайл по имени {} с ID {}", mediaName, media.getId());
                         media.setMessage(savedMessage);
                         Media savedMedia = mediaRepository.save(media);
                         // Используем helper метод для добавления в Set
                         addMediaToMessage(savedMessage, savedMedia);
                         added++;
+                    } else {
+                        log.warn("Медиафайл с именем {} не найден", mediaName);
                     }
                 } catch (Exception e) {
-                    log.warn("Не удалось найти медиа по имени {}: {}", mediaName, e.getMessage());
+                    log.error("Не удалось найти или привязать медиа по имени {}: {}", mediaName, e.getMessage(), e);
                 }
             }
-            log.debug("Добавлено {} медиафайлов к сообщению по имени", added);
+            log.info("Успешно привязано {} из {} медиафайлов к сообщению по имени",
+                    added, createMessageDto.getMediaNames().size());
         }
 
         // Перезагружаем сообщение для получения обновленных связей
@@ -456,5 +471,160 @@ public class MessageServiceImpl implements MessageService {
     @Override
     public void delete(UUID id) {
         deleteMessage(id);
+    }
+
+    @Override
+    public void updateStatus(UUID id, MessageStatus status) {
+        if (status == null) {
+            log.error("Status is null");
+            throw new IllegalArgumentException("Status cannot be null");
+        }
+        Message message = messageRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Message with id " + id + " not found"));
+        message.setStatus(status);
+        messageRepository.save(message);
+    }
+
+    @Override
+    public MessageDto addMessage(MessageDto messageDto) {
+        UUID userId = webUserService.getCurrentUserId();
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+
+        Message message = messageMapper.toMessage(messageDto);
+        message.setStatus(MessageStatus.DRAFT);
+        message.setType(MessageType.TEXT);
+        message.setCreatedBy(userId);
+        message.setWorkspaceId(workspaceId);
+
+        Message savedMessage = messageRepository.save(message);
+        log.info("Saved message with id: {}", savedMessage.getId());
+
+        return messageMapper.toMessageDto(savedMessage);
+    }
+
+    @Override
+    public MessageDto update(UUID id, MessageDto messageDto) {
+        log.info("Updating message with id: {}", id);
+
+        Message existingMessage = messageRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Message with id " + id + " not found"));
+
+        // Проверка, принадлежит ли сообщение текущему рабочему пространству
+        if (!existingMessage.getWorkspaceId().equals(webUserService.getCurrentWorkspaceId())) {
+            throw new AccessDeniedException("You don't have permission to update this message");
+        }
+
+        // Обновляем только разрешенные поля
+        existingMessage.setTitle(messageDto.getTitle());
+        existingMessage.setText(messageDto.getText());
+        existingMessage.setMarkDown(messageDto.getMarkDown());
+        existingMessage.setStatus(messageDto.getStatus());
+
+        // Сохраняем обновленное сообщение
+        Message updatedMessage = messageRepository.save(existingMessage);
+        log.info("Updated message with id: {}", updatedMessage.getId());
+
+        return messageMapper.toMessageDto(updatedMessage);
+    }
+
+    @Override
+    public MessageDto duplicate(UUID id) {
+        log.info("Duplicating message with id: {}", id);
+
+        Message existingMessage = messageRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Message with id " + id + " not found"));
+
+        UUID userId = webUserService.getCurrentUserId();
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+
+        // Проверка, принадлежит ли сообщение текущему рабочему пространству
+        if (!existingMessage.getWorkspaceId().equals(workspaceId)) {
+            throw new AccessDeniedException("You don't have permission to duplicate this message");
+        }
+
+        // Создаем копию сообщения
+        Message duplicateMessage = new Message();
+        duplicateMessage.setTitle(existingMessage.getTitle() + " (copy)");
+        duplicateMessage.setText(existingMessage.getText());
+        duplicateMessage.setMarkDown(existingMessage.getMarkDown());
+        duplicateMessage.setStatus(MessageStatus.DRAFT); // Новая копия всегда в статусе черновика
+        duplicateMessage.setType(existingMessage.getType());
+        duplicateMessage.setCreatedBy(userId);
+        duplicateMessage.setWorkspaceId(workspaceId);
+
+        // Сохраняем новое сообщение
+        Message savedMessage = messageRepository.save(duplicateMessage);
+        log.info("Created duplicate message with id: {}", savedMessage.getId());
+
+        // Дублируем действия (кнопки)
+        duplicateActions(existingMessage, savedMessage);
+
+        // Дублируем медиафайлы
+        duplicateMedia(existingMessage, savedMessage);
+
+        return messageMapper.toMessageDto(savedMessage);
+    }
+
+    /**
+     * Дублирует действия (кнопки) из исходного сообщения в целевое.
+     *
+     * @param sourceMessage исходное сообщение
+     * @param targetMessage целевое сообщение
+     */
+    private void duplicateActions(Message sourceMessage, Message targetMessage) {
+        log.debug("Дублирование действий из сообщения {} в сообщение {}",
+                sourceMessage.getId(), targetMessage.getId());
+
+        if (sourceMessage.getActions() != null && !sourceMessage.getActions().isEmpty()) {
+            Set<Action> actions = new HashSet<>();
+
+            for (Action sourceAction : sourceMessage.getActions()) {
+                Action newAction = new Action();
+                newAction.setMessage(targetMessage);
+                newAction.setText(sourceAction.getText());
+                newAction.setLink(sourceAction.getLink());
+                newAction.setOrdinal(sourceAction.getOrdinal());
+
+                Action savedAction = actionRepository.save(newAction);
+                actions.add(savedAction);
+            }
+
+            targetMessage.setActions(actions);
+            messageRepository.save(targetMessage);
+
+            log.debug("Дублировано {} действий", actions.size());
+        }
+    }
+
+    /**
+     * Дублирует медиафайлы из исходного сообщения в целевое.
+     *
+     * @param sourceMessage исходное сообщение
+     * @param targetMessage целевое сообщение
+     */
+    private void duplicateMedia(Message sourceMessage, Message targetMessage) {
+        log.debug("Дублирование медиафайлов из сообщения {} в сообщение {}",
+                sourceMessage.getId(), targetMessage.getId());
+
+        if (sourceMessage.getMedias() != null && !sourceMessage.getMedias().isEmpty()) {
+            Set<Media> mediaSet = new HashSet<>();
+
+            for (Media sourceMedia : sourceMessage.getMedias()) {
+                // Создаем новую запись в базе данных для медиафайла
+                Media newMedia = new Media();
+                newMedia.setMessage(targetMessage);
+                newMedia.setWorkspaceId(sourceMedia.getWorkspaceId());
+                newMedia.setFileName(sourceMedia.getFileName());
+                newMedia.setFileExtension(sourceMedia.getFileExtension());
+
+                Media savedMedia = mediaRepository.save(newMedia);
+                mediaSet.add(savedMedia);
+            }
+
+            targetMessage.setMedias(mediaSet);
+            messageRepository.save(targetMessage);
+
+            log.debug("Дублировано {} медиафайлов", mediaSet.size());
+        }
     }
 }

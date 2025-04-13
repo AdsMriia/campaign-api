@@ -1,34 +1,36 @@
 package com.example.service.impl;
 
-import com.example.entity.Media;
-import com.example.exception.FileNotFoundException;
-import com.example.exception.FileUploadException;
-import com.example.mapper.MediaMapper;
-import com.example.model.dto.MediaDto;
-import com.example.repository.MediaRepository;
-import com.example.service.MediaService;
-import com.example.service.WebUserService;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.transaction.annotation.Transactional;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.example.entity.Media;
+import com.example.entity.Message;
+import com.example.exception.FileNotFoundException;
+import com.example.exception.FileUploadException;
+import com.example.mapper.MediaMapper;
+import com.example.model.dto.MediaDto;
+import com.example.repository.MediaRepository;
+import com.example.repository.MessageRepository;
+import com.example.service.MediaService;
+import com.example.service.WebUserService;
+
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Реализация сервиса для работы с медиафайлами. Предоставляет методы для
@@ -45,33 +47,111 @@ public class MediaServiceImpl implements MediaService {
     private final MediaRepository mediaRepository;
     private final WebUserService webUserService;
     private final MediaMapper mediaMapper;
+    private final MessageRepository messageRepository;
 
     @Override
     @Transactional
     public MediaDto uploadMedia(MultipartFile file, UUID workspaceId) {
+        log.info("Загрузка медиафайла: {}, размер: {}, тип: {}",
+                file.getOriginalFilename(), file.getSize(), file.getContentType());
+
         try {
+            // Проверяем, что файл не пустой
+            if (file.isEmpty()) {
+                log.error("Попытка загрузить пустой файл");
+                throw new FileUploadException("Файл пустой");
+            }
+
             String originalFilename = file.getOriginalFilename();
             String fileExtension = originalFilename != null
                     ? originalFilename.substring(originalFilename.lastIndexOf(".") + 1)
                     : "";
 
+            // Валидация расширения файла
+            if (fileExtension.isEmpty()) {
+                log.error("Файл не имеет расширения: {}", originalFilename);
+                throw new FileUploadException("Файл должен иметь расширение");
+            }
+
+            // Создаем уникальный идентификатор файла
             UUID fileName = UUID.randomUUID();
+            log.debug("Сгенерировано имя файла: {}", fileName);
+
+            // Создаем директорию для загрузки если она не существует
             Path uploadPath = Paths.get(UPLOAD_DIR);
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
+                log.debug("Создана директория для загрузки: {}", uploadPath.toAbsolutePath());
             }
 
+            // Формируем полный путь и сохраняем файл
             Path filePath = uploadPath.resolve(fileName.toString() + "." + fileExtension);
             Files.write(filePath, file.getBytes());
+            log.debug("Файл сохранен по пути: {}", filePath.toAbsolutePath());
 
+            // Создаем сущность Media и сохраняем в базу
             Media media = new Media();
             media.setWorkspaceId(workspaceId);
             media.setFileName(fileName);
             media.setFileExtension(fileExtension);
 
-            return mediaMapper.toMediaDto(mediaRepository.save(media));
+            Media savedMedia = mediaRepository.save(media);
+            log.info("Медиафайл успешно загружен и сохранен с ID: {}", savedMedia.getId());
+
+            return mediaMapper.toMediaDto(savedMedia);
         } catch (IOException e) {
-            throw new RuntimeException("Failed to store file", e);
+            log.error("Ошибка при сохранении файла: {}", e.getMessage(), e);
+            throw new FileUploadException("Не удалось сохранить файл: " + e.getMessage());
+        } catch (Exception e) {
+            log.error("Непредвиденная ошибка при загрузке файла: {}", e.getMessage(), e);
+            throw new FileUploadException("Ошибка при загрузке файла: " + e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public MediaDto uploadMedia(MultipartFile file, UUID workspaceId, UUID messageId) {
+        log.info("Загрузка медиафайла с привязкой к сообщению: {}, размер: {}, тип: {}, messageId: {}",
+                file.getOriginalFilename(), file.getSize(), file.getContentType(), messageId);
+
+        try {
+            // Загружаем медиафайл
+            MediaDto mediaDto = uploadMedia(file, workspaceId);
+
+            // Если указан messageId, связываем с сообщением
+            if (messageId != null) {
+                try {
+                    // Получаем загруженный медиафайл из базы
+                    Media media = mediaRepository.findById(mediaDto.getId())
+                            .orElseThrow(() -> new EntityNotFoundException("Медиафайл с ID " + mediaDto.getId() + " не найден"));
+
+                    // Проверяем существование сообщения
+                    Message message = messageRepository.findById(messageId)
+                            .orElseThrow(() -> new EntityNotFoundException("Сообщение с ID " + messageId + " не найдено"));
+
+                    // Связываем медиа с сообщением
+                    log.debug("Связывание медиафайла {} с сообщением {}", media.getId(), message.getId());
+                    media.setMessage(message);
+                    mediaRepository.save(media);
+
+                    // Если у сообщения нет коллекции медиафайлов, создаем ее
+                    if (message.getMedias() == null) {
+                        message.setMedias(new HashSet<>());
+                    }
+                    message.getMedias().add(media);
+                    messageRepository.save(message);
+
+                    log.info("Медиафайл {} успешно связан с сообщением {}", media.getId(), message.getId());
+                } catch (EntityNotFoundException e) {
+                    log.error("Ошибка при связывании медиафайла с сообщением: {}", e.getMessage());
+                    // Не прерываем выполнение, возвращаем созданный медиафайл
+                }
+            }
+
+            return mediaDto;
+        } catch (Exception e) {
+            log.error("Ошибка при загрузке медиафайла с привязкой к сообщению: {}", e.getMessage(), e);
+            throw new FileUploadException("Ошибка при загрузке и привязке медиафайла: " + e.getMessage());
         }
     }
 
@@ -111,10 +191,13 @@ public class MediaServiceImpl implements MediaService {
         Media media = (Media) mediaRepository.findById(id)
                 .orElseThrow(() -> new FileNotFoundException("Медиафайл с ID " + id + " не найден"));
 
-        String filePath = UPLOAD_DIR + "/" + media.getFileName() + media.getFileExtension();
+        String filePath = UPLOAD_DIR + "/" + media.getFileName() + "." + media.getFileExtension();
+        log.debug("Полный путь к файлу: {}", filePath);
+
         File file = new File(filePath);
 
         if (!file.exists()) {
+            log.error("Файл не найден на диске: {}", filePath);
             throw new FileNotFoundException("Файл не найден на диске: " + filePath);
         }
 

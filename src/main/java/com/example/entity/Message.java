@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import com.example.model.MessageStatus;
 import com.example.model.MessageType;
@@ -15,10 +14,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -31,10 +26,6 @@ import lombok.Setter;
 @NoArgsConstructor
 @Table(name = "messages")
 public class Message extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
 
     @Column(name = "mark_down", nullable = false)
     private Boolean markDown;
@@ -59,17 +50,8 @@ public class Message extends BaseEntity {
     @Column(nullable = false)
     private String text;
 
-    @Column(name = "created_by", nullable = false)
-    private UUID createdBy;
-
     @Column(name = "channel_id")
     private UUID channelId;
-
-    @Column(name = "created_at", nullable = false)
-    private OffsetDateTime createdAt;
-
-    @Column(name = "updated_at", nullable = false)
-    private OffsetDateTime updatedAt;
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Media> medias = new HashSet<>();
@@ -103,12 +85,12 @@ public class Message extends BaseEntity {
     @Override
     public String toString() {
         return "{"
-                + "\"id\": \"" + id + "\","
+                + "\"id\": \"" + getId() + "\","
                 + "\"markDown\": " + markDown + ","
                 + "\"title\": \"" + title + "\","
                 + "\"type\": \"" + type + "\","
                 + "\"status\": \"" + status + "\","
-                + "\"createdAt\": \"" + createdAt + "\","
+                + "\"createdAt\": \"" + getCreatedAt() + "\","
                 + "\"text\": \"" + text + "\","
                 + "\"telegramId\": " + telegramId
                 + "}";
@@ -123,7 +105,7 @@ public class Message extends BaseEntity {
             return false;
         }
         Message message = (Message) o;
-        return Objects.equals(id, message.id) && Objects.equals(telegramId, message.telegramId);
+        return Objects.equals(getId(), message.getId()) && Objects.equals(telegramId, message.telegramId);
     }
 
     @Override
@@ -134,7 +116,7 @@ public class Message extends BaseEntity {
         message.setType(this.type);
         message.setStatus(MessageStatus.DRAFT);
         message.setText(this.text);
-        message.setCreatedBy(this.createdBy);
+        message.setCreatedBy(this.getCreatedBy());
         message.setChannelId(this.channelId);
         message.setWorkspaceId(this.workspaceId);
         message.setCreatedAt(OffsetDateTime.now());
@@ -163,6 +145,6 @@ public class Message extends BaseEntity {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, telegramId);
+        return Objects.hash(getId(), telegramId);
     }
 }

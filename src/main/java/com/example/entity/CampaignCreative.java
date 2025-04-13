@@ -1,12 +1,16 @@
 package com.example.entity;
 
-import jakarta.persistence.*;
+import java.util.Objects;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.Objects;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -14,10 +18,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @Table(name = "campaign_creatives")
 public class CampaignCreative extends BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "message_id", nullable = false)
@@ -42,12 +42,12 @@ public class CampaignCreative extends BaseEntity {
             return false;
         }
         CampaignCreative campaignCreative = (CampaignCreative) o;
-        return Objects.equals(id, campaignCreative.id) && Objects.equals(percent, campaignCreative.percent);
+        return Objects.equals(getId(), campaignCreative.getId()) && Objects.equals(percent, campaignCreative.percent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, percent);
+        return Objects.hash(getId(), percent);
     }
 
     @Override

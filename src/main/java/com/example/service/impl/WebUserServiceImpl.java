@@ -19,13 +19,14 @@ public class WebUserServiceImpl implements WebUserService {
 
     @Override
     public UUID getCurrentUserId() {
-        return null;
+        WebUserDto userDto = getCurrentUser();
+        return userDto != null ? userDto.getId() : null;
     }
 
     @Override
     public UUID getCurrentWorkspaceId() {
-
-        return null;
+        WebUserDto userDto = getCurrentUser();
+        return userDto != null ? userDto.getWorkspaceId() : null;
     }
 
     @Override
@@ -35,9 +36,15 @@ public class WebUserServiceImpl implements WebUserService {
 
     @Override
     public WebUserDto getCurrentUser() {
-        CustomUserDetails userDetails = (CustomUserDetails) SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getPrincipal();
-        return userDetails.getWebUserDto();
+        try {
+            Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+            if (principal instanceof CustomUserDetails) {
+                CustomUserDetails userDetails = (CustomUserDetails) principal;
+                return userDetails.getWebUserDto();
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

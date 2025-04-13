@@ -1,12 +1,13 @@
 package com.example.service;
 
-import com.example.model.dto.MediaDto;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.UUID;
+import com.example.model.dto.MediaDto;
 
 /**
  * Сервис для работы с медиа-файлами.
@@ -29,6 +30,17 @@ public interface MediaService {
      * @return информация о загруженном медиа-файле
      */
     MediaDto uploadMedia(MultipartFile file, UUID workspaceId);
+
+    /**
+     * Загружает медиа-файл и привязывает его к сообщению.
+     *
+     * @param file загружаемый файл
+     * @param workspaceId идентификатор рабочего пространства
+     * @param messageId идентификатор сообщения, к которому нужно привязать
+     * медиа (может быть null)
+     * @return информация о загруженном медиа-файле
+     */
+    MediaDto uploadMedia(MultipartFile file, UUID workspaceId, UUID messageId);
 
     /**
      * Получает все медиа-файлы текущего пользователя.
