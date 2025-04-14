@@ -1,6 +1,7 @@
 package com.example.security.jwt;
 
 import java.io.IOException;
+import java.util.Enumeration;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -35,6 +36,14 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+
+        log.info("==============================================");
+        Enumeration<String> headerNames = request.getHeaderNames();
+        while (headerNames.hasMoreElements()) {
+            String headerName = headerNames.nextElement();
+            System.out.println(headerName);
+            // do something with the header name
+        }
 
         // Проверяем, нужно ли аутентифицировать этот запрос
         String requestURI = request.getRequestURI();

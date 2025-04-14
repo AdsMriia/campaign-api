@@ -190,16 +190,16 @@ public class MessageServiceImpl implements MessageService {
         message.setUpdatedAt(OffsetDateTime.now());
 
         // Если указан канал, устанавливаем его
-        if (createMessageDto.getChannelIds() != null && !createMessageDto.getChannelIds().isEmpty()) {
-            message.setChannelId(createMessageDto.getChannelIds().get(0));
-            log.info("Установлен channelId из channelIds: {}", message.getChannelId());
-        } else if (createMessageDto.getChannelId() != null) {
-            message.setChannelId(createMessageDto.getChannelId());
-            log.info("Установлен channelId: {}", message.getChannelId());
-        } else {
-            log.error("ChannelId не указан в запросе. Это обязательное поле.");
-            throw new RequestRejectedException("ChannelId обязателен для создания сообщения");
-        }
+//        if (createMessageDto.getChannelIds() != null && !createMessageDto.getChannelIds().isEmpty()) {
+//            message.setChannelId(createMessageDto.getChannelIds().get(0));
+//            log.info("Установлен channelId из channelIds: {}", message.getChannelId());
+//        } else if (createMessageDto.getChannelId() != null) {
+//            message.setChannelId(createMessageDto.getChannelId());
+//            log.info("Установлен channelId: {}", message.getChannelId());
+//        } else {
+//            log.error("ChannelId не указан в запросе. Это обязательное поле.");
+//            throw new RequestRejectedException("ChannelId обязателен для создания сообщения");
+//        }
 
         // Интеграция с воркспейс-микросервисом для получения дополнительной информации
         try {

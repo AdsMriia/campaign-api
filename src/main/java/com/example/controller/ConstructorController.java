@@ -51,7 +51,7 @@ public interface ConstructorController {
     GetMessageDto update(@RequestBody CreateMessageDto object, @PathVariable("id") UUID id);
 
     @PostMapping
-    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
+//    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     @Operation(summary = "Создание креатива", description = "Создает новый креатив (сообщение)")
     GetMessageDto create(
             @RequestParam boolean markdown,

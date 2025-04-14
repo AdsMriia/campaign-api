@@ -152,6 +152,10 @@ public class CampaignServiceImpl implements CampaignService {
             throw new IllegalArgumentException("StartDate и EndDate не могут быть пустыми для запланированных кампаний");
         }
 
+        if (campaignRepository.existsByTitle(submitABDto.getTitle())){
+            throw new IllegalArgumentException("Кампания с таким названием уже существует");
+        }
+
         List<CampaignDto> results = new ArrayList<>();
 
         // Получаем текущего пользователя и его рабочее пространство
@@ -187,7 +191,7 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setStartDate(startDate);
             campaign.setEndDate(endDate);
             campaign.setCreatedBy(userId);
-            campaign.setCampaignType(CampaignType.BROADCAST);
+            campaign.setCampaignType(CampaignType.BASIC);
             campaign.setStatus(CampaignStatus.SCHEDULED);
             campaign.setWorkspaceId(workspaceId);
             campaign.setChannelId(channelId);

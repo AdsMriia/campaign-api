@@ -3,6 +3,7 @@ package com.example.repository;
 import java.util.List;
 import java.util.UUID;
 
+import com.example.entity.enums.CompanyStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -12,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import com.example.entity.Campaign;
-import com.example.entity.enums.CompanyStatus;
 import com.example.model.CampaignStatus;
 import com.example.model.CampaignType;
 

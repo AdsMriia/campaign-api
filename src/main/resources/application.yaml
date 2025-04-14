@@ -58,9 +58,9 @@ jwt:
   expiration: 86400000 # 24 hours
 
 services:
-  telegram: ${TELEGRAM_URL:http://localhost:8080}
+  telegram: ${TELEGRAM_URL}
 #  workspace-api: ${WORKSPACE_API}
 
 channel:
   service:
-    url: ${CHANNEL_SERVICE_URL:http://localhost:8080}
+    url: ${CHANNEL_SERVICE_URL}
