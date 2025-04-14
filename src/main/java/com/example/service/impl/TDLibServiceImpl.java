@@ -11,6 +11,7 @@ import com.example.exception.ServiceUnavailableException;
 import com.example.repository.CampaignRepository;
 import com.example.service.TDLibService;
 import com.example.service.WebUserService;
+import com.example.model.dto.CampaignDto;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,26 +82,23 @@ public class TDLibServiceImpl implements TDLibService {
      * {@inheritDoc}
      */
     @Override
-    public boolean scheduleCampaign(UUID campaignId, Long timestamp, String timezone) {
-        log.info("Планирование кампании с ID: {}, время: {}, часовой пояс: {}",
-                campaignId, timestamp, timezone);
+    public boolean scheduleCampaign(CampaignDto campaignDto) {
+        log.info("Планирование кампании: {}", campaignDto);
 
         try {
             String token = webUserService.getCurrentUser().getToken();
-
-            ResponseEntity<String> response = tdLibClient.scheduleCampaign(
-                    token, campaignId, timestamp, timezone);
+            ResponseEntity<String> response = tdLibClient.scheduleCampaign(token, campaignDto);
 
             if (response.getStatusCode() == HttpStatus.OK) {
-                log.info("Кампания {} успешно запланирована на {}", campaignId, timestamp);
+                log.info("Кампания {} успешно запланирована", campaignDto.getId());
                 return true;
             } else {
-                log.error("Ошибка при планировании кампании {}: {}", campaignId, response.getBody());
+                log.error("Ошибка при планировании кампании {}: {}", campaignDto.getId(), response.getBody());
                 return false;
             }
         } catch (Exception e) {
             log.error("Ошибка при взаимодействии с TdLib при планировании кампании {}: {}",
-                    campaignId, e.getMessage(), e);
+                    campaignDto.getId(), e.getMessage(), e);
             return false;
         }
     }

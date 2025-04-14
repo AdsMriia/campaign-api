@@ -2,6 +2,8 @@ package com.example.service;
 
 import java.util.UUID;
 
+import com.example.model.dto.CampaignDto;
+
 /**
  * Сервис для взаимодействия с TdLib API.
  */
@@ -26,12 +28,10 @@ public interface TDLibService {
     /**
      * Запланировать выполнение кампании на указанное время.
      *
-     * @param campaignId идентификатор кампании
-     * @param timestamp временная метка запуска
-     * @param timezone часовой пояс
+     * @param campaignDto объект, содержащий информацию о кампании
      * @return true если запрос выполнен успешно, иначе false
      */
-    boolean scheduleCampaign(UUID campaignId, Long timestamp, String timezone);
+    boolean scheduleCampaign(CampaignDto campaignDto);
 
     /**
      * Проверить статус выполнения кампании.

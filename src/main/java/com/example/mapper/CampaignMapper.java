@@ -26,26 +26,26 @@ public interface CampaignMapper {
     @Mapping(target = "startDate", expression = "java(campaign.getStartDate() != null ? campaign.getStartDate().toEpochSecond() : null)")
     @Mapping(target = "endDate", expression = "java(campaign.getEndDate() != null ? campaign.getEndDate().toEpochSecond() : null)")
     @Mapping(target = "createdAt", expression = "java(campaign.getCreatedAt() != null ? campaign.getCreatedAt().toEpochSecond() : null)")
-    @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(campaign.getUpdatedAt()))")
-    CampaignDto toCampaignDto(Campaign campaign);
-
-    @Mapping(target = "startDate", expression = "java(dto.getStartDate() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getStartDate()), java.time.ZoneOffset.UTC) : null)")
-    @Mapping(target = "endDate", expression = "java(dto.getEndDate() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getEndDate()), java.time.ZoneOffset.UTC) : null)")
-    @Mapping(target = "createdAt", expression = "java(dto.getCreatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getCreatedAt()), java.time.ZoneOffset.UTC) : null)")
-    @Mapping(target = "updatedAt", expression = "java(longToOffsetDateTime(dto.getUpdatedAt()))")
-    @Mapping(target = "updatedBy", ignore = true)
-    Campaign toCampaign(CampaignDto dto);
-
-    @Mapping(target = "createdAt", expression = "java(campaign.getCreatedAt() != null ? campaign.getCreatedAt().toEpochSecond() : null)")
-    @Mapping(target = "startDate", expression = "java(campaign.getStartDate() != null ? campaign.getStartDate().toEpochSecond() : null)")
-    @Mapping(target = "endDate", expression = "java(campaign.getEndDate() != null ? campaign.getEndDate().toEpochSecond() : null)")
-    @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(campaign.getUpdatedAt()))")
+    @Mapping(target = "updatedAt", expression = "java(campaign.getUpdatedAt() != null ? campaign.getUpdatedAt().toEpochSecond() : null)")
+    @Mapping(target = "createdBy", source = "createdBy")
+    @Mapping(target = "campaignType", source = "campaignType")
+    @Mapping(target = "status", source = "status")
+    @Mapping(target = "workspaceId", source = "workspaceId")
     @Mapping(target = "channelId", source = "channelId")
+    @Mapping(target = "isArchived", source = "isArchived")
     @Mapping(target = "maxRetargeted", source = "maxRetargeted")
     @Mapping(target = "audiencePercent", source = "audiencePercent")
     @Mapping(target = "maxCost", source = "maxCost")
     @Mapping(target = "errorMessage", source = "errorMessage")
+    @Mapping(target = "creatives", source = "creatives")
     CampaignDto mapToDto(Campaign campaign);
+
+    @Mapping(target = "startDate", expression = "java(dto.getStartDate() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getStartDate()), java.time.ZoneOffset.UTC) : null)")
+    @Mapping(target = "endDate", expression = "java(dto.getEndDate() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getEndDate()), java.time.ZoneOffset.UTC) : null)")
+    @Mapping(target = "createdAt", expression = "java(dto.getCreatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getCreatedAt()), java.time.ZoneOffset.UTC) : null)")
+    @Mapping(target = "updatedAt", expression = "java(dto.getUpdatedAt() != null ? java.time.OffsetDateTime.ofInstant(java.time.Instant.ofEpochSecond(dto.getUpdatedAt()), java.time.ZoneOffset.UTC) : null)")
+    @Mapping(target = "updatedBy", ignore = true)
+    Campaign mapToEntity(CampaignDto dto);
 
     /**
      * Преобразует OffsetDateTime в Long (эпоха в секундах).

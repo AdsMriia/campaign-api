@@ -4,8 +4,10 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -197,6 +199,8 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Создаем креативы для кампании
             List<CampaignCreative> creatives = new ArrayList<>();
+            log.info("submitABDto.getPercents(): {}", submitABDto.getPercents());
+
             for (int i = 0; i < submitABDto.getPercents().size(); i++) {
                 UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
                 Message message = messageRepository.findById(messageId)
@@ -218,8 +222,15 @@ public class CampaignServiceImpl implements CampaignService {
                 creatives.add(campaignCreativeRepository.save(creative));
             }
 
+            campaignCreativeRepository.saveAll(creatives);
+            savedCampaign.setCreatives(new HashSet<>(creatives));
+
             // Планирование кампании в TdLib сервисе
-            scheduleCampaign(savedCampaign.getId(), startDate, timezone);
+            CampaignDto campaignDto = campaignMapper.mapToDto(savedCampaign);
+            log.info("--------------------------------");
+            log.info("Планирование кампании: {}", campaignDto);
+            log.info("--------------------------------");
+            scheduleCampaign(campaignDto);
 
             // Преобразуем в DTO и добавляем в результаты
             results.add(campaignMapper.mapToDto(savedCampaign));
@@ -599,7 +610,7 @@ public class CampaignServiceImpl implements CampaignService {
     @Override
     public CampaignDto createCampaign(CampaignDto campaignDto) {
         log.info("Создание новой кампании: {}", campaignDto);
-        Campaign campaign = campaignMapper.toCampaign(campaignDto);
+        Campaign campaign = campaignMapper.mapToEntity(campaignDto);
         campaign.setCreatedBy(webUserService.getCurrentUserId());
         campaign.setWorkspaceId(webUserService.getCurrentWorkspaceId());
         return campaignMapper.mapToDto(campaignRepository.save(campaign));
@@ -656,21 +667,19 @@ public class CampaignServiceImpl implements CampaignService {
         }
     }
 
-    private void scheduleCampaign(UUID campaignId, OffsetDateTime startDate, String timezone) {
-        log.info("Планирование кампании с ID: {}, время начала: {}, часовой пояс: {}",
-                campaignId, startDate, timezone);
+    private void scheduleCampaign(CampaignDto campaignDto) {
+        log.info("Планирование кампании: {}", campaignDto);
 
         // Максимальное количество попыток
         final int MAX_RETRIES = 3;
         // Начальная задержка в миллисекундах
         final long INITIAL_BACKOFF = 1000;
 
-        String effectiveTimezone = timezone != null ? timezone : ZoneId.systemDefault().getId();
         String token = webUserService.getCurrentUser().getToken();
 
         // Получаем channelId для этой кампании
-        Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+        Campaign campaign = campaignRepository.findById(campaignDto.getId())
+                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignDto.getId() + " не найдена"));
 
         // Информационное сообщение о канале
         log.info("Планирование кампании для канала: {}", campaign.getChannelId());
@@ -682,12 +691,10 @@ public class CampaignServiceImpl implements CampaignService {
             try {
                 ResponseEntity<String> response = tdLibClient.scheduleCampaign(
                         token,
-                        campaignId,
-                        startDate.toEpochSecond(),
-                        effectiveTimezone);
+                        campaignDto);
 
                 if (response.getStatusCode() == HttpStatus.OK) {
-                    log.info("Кампания с ID {} успешно запланирована, попытка {}", campaignId, attempts);
+                    log.info("Кампания с ID {} успешно запланирована, попытка {}", campaignDto.getId(), attempts);
                     return; // Успешное завершение
                 } else {
                     log.error("Ошибка при планировании кампании в TdLib: код статуса {}, тело ответа: {}, попытка {}",
@@ -695,7 +702,7 @@ public class CampaignServiceImpl implements CampaignService {
 
                     // Если последняя попытка, обновляем статус
                     if (attempts >= MAX_RETRIES) {
-                        updateCampaignStatusAfterError(campaignId,
+                        updateCampaignStatusAfterError(campaignDto.getId(),
                                 "Ошибка планирования: " + response.getStatusCode() + " " + response.getBody());
                     } else {
                         // Ждем перед следующей попыткой (увеличение задержки в 2 раза с каждой попыткой)
@@ -713,7 +720,7 @@ public class CampaignServiceImpl implements CampaignService {
                 if (status == 403 || attempts >= MAX_RETRIES) {
                     String errorMessage = "Ошибка доступа к TdLib: "
                             + (status == 403 ? "Отказано в доступе" : message);
-                    updateCampaignStatusAfterError(campaignId, errorMessage);
+                    updateCampaignStatusAfterError(campaignDto.getId(), errorMessage);
                     return;
                 }
 
@@ -728,7 +735,7 @@ public class CampaignServiceImpl implements CampaignService {
                         e.getMessage(), e.getStatusCode(), attempts);
 
                 if (attempts >= MAX_RETRIES) {
-                    updateCampaignStatusAfterError(campaignId, "Ошибка в TdLib: " + e.getMessage());
+                    updateCampaignStatusAfterError(campaignDto.getId(), "Ошибка в TdLib: " + e.getMessage());
                     return;
                 }
 
@@ -741,14 +748,14 @@ public class CampaignServiceImpl implements CampaignService {
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
                 log.error("Прервано ожидание перед повторной попыткой", e);
-                updateCampaignStatusAfterError(campaignId, "Прервано ожидание: " + e.getMessage());
+                updateCampaignStatusAfterError(campaignDto.getId(), "Прервано ожидание: " + e.getMessage());
                 return;
             } catch (Exception e) {
                 log.error("Непредвиденная ошибка при планировании кампании в TdLib: {}, попытка: {}",
                         e.getMessage(), attempts, e);
 
                 if (attempts >= MAX_RETRIES) {
-                    updateCampaignStatusAfterError(campaignId, "Непредвиденная ошибка: " + e.getMessage());
+                    updateCampaignStatusAfterError(campaignDto.getId(), "Непредвиденная ошибка: " + e.getMessage());
                     return;
                 }
 

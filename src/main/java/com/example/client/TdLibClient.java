@@ -1,19 +1,17 @@
 package com.example.client;
 
 import java.util.UUID;
-import java.util.List;
-import java.util.Map;
 
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import com.example.config.FeignConfiguration;
-import com.example.dto.CampaignDto;
-import com.example.dto.ChannelMember;
+import com.example.model.dto.CampaignDto;
+
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 /**
  * Feign клиент для взаимодействия с TdLib сервисом. Предоставляет методы для
@@ -43,12 +41,11 @@ public interface TdLibClient {
      * @param timezone часовой пояс
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/campaign/schedule")
+    @PostMapping("/api/audience/split")
     ResponseEntity<String> scheduleCampaign(
             @RequestHeader("Authorization") String authorization,
-            @RequestParam("campaignId") UUID campaignId,
-            @RequestParam("startTimestamp") Long startTimestamp,
-            @RequestParam("timezone") String timezone);
+            @RequestBody CampaignDto campaignDto
+    );
 
     /**
      * Останавливает активную кампанию.
@@ -116,8 +113,8 @@ public interface TdLibClient {
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);
 
-    @PostMapping("/split")
-    ResponseEntity<Map<UUID, List<ChannelMember>>> splitAudienceByPercentages(
-            @RequestHeader("Authorization") String authorization,
-            @RequestBody CampaignDto campaignDto);
+    // @PostMapping("/split")
+    // ResponseEntity<Map<UUID, List<ChannelMember>>> splitAudienceByPercentages(
+    //         @RequestHeader("Authorization") String authorization,
+    //         @RequestBody CampaignDto campaignDto);
 }
