@@ -179,7 +179,7 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
             // Проверяем, что канал существует и принадлежит пользователю
-            ResponseEntity<Object> response = channelClient.getById(webUserService.getCurrentUser().getToken(), channelId);
+            ResponseEntity<Object> response = channelClient.getById("Bearer " + webUserService.getCurrentUser().getToken(), channelId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
@@ -680,6 +680,8 @@ public class CampaignServiceImpl implements CampaignService {
         final long INITIAL_BACKOFF = 1000;
 
         String token = webUserService.getCurrentUser().getToken();
+        log.info("=======================================================================================");
+        log.info(token);
 
         // Получаем channelId для этой кампании
         Campaign campaign = campaignRepository.findById(campaignDto.getId())
@@ -694,7 +696,7 @@ public class CampaignServiceImpl implements CampaignService {
             attempts++;
             try {
                 ResponseEntity<String> response = tdLibClient.scheduleCampaign(
-                        token,
+                        "Bearer " + token,
                         campaignDto);
 
                 if (response.getStatusCode() == HttpStatus.OK) {

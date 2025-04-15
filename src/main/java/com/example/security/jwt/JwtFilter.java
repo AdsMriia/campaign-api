@@ -2,7 +2,11 @@ package com.example.security.jwt;
 
 import java.io.IOException;
 import java.util.Enumeration;
+import java.util.UUID;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
@@ -36,19 +40,8 @@ public class JwtFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-
-        log.info("==============================================");
-        Enumeration<String> headerNames = request.getHeaderNames();
-        while (headerNames.hasMoreElements()) {
-            String headerName = headerNames.nextElement();
-            System.out.println(headerName);
-            // do something with the header name
-        }
-
-        // Проверяем, нужно ли аутентифицировать этот запрос
         String requestURI = request.getRequestURI();
         String method = request.getMethod();
-        log.debug("Обработка запроса: {} {}", method, requestURI);
 
         boolean isPublicUrl = SecurityConfig.PUBLIC_URLS.stream()
                 .anyMatch(pattern -> pathMatcher.match(pattern, requestURI));
@@ -63,43 +56,41 @@ public class JwtFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         log.debug("Заголовок авторизации: {}", authHeader);
 
-        // Если нет заголовка Authorization или он не начинается с "Bearer ", пропускаем запрос
+
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            log.warn("JWT токен не найден в запросе {} {}, продолжение без аутентификации", method, requestURI);
-            filterChain.doFilter(request, response);
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Unauthorized", "No such token");
             return;
         }
 
-        final String jwt = authHeader.substring(7);
-        try {
-            // Валидируем токен
-            WebUserDto userDto = jwtService.validateToken(jwt);
-            log.debug("JWT токен успешно валидирован для пользователя: {}", userDto.getEmail());
+        final String jwt = authHeader.split(" ")[1];
 
-            // Если аутентификация не установлена
-            if (SecurityContextHolder.getContext().getAuthentication() == null) {
-                CustomUserDetails userDetails = new CustomUserDetails(userDto);
+        WebUserDto userDto = jwtService.validateToken(jwt);
 
-                // Создаем токен аутентификации
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+        CustomUserDetails userDetails = new CustomUserDetails(userDto);
 
-                // Добавляем детали аутентификации
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                jwt,
+                userDetails.getAuthorities()
+        );
 
-                // Устанавливаем аутентификацию в контекст
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                log.info("Установлена аутентификация для пользователя: {}", userDto.getEmail());
-            }
-        } catch (TokenValidationException e) {
-            log.error("Ошибка валидации JWT: {}", e.getMessage());
-        } catch (Exception e) {
-            log.error("Непредвиденная ошибка при валидации JWT: {}", e.getMessage(), e);
-        }
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
 
+        // Пропускаем все запросы без проверки, так как это заглушка
         filterChain.doFilter(request, response);
+    }
+    private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String error, String message) throws IOException {
+        response.setStatus(status.value());
+        response.setContentType("application/json");
+        response.getWriter().write(convertObjectToJson(new ErrorResponse(error, message)));
+    }
+
+    public String convertObjectToJson(Object object) throws JsonProcessingException {
+        if (object == null) {
+            return null;
+        }
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.writeValueAsString(object);
     }
 }
