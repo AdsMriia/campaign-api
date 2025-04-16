@@ -5,18 +5,7 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                       http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.20.xsd">
 
-    <!-- SQL миграции вместо XML -->
-    <include file="classpath:db/changelog/sql/000-init-liquibase.sql"/>
-    <include file="classpath:db/changelog/sql/001-initial-schema.sql"/>
-    <include file="classpath:db/changelog/sql/002-add-campaign-fields.sql"/>
-    <include file="classpath:db/changelog/sql/003-fix-messages-table.sql"/>
-    <include file="classpath:db/changelog/sql/004-check-correct-structure.sql"/>
-    <include file="classpath:db/changelog/sql/005-add-base-entity-columns.sql"/>
-    <include file="classpath:db/changelog/sql/006-add-audit-fields-to-campaign-creatives.sql"/>
-    <include file="classpath:db/changelog/sql/007-add-audit-fields.sql"/>
-    <include file="classpath:db/changelog/sql/008-add-updated-at-to-campaigns.sql"/>
-    <include file="classpath:db/changelog/sql/009-add-audit-fields-to-media.sql"/>
-    <include file="classpath:db/changelog/sql/010-update-retarget-stats-table.sql"/>
-    <include file="classpath:db/changelog/sql/011-add-error-message-to-campaigns.sql"/>
+    <!-- SQL миграция с полной схемой базы данных -->
+    <include file="sql/schema.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog> 
