@@ -1,5 +1,15 @@
 package com.example.controller.impl;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.example.controller.CampaignController;
 import com.example.model.CampaignStatus;
 import com.example.model.CampaignType;
@@ -9,19 +19,11 @@ import com.example.model.dto.ExpectedRetargetDto;
 import com.example.model.dto.RetargetStatsDto;
 import com.example.model.dto.SubmitABDto;
 import com.example.service.CampaignService;
+
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
-import java.util.UUID;
 
 /**
  * Контроллер для управления кампаниями. Предоставляет операции создания,
@@ -38,6 +40,7 @@ public class CampaignControllerImpl implements CampaignController {
 
     @Override
     public List<CampaignDto> campaignSubmit(@Valid @RequestBody SubmitABDto submitABDto, @RequestParam(required = false) String timezone) {
+        //todo формирование бота в логике
         log.info("Получен запрос на создание кампании: {}, часовой пояс: {}", submitABDto, timezone);
 
         if (submitABDto.getCampaignType() == CampaignType.IMMEDIATE) {
