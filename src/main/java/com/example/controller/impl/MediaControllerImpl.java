@@ -1,11 +1,8 @@
 package com.example.controller.impl;
 
 import java.util.List;
-import java.util.UUID;
 
-import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,25 +31,10 @@ public class MediaControllerImpl implements MediaController {
     private final UserProvider userProvider;
 
     @Override
-    public Resource getMedia(@PathVariable("id") UUID id) {
-        log.info("Получен запрос на получение медиафайла с ID: {}", id);
-        return mediaService.getMedia(id);
-    }
-
-    @Override
     public MediaDto uploadMedia(@RequestParam("file") MultipartFile file) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
 
         return mediaService.uploadMedia(file, userProvider.getCurrentUser().getWorkspaceId());
-    }
-
-    @Override
-    public MediaDto uploadMediaForMessage(@RequestParam("file") MultipartFile file,
-            @RequestParam("messageId") UUID messageId) {
-        log.info("Получен запрос на загрузку медиафайла с привязкой к сообщению: {}, messageId: {}",
-                file.getOriginalFilename(), messageId);
-
-        return mediaService.uploadMedia(file, userProvider.getCurrentUser().getWorkspaceId(), messageId);
     }
 
     @Override
@@ -61,9 +43,4 @@ public class MediaControllerImpl implements MediaController {
         return mediaService.getAllMy();
     }
 
-    @Override
-    public List<MediaDto> getByWorkspaceId(@RequestParam List<UUID> workspaceIds) {
-        log.info("Получен запрос на получение медиафайлов по рабочим пространствам: {}", workspaceIds);
-        return mediaService.getByWorkspaceId(workspaceIds);
-    }
 }
