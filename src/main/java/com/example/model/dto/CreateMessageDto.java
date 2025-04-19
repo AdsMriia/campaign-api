@@ -51,52 +51,14 @@ public class CreateMessageDto {
     private Boolean markDown;
 
     /**
-     * Идентификатор канала.
-     */
-    @NotNull(message = "Channel ID cannot be null")
-    @JsonProperty("channel_id")
-    private UUID channelId;
-
-    /**
-     * Список идентификаторов каналов.
-     */
-    @JsonProperty("channel_ids")
-    private List<UUID> channelIds;
-
-    /**
      * Список кнопок/действий сообщения.
      */
     @JsonProperty("actions")
     private List<ActionDto> actions = new ArrayList<>();
 
     /**
-     * Список медиа-файлов сообщения.
+     * Имя медиа-файла.
      */
-    @JsonProperty("medias")
-    private List<MediaDto> medias = new ArrayList<>();
-
-    /**
-     * Список идентификаторов медиа-файлов.
-     */
-    @JsonProperty("media_ids")
-    private List<UUID> mediaIds = new ArrayList<>();
-
-    /**
-     * Список имен медиа-файлов.
-     */
-    @JsonProperty("media_names")
-    private List<String> mediaNames = new ArrayList<>();
-
-    /**
-     * Получает список идентификаторов каналов. Если channelIds пуст, но
-     * channelId задан, возвращает список с единственным элементом channelId.
-     *
-     * @return список идентификаторов каналов
-     */
-    public List<UUID> getChannelIds() {
-        if ((channelIds == null || channelIds.isEmpty()) && channelId != null) {
-            return List.of(channelId);
-        }
-        return channelIds != null ? channelIds : new ArrayList<>();
-    }
+    @JsonProperty("media_name")
+    private String mediaName;
 }

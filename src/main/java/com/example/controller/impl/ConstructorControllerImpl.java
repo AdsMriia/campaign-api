@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -19,11 +20,14 @@ import com.example.model.dto.MessageDto;
 import com.example.service.MessageService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Контроллер для управления конструктором со общений
+ * Контроллер для управления креативами (сообщениями). Предоставляет
+ * функциональность для создания, обновления и управления сообщениями для
+ * кампаний.
  */
 @RestController
 @RequiredArgsConstructor
@@ -52,23 +56,24 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    public GetMessageDto update(@RequestBody CreateMessageDto object, @PathVariable("id") UUID id) {
+    public GetMessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(object, id);
     }
 
     @Override
     public GetMessageDto create(
-            @RequestParam boolean markdown,
-            @RequestBody CreateMessageDto createMessageDto) {
+            @RequestParam(defaultValue = "false") boolean markdown,
+            @RequestBody @Valid CreateMessageDto createMessageDto) {
         log.info("Получен запрос на создание креатива: {}, markdown: {}", createMessageDto, markdown);
         return messageService.create(markdown, createMessageDto);
     }
 
     @Override
-    public void delete(@PathVariable("id") UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @Override
