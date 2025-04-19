@@ -23,7 +23,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Контроллер для управления конструктором сообщений
+ * Контроллер для управления конструктором со общений
  */
 @RestController
 @RequiredArgsConstructor

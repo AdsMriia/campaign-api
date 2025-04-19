@@ -41,6 +41,7 @@ public class JwtService {
                 .claim("user_id", user.getId().toString())
                 .claim("roles", user.getRoles())
                 .claim("workspace_id", user.getWorkspaceId())
+                .claim("tokenType", "access")
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey())

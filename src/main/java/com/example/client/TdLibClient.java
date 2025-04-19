@@ -41,7 +41,7 @@ public interface TdLibClient {
      * @param timezone часовой пояс
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/audience/split")
+    @PostMapping("/api/audience/campaign/init")
     ResponseEntity<String> scheduleCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestBody CampaignDto campaignDto

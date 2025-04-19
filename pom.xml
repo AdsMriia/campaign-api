@@ -29,12 +29,12 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-impl</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-impl</artifactId>-->
+<!--            <version>0.12.6</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
 
         <dependency>
             <groupId>com.h2database</groupId>
@@ -43,12 +43,12 @@
             <scope>test</scope>
         </dependency>
 
-        <dependency>
-            <groupId>io.jsonwebtoken</groupId>
-            <artifactId>jjwt-jackson</artifactId>
-            <version>0.12.6</version>
-            <scope>runtime</scope>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-jackson</artifactId>-->
+<!--            <version>0.12.6</version>-->
+<!--            <scope>runtime</scope>-->
+<!--        </dependency>-->
         <!--	Parameter names	-->
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
@@ -89,10 +89,28 @@
         <!--            <version>9.40</version>-->
         <!--        </dependency>-->
         <!-- io.jsonwebtoken/jjwt-api -->
+<!--        <dependency>-->
+<!--            <groupId>io.jsonwebtoken</groupId>-->
+<!--            <artifactId>jjwt-api</artifactId>-->
+<!--            <version>0.12.6</version>-->
+<!--        </dependency>-->
+
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>0.12.6</version>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-jackson</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-impl</artifactId>
+            <version>0.12.6</version>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.projectlombok/lombok-mapstruct-binding -->
