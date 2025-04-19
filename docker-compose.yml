@@ -1,16 +1,39 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: campaign_db
-    environment:
-      POSTGRES_DB: campaign_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+  # Основное приложение
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: campaign-app
     ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - "8083:8080"
+    depends_on:
+      - postgres
+    restart: unless-stopped
+    networks:
+      - campaign-network
 
- 
+  # База данных PostgreSQL
+  postgres:
+    image: postgres:13-alpine
+    container_name: campaign-postgres
+    ports:
+      - "5003:5432"
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - campaign-network
+
+volumes:
+  postgres-data:
+
+networks:
+  campaign-network:
+    driver: bridge 
