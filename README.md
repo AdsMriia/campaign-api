@@ -2,6 +2,9 @@
 
 Микросервис для управления рекламными кампаниями в Telegram.
 
+## Документяция
+[What is immediate campaign](https://github.com/orgs/AdsMriia/discussions/31)
+
 ## Технологии
 
 - Java 21
