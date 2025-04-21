@@ -1,4 +1,4 @@
-FROM maven:3.8.4-openjdk-11-slim AS build
+FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /app
 
 # Копируем файлы pom.xml
@@ -14,7 +14,7 @@ COPY . .
 RUN mvn package 
 
 # Финальный образ
-FROM openjdk:11-jre-slim
+FROM eclipse-temurin:21-jre
 WORKDIR /app
 
 # Устанавливаем зависимости для TdLib, если необходимо
