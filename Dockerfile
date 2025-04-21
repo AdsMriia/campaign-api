@@ -8,7 +8,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 # Копируем исходный код
-COPY src ./src
+COPY . .
 
 # Собираем приложение, пропуская тесты для ускорения сборки
 RUN mvn package 

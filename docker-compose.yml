@@ -11,8 +11,10 @@ services:
     depends_on:
       - postgres
     restart: unless-stopped
+    env_file:
+      - .env
     networks:
-      - campaign-network
+      - micro-network
 
   # База данных PostgreSQL
   postgres:
@@ -28,11 +30,11 @@ services:
       - postgres-data:/var/lib/postgresql/data
     restart: unless-stopped
     networks:
-      - campaign-network
+      - micro-network
 
 volumes:
   postgres-data:
 
 networks:
-  campaign-network:
-    driver: bridge 
+  micro-network:
+    external: true
