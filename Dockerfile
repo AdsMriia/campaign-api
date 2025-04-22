@@ -1,18 +1,34 @@
-FROM eclipse-temurin:21-jdk-alpine as build
-WORKDIR /workspace/app
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /app
 
-COPY mvnw .
-COPY .mvn .mvn
+# Копируем файлы pom.xml
 COPY pom.xml .
-COPY src src
 
-RUN ./mvnw install -DskipTests
-RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
+# Загружаем зависимости отдельно от кода для лучшего кэширования
+RUN mvn dependency:go-offline -B
 
-FROM eclipse-temurin:21-jre-alpine
-VOLUME /tmp
-ARG DEPENDENCY=/workspace/app/target/dependency
-COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
-COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
-ENTRYPOINT ["java","-cp","app:app/lib/*","com.example.CampaignApplication"] 
+# Копируем исходный код
+COPY . .
+
+# Собираем приложение, пропуская тесты для ускорения сборки
+RUN mvn package 
+
+# Финальный образ
+FROM eclipse-temurin:21-jre
+WORKDIR /app
+
+# Устанавливаем зависимости для TdLib, если необходимо
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    zlib1g-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем JAR из этапа сборки
+COPY --from=build /app/target/*.jar app.jar
+
+# Порт, который будет доступен извне
+EXPOSE 8080
+
+# Точка входа для запуска приложения
+ENTRYPOINT ["java", "-jar", "app.jar"] 
