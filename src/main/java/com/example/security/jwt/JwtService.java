@@ -49,6 +49,7 @@ public class JwtService {
     }
 
     public WebUserDto validateToken(String token) {
+        log.info("Проверка токена: {}", token);
         try {
             Claims claims = Jwts.parser()
                     .verifyWith(getSigningKey())

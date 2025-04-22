@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/campaigns")
+@RequestMapping
 @Tag(name = "Campaign API", description = "API для управления рекламными кампаниями")
 @Slf4j
 public class CampaignControllerImpl implements CampaignController {
