@@ -40,16 +40,16 @@ server:
   error:
     include-message: always
     include-binding-errors: always
-  port: 8082
+  port: 8080
   servlet:
     context-path: ${CONTEXT_PATH}
 
-springdoc:
-  api-docs:
-    enabled: true
-    path: /swagger/docs
-  swagger-ui:
-    path: /swagger/index.html
+#springdoc:
+#  api-docs:
+#    enabled: true
+#    path: /swagger/docs
+#  swagger-ui:
+#    path: /swagger/index.html
 
 jwt:
   secret: ${SPRING_JWT_SECRET}
