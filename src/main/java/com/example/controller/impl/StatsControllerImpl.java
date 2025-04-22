@@ -2,13 +2,8 @@ package com.example.controller.impl;
 
 import com.example.controller.StatsController;
 import com.example.model.MessageType;
-import com.example.model.dto.ChartDto;
-import com.example.model.dto.GroupedWebStats;
-import com.example.model.dto.HistoryDto;
-import com.example.model.dto.PollStatsDto;
-import com.example.model.dto.SimpleDate;
-import com.example.model.dto.StatsDto;
-import com.example.model.dto.WebStatsDto;
+import com.example.model.dto.*;
+import com.example.service.CampaignService;
 import com.example.service.StatsService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +28,7 @@ import java.util.UUID;
 public class StatsControllerImpl implements StatsController {
 
     private final StatsService statsService;
+    private final CampaignService campaignService;
 
     @Override
     public SimpleDate getDates(
@@ -105,5 +101,18 @@ public class StatsControllerImpl implements StatsController {
                 + "дата окончания={}, страница={}, размер={}, возрастание={}, сортировка={}",
                 channelIds, startDate, endDate, page, size, asc, sortedBy);
         return statsService.getPollResults(channelIds, endDate, startDate, page, size, asc, sortedBy);
+    }
+    @Override
+    public Page<RetargetStatsDto> getAllStats(
+            Integer page,
+            Integer size,
+            Boolean asc,
+            String sort,
+            Long startDate,
+            Long endDate,
+            List<UUID> channelId) {
+        log.info("Получение всей статистики с параметрами: страница={}, размер={}, возрастание={}, сортировка={}, дата начала={}, дата окончания={}, ID канала={}",
+                page, size, asc, sort, startDate, endDate, channelId);
+        return campaignService.getAllStats(page, size, asc, sort, startDate, endDate, channelId);
     }
 }

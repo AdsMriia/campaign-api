@@ -3,6 +3,7 @@ package com.example.controller;
 import java.util.List;
 import java.util.UUID;
 
+import com.example.model.dto.*;
 import org.springframework.data.domain.Page;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,13 +13,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.model.MessageType;
-import com.example.model.dto.ChartDto;
-import com.example.model.dto.GroupedWebStats;
-import com.example.model.dto.HistoryDto;
-import com.example.model.dto.PollStatsDto;
-import com.example.model.dto.SimpleDate;
-import com.example.model.dto.StatsDto;
-import com.example.model.dto.WebStatsDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -215,6 +209,38 @@ public interface StatsController {
             @RequestParam List<Long> interval,
             @Parameter(description = "Гранулярность данных", required = true)
             @RequestParam Integer granularity
+    );
+
+    @Operation(
+            summary = "Получение статистики всех кампаний",
+            description = "Возвращает статистику с возможностью фильтрации",
+            responses = {
+                @ApiResponse(
+                        responseCode = "200",
+                        description = "Статистика успешно получена",
+                        content = @Content(
+                                mediaType = "application/json",
+                                schema = @Schema(implementation = Page.class)
+                        )
+                )
+            }
+    )
+    @GetMapping("/retarget")
+    Page<RetargetStatsDto> getAllStats(
+            @Parameter(description = "Номер страницы (начиная с 0)")
+            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
+            @Parameter(description = "Размер страницы")
+            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
+            @Parameter(description = "Порядок сортировки (по возрастанию или убыванию)")
+            @RequestParam(value = "asc", required = false, defaultValue = "true") Boolean asc,
+            @Parameter(description = "Поле для сортировки")
+            @RequestParam(value = "sortedBy", required = false, defaultValue = "createdAt") String sort,
+            @Parameter(description = "Дата начала периода (в миллисекундах)")
+            @RequestParam(value = "startDate", required = false) Long startDate,
+            @Parameter(description = "Дата окончания периода (в миллисекундах)")
+            @RequestParam(value = "endDate", required = false) Long endDate,
+            @Parameter(description = "Идентификатор канала для фильтрации")
+            @RequestParam(value = "channelId", required = false) List<UUID> channelId
     );
 
     @Operation(

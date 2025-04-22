@@ -91,38 +91,6 @@ public interface CampaignController {
             @PathVariable("id") UUID campaignId);
 
     @Operation(
-            summary = "Получение статистики всех кампаний",
-            description = "Возвращает статистику с возможностью фильтрации",
-            responses = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Статистика успешно получена",
-                        content = @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = Page.class)
-                        )
-                )
-            }
-    )
-    @GetMapping("/stats")
-    Page<RetargetStatsDto> getAllStats(
-            @Parameter(description = "Номер страницы (начиная с 0)")
-            @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
-            @Parameter(description = "Размер страницы")
-            @RequestParam(value = "size", required = false, defaultValue = "10") Integer size,
-            @Parameter(description = "Порядок сортировки (по возрастанию или убыванию)")
-            @RequestParam(value = "asc", required = false, defaultValue = "true") Boolean asc,
-            @Parameter(description = "Поле для сортировки")
-            @RequestParam(value = "sortedBy", required = false, defaultValue = "createdAt") String sort,
-            @Parameter(description = "Дата начала периода (в миллисекундах)")
-            @RequestParam(value = "startDate", required = false) Long startDate,
-            @Parameter(description = "Дата окончания периода (в миллисекундах)")
-            @RequestParam(value = "endDate", required = false) Long endDate,
-            @Parameter(description = "Идентификатор канала для фильтрации")
-            @RequestParam(value = "channelId", required = false) List<UUID> channelId
-    );
-
-    @Operation(
             summary = "Остановка кампании",
             description = "Останавливает выполнение кампании",
             responses = {

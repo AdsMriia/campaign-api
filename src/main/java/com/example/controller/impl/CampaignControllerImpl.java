@@ -63,20 +63,6 @@ public class CampaignControllerImpl implements CampaignController {
     }
 
     @Override
-    public Page<RetargetStatsDto> getAllStats(
-            Integer page,
-            Integer size,
-            Boolean asc,
-            String sort,
-            Long startDate,
-            Long endDate,
-            List<UUID> channelId) {
-        log.info("Получение всей статистики с параметрами: страница={}, размер={}, возрастание={}, сортировка={}, дата начала={}, дата окончания={}, ID канала={}",
-                page, size, asc, sort, startDate, endDate, channelId);
-        return campaignService.getAllStats(page, size, asc, sort, startDate, endDate, channelId);
-    }
-
-    @Override
     public boolean stopRetarget(@PathVariable("id") UUID campaignId) {
         log.info("Остановка ретаргетинга для кампании с ID: {}", campaignId);
         return campaignService.stopRetarget(campaignId);
