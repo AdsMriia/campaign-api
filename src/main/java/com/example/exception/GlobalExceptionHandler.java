@@ -1,5 +1,7 @@
-package com.example.exception;
+package com.example.controller.impl;
 
+import com.example.exception.ErrorResponse;
+import com.example.exception.TokenValidationException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -22,7 +24,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(TokenValidationException.class)
-    public ResponseEntity<ErrorResponse> handleTokenValidationException(TokenValidationException ex) {
+    public ResponseEntity<ErrorResponse> handleTokenValidationException(Exception ex) {
         log.error("Token validation failed: {}", ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
