@@ -8,6 +8,8 @@ services:
     container_name: campaign-app
     volumes:
       - ${MEDIA_PATH}:/uploads
+      - /var/jenkins/tools/ffmpeg/ffmpeg:/app/tools/ffmpeg/ffmpeg
+      - /var/jenkins/tools/ffmpeg/ffprobe:/app/tools/ffmpeg/ffprobe
     ports:
       - "8083:8080"
     depends_on:
