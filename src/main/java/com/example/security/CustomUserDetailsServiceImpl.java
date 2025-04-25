@@ -29,8 +29,8 @@ public class CustomUserDetailsServiceImpl {
         WebUserDto userDto = new WebUserDto();
         userDto.setId(userId);
         userDto.setEmail(email);
+        // todo
         userDto.setRoles(new ArrayList<>());
-        userDto.setWorkspaceId(currentWorkspace);
         return new CustomUserDetails(userDto);
     }
 }

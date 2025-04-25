@@ -31,8 +31,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/constructor")
-@Tag(name = "Constructor API", description = "API для создания и управления креативами (сообщениями)")
 @Slf4j
 public class ConstructorControllerImpl implements ConstructorController {
 
@@ -63,10 +61,10 @@ public class ConstructorControllerImpl implements ConstructorController {
 
     @Override
     public GetMessageDto create(
-            @RequestParam(defaultValue = "false") boolean markdown,
+            @RequestParam("workspaceId") UUID workspaceId,
             @RequestBody @Valid CreateMessageDto createMessageDto) {
-        log.info("Получен запрос на создание креатива: {}, markdown: {}", createMessageDto, markdown);
-        return messageService.create(markdown, createMessageDto);
+        log.info("Получен запрос на создание креатива: {}, workspaceId: {}", createMessageDto, workspaceId);
+        return messageService.create(createMessageDto, workspaceId);
     }
 
     @Override
@@ -76,9 +74,9 @@ public class ConstructorControllerImpl implements ConstructorController {
         return ResponseEntity.noContent().build();
     }
 
-    @Override
-    public List<MessageDto> getByWorkspaceId(@RequestParam List<UUID> workspaceIds) {
-        log.info("Получен запрос на получение креативов по рабочим пространствам: {}", workspaceIds);
-        return messageService.getByWorkspaceId(workspaceIds);
-    }
+//    @Override
+//    public List<MessageDto> getByWorkspaceId(@RequestParam List<UUID> workspaceIds) {
+//        log.info("Получен запрос на получение креативов по рабочим пространствам: {}", workspaceIds);
+//        return messageService.getByWorkspaceId(workspaceIds);
+//    }
 }

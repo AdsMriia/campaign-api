@@ -35,7 +35,7 @@ import jakarta.validation.Valid;
  * кампаний.
  */
 @RestController
-@RequestMapping("/constructor")
+@RequestMapping("/workspace/{workspaceId}/constructor")
 @Tag(name = "Constructor API", description = "API для создания и управления креативами (сообщениями)")
 public interface ConstructorController {
 
@@ -153,8 +153,8 @@ public interface ConstructorController {
     )
     @PostMapping
     GetMessageDto create(
-            @Parameter(description = "Использовать markdown форматирование")
-            @RequestParam(defaultValue = "false") boolean markdown,
+            @Parameter(description = "Идентификатор рабочего пространства", required = true)
+            @RequestParam UUID workspaceId,
             @Parameter(description = "Данные для создания креатива", required = true)
             @RequestBody @Valid CreateMessageDto createMessageDto
     );
@@ -182,22 +182,22 @@ public interface ConstructorController {
             @Parameter(description = "Идентификатор креатива", required = true)
             @PathVariable("id") UUID id);
 
-    @Operation(
-            summary = "Получение креативов по рабочим пространствам",
-            description = "Возвращает список креативов по указанным рабочим пространствам",
-            responses = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Список креативов успешно получен",
-                        content = @Content(
-                                mediaType = "application/json",
-                                schema = @Schema(implementation = MessageDto.class)
-                        )
-                )
-            }
-    )
-    @GetMapping("/workspace")
-    List<MessageDto> getByWorkspaceId(
-            @Parameter(description = "Список идентификаторов рабочих пространств", required = true)
-            @RequestParam List<UUID> workspaceIds);
+//    @Operation(
+//            summary = "Получение креативов по рабочим пространствам",
+//            description = "Возвращает список креативов по указанным рабочим пространствам",
+//            responses = {
+//                @ApiResponse(
+//                        responseCode = "200",
+//                        description = "Список креативов успешно получен",
+//                        content = @Content(
+//                                mediaType = "application/json",
+//                                schema = @Schema(implementation = MessageDto.class)
+//                        )
+//                )
+//            }
+//    )
+//    @GetMapping("/workspace")
+//    List<MessageDto> getByWorkspaceId(
+//            @Parameter(description = "Список идентификаторов рабочих пространств", required = true)
+//            @RequestParam List<UUID> workspaceIds);
 }

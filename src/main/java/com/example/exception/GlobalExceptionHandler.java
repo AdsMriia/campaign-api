@@ -1,7 +1,5 @@
-package com.example.controller.impl;
+package com.example.exception;
 
-import com.example.exception.ErrorResponse;
-import com.example.exception.TokenValidationException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;

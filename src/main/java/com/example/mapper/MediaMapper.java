@@ -28,7 +28,6 @@ public interface MediaMapper {
      * @param mediaDto DTO медиафайла
      * @return сущность медиафайла
      */
-    @Mapping(target = "message", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
@@ -42,7 +41,6 @@ public interface MediaMapper {
      * @param fileExtension расширение файла
      * @return сущность медиафайла
      */
-    @Mapping(target = "message", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

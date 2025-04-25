@@ -15,20 +15,20 @@ import com.example.entity.Media;
 @Repository
 public interface MediaRepository extends JpaRepository<Media, UUID> {
 
-    /**
-     * Находит все медиафайлы, связанные с указанным сообщением.
-     *
-     * @param messageId идентификатор сообщения
-     * @return список медиафайлов
-     */
-    List<Media> findByMessageId(UUID messageId);
+//    /**
+//     * Находит все медиафайлы, связанные с указанным сообщением.
+//     *
+//     * @param messageId идентификатор сообщения
+//     * @return список медиафайлов
+//     */
+//    List<Media> findByMessageId(UUID messageId);
 
-    /**
-     * Удаляет все медиафайлы, связанные с указанным сообщением.
-     *
-     * @param messageId идентификатор сообщения
-     */
-    void deleteAllByMessageId(UUID messageId);
+//    /**
+//     * Удаляет все медиафайлы, связанные с указанным сообщением.
+//     *
+//     * @param messageId идентификатор сообщения
+//     */
+//    void deleteAllByMessageId(UUID messageId);
 
     /**
      * Находит медиафайл по имени файла и идентификатору рабочего пространства.

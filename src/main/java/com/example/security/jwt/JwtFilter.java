@@ -64,21 +64,27 @@ public class JwtFilter extends OncePerRequestFilter {
 
         final String jwt = authHeader.split(" ")[1];
 
-        WebUserDto userDto = jwtService.validateToken(jwt);
+        log.info("============================================");
 
-        CustomUserDetails userDetails = new CustomUserDetails(userDto);
+        try {
+            WebUserDto userDto = jwtService.validateToken(jwt);
 
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                jwt,
-                userDetails.getAuthorities()
-        );
+            CustomUserDetails userDetails = new CustomUserDetails(userDto);
 
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    jwt,
+                    userDetails.getAuthorities()
+            );
 
-        // Пропускаем все запросы без проверки, так как это заглушка
-        filterChain.doFilter(request, response);
+            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+            SecurityContextHolder.getContext().setAuthentication(authToken);
+
+            // Пропускаем все запросы без проверки, так как это заглушка
+            filterChain.doFilter(request, response);
+        } catch (TokenValidationException e) {
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid token", e.getMessage());
+        }
     }
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String error, String message) throws IOException {
         response.setStatus(status.value());

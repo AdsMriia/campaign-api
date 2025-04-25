@@ -5,13 +5,20 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import com.example.client.WorkspaceClient;
+import com.example.exception.RequestRejectedException;
+import com.example.security.UserProvider;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -42,118 +49,168 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class MediaServiceImpl implements MediaService {
 
-    private static final String UPLOAD_DIR = "uploads";
+    private static final String UPLOAD_DIR = "/uploads";
+
+    private final UserProvider userProvider;
 
     private final MediaRepository mediaRepository;
     private final WebUserService webUserService;
     private final MediaMapper mediaMapper;
     private final MessageRepository messageRepository;
 
+    private final WorkspaceClient workspaceClient;
+
     @Override
     @Transactional
     public MediaDto uploadMedia(MultipartFile file, UUID workspaceId) {
-        log.info("Загрузка медиафайла: {}, размер: {}, тип: {}",
-                file.getOriginalFilename(), file.getSize(), file.getContentType());
+        System.out.println("uploadMedia method is called.");
+        System.out.println("Original file name: " + file.getOriginalFilename());
+        System.out.println("Content type: " + file.getContentType());
 
-        try {
-            // Проверяем, что файл не пустой
-            if (file.isEmpty()) {
-                log.error("Попытка загрузить пустой файл");
-                throw new FileUploadException("Файл пустой");
+        if (file.isEmpty()) {
+            throw new RequestRejectedException("File is empty");
+        }
+
+        if (file.getOriginalFilename() == null) {
+            throw new RequestRejectedException("File name is empty");
+        }
+
+        String contentType = file.getContentType();
+
+        if (contentType != null) {
+            if (contentType.startsWith("video/")) {
+                // Якщо це відео
+                System.out.println("File type is video. Converting to format: webm");
+                return convert(file, "webm", workspaceId);
+            } else if (contentType.startsWith("image/")) {
+                // Якщо це зображення
+                System.out.println("File type is image. Converting to format: webp");
+                return convert(file, "webp", workspaceId);
+            } else {
+                // Якщо тип файлу не є відео чи зображенням
+                System.out.println("Unknown file type encountered.");
+                throw new RequestRejectedException("Unknown file type");
             }
-
-            String originalFilename = file.getOriginalFilename();
-            String fileExtension = originalFilename != null
-                    ? originalFilename.substring(originalFilename.lastIndexOf(".") + 1)
-                    : "";
-
-            // Валидация расширения файла
-            if (fileExtension.isEmpty()) {
-                log.error("Файл не имеет расширения: {}", originalFilename);
-                throw new FileUploadException("Файл должен иметь расширение");
-            }
-
-            // Создаем уникальный идентификатор файла
-            UUID fileName = UUID.randomUUID();
-            log.debug("Сгенерировано имя файла: {}", fileName);
-
-            // Создаем директорию для загрузки если она не существует
-            Path uploadPath = Paths.get(UPLOAD_DIR);
-            if (!Files.exists(uploadPath)) {
-                Files.createDirectories(uploadPath);
-                log.debug("Создана директория для загрузки: {}", uploadPath.toAbsolutePath());
-            }
-
-            // Формируем полный путь и сохраняем файл
-            Path filePath = uploadPath.resolve(fileName.toString() + "." + fileExtension);
-            Files.write(filePath, file.getBytes());
-            log.debug("Файл сохранен по пути: {}", filePath.toAbsolutePath());
-
-            // Создаем сущность Media и сохраняем в базу
-            Media media = new Media();
-            media.setWorkspaceId(workspaceId);
-            media.setFileName(fileName);
-            media.setFileExtension(fileExtension);
-
-            Media savedMedia = mediaRepository.save(media);
-            log.info("Медиафайл успешно загружен и сохранен с ID: {}", savedMedia.getId());
-
-            return mediaMapper.toMediaDto(savedMedia);
-        } catch (IOException e) {
-            log.error("Ошибка при сохранении файла: {}", e.getMessage(), e);
-            throw new FileUploadException("Не удалось сохранить файл: " + e.getMessage());
-        } catch (Exception e) {
-            log.error("Непредвиденная ошибка при загрузке файла: {}", e.getMessage(), e);
-            throw new FileUploadException("Ошибка при загрузке файла: " + e.getMessage());
+        } else {
+            throw new RequestRejectedException("Failed to determine file type");
         }
     }
 
-    @Override
-    @Transactional
-    public MediaDto uploadMedia(MultipartFile file, UUID workspaceId, UUID messageId) {
-        log.info("Загрузка медиафайла с привязкой к сообщению: {}, размер: {}, тип: {}, messageId: {}",
-                file.getOriginalFilename(), file.getSize(), file.getContentType(), messageId);
+    private MediaDto convert(MultipartFile file, String outputFormat, UUID workspaceId) {
+        UUID uuid = UUID.randomUUID();
+        String inputFileExtension = getFileExtension(file.getOriginalFilename());
 
-        try {
-            // Загружаем медиафайл
-            MediaDto mediaDto = uploadMedia(file, workspaceId);
+        // Create a temporary directory to process the file
+        File tempDir = new File(System.getProperty("java.io.tmpdir"), "media-uploads");
+        ensureDirectoryExists(tempDir);
 
-            // Если указан messageId, связываем с сообщением
-            if (messageId != null) {
-                try {
-                    // Получаем загруженный медиафайл из базы
-                    Media media = mediaRepository.findById(mediaDto.getId())
-                            .orElseThrow(() -> new EntityNotFoundException("Медиафайл с ID " + mediaDto.getId() + " не найден"));
+        // Paths for the original and processed files in the temporary directory
+        File tempOriginalFile = new File(tempDir, uuid + inputFileExtension);
+        File processedFile = new File(tempDir, uuid + "." + outputFormat);
 
-                    // Проверяем существование сообщения
-                    Message message = messageRepository.findById(messageId)
-                            .orElseThrow(() -> new EntityNotFoundException("Сообщение с ID " + messageId + " не найдено"));
+        System.out.println("File size: " + file.getSize());
+        if (file.getSize() == 0) {
+            throw new RuntimeException("Uploaded file is empty.");
+        }
 
-                    // Связываем медиа с сообщением
-                    log.debug("Связывание медиафайла {} с сообщением {}", media.getId(), message.getId());
-                    media.setMessage(message);
-                    mediaRepository.save(media);
+        System.out.println("Input file path: " + tempOriginalFile.getAbsolutePath());
+        System.out.println("Input file extension: " + inputFileExtension);
+        // Save the original file to the temporary directory
+        saveFile(file, tempOriginalFile);
+        System.out.println("Original file saved successfully: " + tempOriginalFile.getAbsolutePath());
 
-                    // Если у сообщения нет коллекции медиафайлов, создаем ее
-                    if (message.getMedias() == null) {
-                        message.setMedias(new HashSet<>());
-                    }
-                    message.getMedias().add(media);
-                    messageRepository.save(message);
 
-                    log.info("Медиафайл {} успешно связан с сообщением {}", media.getId(), message.getId());
-                } catch (EntityNotFoundException e) {
-                    log.error("Ошибка при связывании медиафайла с сообщением: {}", e.getMessage());
-                    // Не прерываем выполнение, возвращаем созданный медиафайл
+        // Call FFmpeg to convert to the desired format
+        System.out.println("Starting file conversion with FFmpeg...");
+        if (!inputFileExtension.equals(".webp")) {
+            try {
+                ProcessBuilder processBuilder = new ProcessBuilder(
+                        "/app/ffmpeg",
+                        "-i", tempOriginalFile.getAbsolutePath(), // Вхідний файл
+                        "-fs", "100k", // Максимальний розмір файлу 100 KB
+                        "-quality", "50", // Якість (0-100)
+                        processedFile.getAbsolutePath() // Вихідний файл
+                );
+
+                Process process = processBuilder.start();
+                int exitCode = process.waitFor();
+                if (exitCode != 0) {
+                    System.out.println("FFmpeg process failed with exit code: " + exitCode);
+                    throw new RuntimeException("FFmpeg process failed with exit code: " + exitCode);
                 }
+                System.out.println("File conversion completed successfully with FFmpeg.");
+            } catch (IOException | InterruptedException e) {
+                throw new RuntimeException("Error during file processing: " + e.getMessage(), e);
             }
-
-            return mediaDto;
-        } catch (Exception e) {
-            log.error("Ошибка при загрузке медиафайла с привязкой к сообщению: {}", e.getMessage(), e);
-            throw new FileUploadException("Ошибка при загрузке и привязке медиафайла: " + e.getMessage());
         }
+
+        // Move the processed file to UPLOAD_DIR
+        System.out.println("Moving processed file to final destination...");
+        File finalDestinationFile = new File(UPLOAD_DIR, processedFile.getName());
+        try {
+            Files.move(processedFile.toPath(), finalDestinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            System.out.println("Processed file moved successfully to: " + finalDestinationFile.getAbsolutePath());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to move processed file: " + e.getMessage(), e);
+        }
+
+        // Create and save Media entity with the new format
+        System.out.println("Creating Media entity for the database...");
+//        Media media = createMediaEntity(uuid, "." + outputFormat);
+        Media media = new Media();
+        media.setWorkspaceId(workspaceId);
+        mediaRepository.save(media);
+        System.out.println("Media entity successfully saved to the database. File name: " + media.getFileName());
+
+        return mediaMapper.toMediaDto(media);
     }
+
+//    @Override
+//    @Transactional
+//    public MediaDto uploadMedia(MultipartFile file, UUID workspaceId) {
+//        log.info("Загрузка медиафайла с привязкой к сообщению: {}, размер: {}, тип: {}",
+//                file.getOriginalFilename(), file.getSize(), file.getContentType());
+//
+//        try {
+//            // Загружаем медиафайл
+//            MediaDto mediaDto = uploadMedia(file, workspaceId);
+//
+//            // Если указан messageId, связываем с сообщением
+////            if (messageId != null) {
+////                try {
+////                    // Получаем загруженный медиафайл из базы
+////                    Media media = mediaRepository.findById(mediaDto.getId())
+////                            .orElseThrow(() -> new EntityNotFoundException("Медиафайл с ID " + mediaDto.getId() + " не найден"));
+////
+////                    // Проверяем существование сообщения
+////                    Message message = messageRepository.findById(messageId)
+////                            .orElseThrow(() -> new EntityNotFoundException("Сообщение с ID " + messageId + " не найдено"));
+////
+////                    // Связываем медиа с сообщением
+////                    log.debug("Связывание медиафайла {} с сообщением {}", media.getId(), message.getId());
+////                    media.setMessage(message);
+////                    mediaRepository.save(media);
+////
+////                    // Если у сообщения нет коллекции медиафайлов, создаем ее
+////                    if (message.getMedias() == null) {
+////                        message.setMedias(new HashSet<>());
+////                    }
+////                    message.getMedias().add(media);
+////                    messageRepository.save(message);
+////
+////                    log.info("Медиафайл {} успешно связан с сообщением {}", media.getId(), message.getId());
+////                } catch (EntityNotFoundException e) {
+////                    log.error("Ошибка при связывании медиафайла с сообщением: {}", e.getMessage());
+////                    // Не прерываем выполнение, возвращаем созданный медиафайл
+////                }
+////            }
+//
+//            return mediaDto;
+//        } catch (Exception e) {
+//            log.error("Ошибка при загрузке медиафайла с привязкой к сообщению: {}", e.getMessage(), e);
+//            throw new FileUploadException("Ошибка при загрузке и привязке медиафайла: " + e.getMessage());
+//        }
+//    }
 
     @Override
     @Transactional(readOnly = true)
@@ -205,12 +262,16 @@ public class MediaServiceImpl implements MediaService {
     }
 
     @Override
-    public ResponseEntity<List<MediaDto>> getAllMy() {
+    public ResponseEntity<List<MediaDto>> getAll(UUID workspaceId) {
         log.info("Получение всех медиафайлов пользователя");
 
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
-        List<Media> medias = mediaRepository.findByWorkspaceId(workspaceId).stream()
-                .map(m -> (Media) m)
+//        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+
+        List<Map<String, Object>> workspaces = (List<Map<String, Object>>) workspaceClient.getWorkspaceById(workspaceId, "FLAT", userProvider.getCurrentUserToken());
+
+        log.info(workspaces.toString());
+
+        List<Media> medias = mediaRepository.findByWorkspaceIdIn(List.of(workspaceId)).stream()
                 .collect(Collectors.toList());
 
         List<MediaDto> mediaDtos = medias.stream()
@@ -225,7 +286,6 @@ public class MediaServiceImpl implements MediaService {
         log.info("Получение медиафайлов для рабочих пространств: {}", workspaceIds);
 
         List<Media> medias = mediaRepository.findByWorkspaceIdIn(workspaceIds).stream()
-                .map(m -> (Media) m)
                 .collect(Collectors.toList());
 
         return medias.stream()
@@ -296,5 +356,23 @@ public class MediaServiceImpl implements MediaService {
             return "";
         }
         return filename.substring(lastDotIndex);
+    }
+
+    private void ensureDirectoryExists(File directory) {
+        if (!directory.exists()) {
+            boolean created = directory.mkdirs();
+            System.out.println("Directory created: " + created + ", path: " + directory.getAbsolutePath());
+            if (!created) {
+                throw new RuntimeException("Failed to create directories: " + directory.getAbsolutePath());
+            }
+        }
+    }
+
+    private void saveFile(MultipartFile file, File destinationFile) {
+        try {
+            Files.write(destinationFile.toPath(), file.getBytes());
+        } catch (IOException e) {
+            throw new FileUploadException("File upload failed: " + e.getMessage());
+        }
     }
 }

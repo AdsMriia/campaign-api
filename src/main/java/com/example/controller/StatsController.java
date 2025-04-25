@@ -22,7 +22,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/stats")
+@RequestMapping("/workspace/{workspaceId}/stats")
 @Tag(name = "Statistics API", description = "API для получения статистики и аналитики")
 public interface StatsController {
 
@@ -43,6 +43,7 @@ public interface StatsController {
     @GetMapping("/dates")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     SimpleDate getDates(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Диапазон дат", required = true)
             @RequestParam Double range,
             @Parameter(description = "Интервал между датами", required = true)
@@ -76,6 +77,7 @@ public interface StatsController {
     @GetMapping("/eva/{type}/{channelId}")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<WebStatsDto> getChannelStats(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Тип статистики", required = true)
             @PathVariable("type") String type,
             @Parameter(description = "Идентификатор канала", required = true)
@@ -99,6 +101,7 @@ public interface StatsController {
     @GetMapping("/eva/{type}/grouped")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<GroupedWebStats> getGroupedStats(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Тип статистики", required = true)
             @PathVariable("type") String type);
 
@@ -127,6 +130,7 @@ public interface StatsController {
     @GetMapping("/eva/{channelId}")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<WebStatsDto> getStatsById(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Идентификатор канала", required = true)
             @PathVariable("channelId") UUID id);
 
@@ -155,6 +159,7 @@ public interface StatsController {
     @GetMapping("/{statsId}/history")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<HistoryDto> getHistory(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Идентификатор статистики", required = true)
             @PathVariable("statsId") UUID statsId);
 
@@ -183,6 +188,7 @@ public interface StatsController {
     @GetMapping("/{channelId}")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<StatsDto> getStatsByChannelId(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Идентификатор канала", required = true)
             @PathVariable("channelId") Long id);
 
@@ -203,6 +209,7 @@ public interface StatsController {
     @GetMapping
     @PreAuthorize("hasAuthority('WEB_STATS')")
     List<ChartDto> getChart(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Тип сообщения", required = true)
             @RequestParam MessageType type,
             @Parameter(description = "Интервал времени (начало и конец в миллисекундах)", required = true)
@@ -227,6 +234,7 @@ public interface StatsController {
     )
     @GetMapping("/retarget")
     Page<RetargetStatsDto> getAllStats(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Номер страницы (начиная с 0)")
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @Parameter(description = "Размер страницы")
@@ -268,6 +276,7 @@ public interface StatsController {
     @GetMapping("/poll/{id}")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     PollStatsDto getPollResults(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Идентификатор опроса", required = true)
             @PathVariable("id") UUID pollId);
 
@@ -288,6 +297,7 @@ public interface StatsController {
     @GetMapping("/poll")
     @PreAuthorize("hasAuthority('WEB_STATS')")
     Page<PollStatsDto> getPollResults(
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Список идентификаторов каналов для фильтрации")
             @RequestParam(value = "channelIds", required = false) List<UUID> channelIds,
             @Parameter(description = "Дата начала периода (в миллисекундах)")

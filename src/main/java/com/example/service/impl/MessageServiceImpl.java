@@ -1,13 +1,13 @@
 package com.example.service.impl;
 
 import java.time.OffsetDateTime;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import com.example.entity.MediaToMessage;
+import com.example.model.dto.*;
+import com.example.repository.MediaToMessageRepository;
+import org.antlr.v4.runtime.misc.LogManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -24,10 +24,6 @@ import com.example.mapper.ActionMapper;
 import com.example.mapper.MessageMapper;
 import com.example.model.MessageStatus;
 import com.example.model.MessageType;
-import com.example.model.dto.ActionDto;
-import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
-import com.example.model.dto.MessageDto;
 import com.example.repository.ActionRepository;
 import com.example.repository.MediaRepository;
 import com.example.repository.MessageRepository;
@@ -40,6 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 /**
  * Реализация сервиса для управления сообщениями. Предоставляет методы для
@@ -60,6 +57,7 @@ public class MessageServiceImpl implements MessageService {
     private final MessageMapper messageMapper;
     private final ObjectMapper objectMapper;
     private final ActionMapper actionMapper;
+    private final MediaToMessageRepository mediaToMessageRepository;
 
     @Override
     public GetMessageDto getById(UUID id) {
@@ -120,7 +118,7 @@ public class MessageServiceImpl implements MessageService {
 
         // Удаляем существующие действия и медиа
         actionRepository.deleteAllByMessageId(id);
-        mediaRepository.deleteAllByMessageId(id);
+        mediaToMessageRepository.deleteAllByMessage(message);
 
         // Обновляем основные поля сообщения
         message.setTitle(messageDto.getTitle());
@@ -150,14 +148,23 @@ public class MessageServiceImpl implements MessageService {
         }
 
         // Добавляем новые медиа
-        if (messageDto.getMediaName() != null && !messageDto.getMediaName().isBlank()) {
-            Set<Media> medias = new HashSet<>();
+        if (messageDto.getMediaName() != null && !messageDto.getMediaName().isEmpty()) {
+            Set<MediaToMessage> medias = new HashSet<>();
             List<Media> mediaList = findMediaByFileName(messageDto.getMediaName());
 
             if (!mediaList.isEmpty()) {
-                Media media = mediaList.get(0);
-                media.setMessage(message);
-                medias.add(mediaRepository.save(media));
+
+                for (Media media : mediaList) {
+                    MediaToMessage mediaToMessage = new MediaToMessage();
+                    mediaToMessage.setMessage(message);
+                    mediaToMessage.setMedia(media);
+                    mediaToMessageRepository.save(mediaToMessage);
+                    medias.add(mediaToMessage);
+                }
+
+//                Media media = mediaList.get(0);
+//                media.setMessage(message);
+//                medias.add(mediaRepository.save(media));
                 message.setMedias(medias);
             } else {
                 log.warn("Медиафайл с именем {} не найден", messageDto.getMediaName());
@@ -173,12 +180,11 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public GetMessageDto create(boolean markdown, CreateMessageDto createMessageDto) {
-        log.info("Создание нового сообщения: {}, markdown: {}", createMessageDto, markdown);
+    public GetMessageDto create(CreateMessageDto createMessageDto, UUID workspaceId) {
+        log.info("Создание нового сообщения: {}, markdown: {}", createMessageDto, createMessageDto.getMarkDown());
 
         // Получаем ID текущего пользователя и рабочего пространства
         UUID userId = webUserService.getCurrentUserId();
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
 
         // Создаем новое сообщение
         Message message = new Message();
@@ -189,8 +195,7 @@ public class MessageServiceImpl implements MessageService {
                 ? createMessageDto.getStatus()
                 : MessageStatus.DRAFT);
         // Используем значение markdown из параметра, если в DTO не указано
-        message.setMarkDown(createMessageDto.getMarkDown() != null
-                ? createMessageDto.getMarkDown() : markdown);
+        message.setMarkDown(createMessageDto.getMarkDown());
         message.setWorkspaceId(workspaceId);
         message.setCreatedBy(userId);
         message.setCreatedAt(OffsetDateTime.now());
@@ -237,20 +242,26 @@ public class MessageServiceImpl implements MessageService {
         }
 
         // Добавляем медиа
-        if (createMessageDto.getMediaName() != null && !createMessageDto.getMediaName().isBlank()) {
+        if (createMessageDto.getMediaName() != null && !createMessageDto.getMediaName().isEmpty()) {
             log.info("Начинаем привязку медиафайла по имени: {}", createMessageDto.getMediaName());
             try {
                 // Ищем медиа по имени файла с безопасным преобразованием типов
                 List<Media> mediaList = findMediaByFileName(createMessageDto.getMediaName());
 
                 if (!mediaList.isEmpty()) {
-                    Media media = mediaList.get(0);
-                    log.debug("Найден медиафайл по имени {} с ID {}", createMessageDto.getMediaName(), media.getId());
-                    media.setMessage(savedMessage);
-                    Media savedMedia = mediaRepository.save(media);
+                    for (Media media : mediaList) {
+                        MediaToMessage mediaToMessage = new MediaToMessage();
+                        mediaToMessage.setMessage(message);
+                        mediaToMessage.setMedia(media);
+                        mediaToMessageRepository.save(mediaToMessage);
+                        addMediaToMessage(savedMessage, mediaToMessage);
+                    }
+//                    Media media = mediaList.get(0);
+//                    log.debug("Найден медиафайл по имени {} с ID {}", createMessageDto.getMediaName(), media.getId());
+//                    media.setMessage(savedMessage);
+//                    Media savedMedia = mediaRepository.save(media);
                     // Используем helper метод для добавления в Set
-                    addMediaToMessage(savedMessage, savedMedia);
-                    log.info("Успешно привязан медиафайл к сообщению по имени {}", createMessageDto.getMediaName());
+//                    log.info("Успешно привязан медиафайл к сообщению по имени {}", createMessageDto.getMediaName());
                 } else {
                     log.warn("Медиафайл с именем {} не найден", createMessageDto.getMediaName());
                 }
@@ -287,7 +298,7 @@ public class MessageServiceImpl implements MessageService {
      * @param message сообщение
      * @param media медиа
      */
-    private void addMediaToMessage(Message message, Media media) {
+    private void addMediaToMessage(Message message, MediaToMessage media) {
         if (message.getMedias() == null) {
             message.setMedias(new HashSet<>());
         }
@@ -300,17 +311,24 @@ public class MessageServiceImpl implements MessageService {
      * @param fileName имя файла
      * @return список найденных медиафайлов
      */
-    private List<Media> findMediaByFileName(String fileName) {
-        return mediaRepository.findAll().stream()
-                .filter(m -> {
-                    if (m instanceof Media) {
-                        Media media = (Media) m;
-                        return media.getFileName() != null && media.getFileName().toString().contains(fileName);
-                    }
-                    return false;
-                })
-                .map(m -> (Media) m)
-                .collect(Collectors.toList());
+    private List<Media> findMediaByFileName(List<String> fileName) {
+
+        List<Media> mediaList = new ArrayList<>();
+        for (String name : fileName) {
+            mediaRepository.findByFileName(UUID.fromString(name)).map(mediaList::add);
+        }
+        return mediaList;
+
+//        return mediaRepository.findAll().stream()
+//                .filter(m -> {
+//                    if (m instanceof Media) {
+//                        Media media = (Media) m;
+//                        return media.getFileName() != null && media.getFileName().toString().contains(fileName);
+//                    }
+//                    return false;
+//                })
+//                .map(m -> (Media) m)
+//                .collect(Collectors.toList());
     }
 
     @Override
@@ -396,45 +414,47 @@ public class MessageServiceImpl implements MessageService {
                 .collect(Collectors.toList());
     }
 
+    @Deprecated
     @Override
     public MessageDto createMessage(CreateMessageDto messageDto) {
-        log.info("Создание нового сообщения из MessageDto");
-        Message message = messageMapper.toMessage(messageDto);
-        message.setCreatedAt(OffsetDateTime.now());
-        message.setUpdatedAt(OffsetDateTime.now());
-        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
-        message.setCreatedBy(userProvider.getCurrentUser().getId());
-        Message savedMessage = messageRepository.save(message);
-
-        // Добавляем действия
-        if (messageDto.getActions() != null && !messageDto.getActions().isEmpty()) {
-            for (ActionDto actionDto : messageDto.getActions()) {
-                Action action = new Action();
-                action.setText(actionDto.getText());
-                action.setLink(actionDto.getLink());
-                action.setMessage(savedMessage);
-                action.setOrdinal(messageDto.getActions().indexOf(actionDto) + 1);
-                action.setCreatedAt(OffsetDateTime.now());
-                action.setUpdatedAt(OffsetDateTime.now());
-                actionRepository.save(action);
-                savedMessage.getActions().add(action);
-            }
-        }
-
-        // Добавляем медиа если указано
-        if (messageDto.getMediaName() != null && !messageDto.getMediaName().isBlank()) {
-            List<Media> mediaList = findMediaByFileName(messageDto.getMediaName());
-            if (!mediaList.isEmpty()) {
-                Media media = mediaList.get(0);
-                media.setMessage(savedMessage);
-                Media savedMedia = mediaRepository.save(media);
-                addMediaToMessage(savedMessage, savedMedia);
-            } else {
-                log.warn("Медиафайл с именем {} не найден", messageDto.getMediaName());
-            }
-        }
-
-        return messageMapper.toMessageDto(savedMessage);
+        return new MessageDto();
+//        log.info("Создание нового сообщения из MessageDto");
+//        Message message = messageMapper.toMessage(messageDto);
+//        message.setCreatedAt(OffsetDateTime.now());
+//        message.setUpdatedAt(OffsetDateTime.now());
+////        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
+//        message.setCreatedBy(userProvider.getCurrentUser().getId());
+//        Message savedMessage = messageRepository.save(message);
+//
+//        // Добавляем действия
+//        if (messageDto.getActions() != null && !messageDto.getActions().isEmpty()) {
+//            for (ActionDto actionDto : messageDto.getActions()) {
+//                Action action = new Action();
+//                action.setText(actionDto.getText());
+//                action.setLink(actionDto.getLink());
+//                action.setMessage(savedMessage);
+//                action.setOrdinal(messageDto.getActions().indexOf(actionDto) + 1);
+//                action.setCreatedAt(OffsetDateTime.now());
+//                action.setUpdatedAt(OffsetDateTime.now());
+//                actionRepository.save(action);
+//                savedMessage.getActions().add(action);
+//            }
+//        }
+//
+//        // Добавляем медиа если указано
+//        if (messageDto.getMediaName() != null && !messageDto.getMediaName().isBlank()) {
+//            List<Media> mediaList = findMediaByFileName(messageDto.getMediaName());
+//            if (!mediaList.isEmpty()) {
+//                Media media = mediaList.get(0);
+//                media.setMessage(savedMessage);
+//                Media savedMedia = mediaRepository.save(media);
+//                addMediaToMessage(savedMessage, savedMedia);
+//            } else {
+//                log.warn("Медиафайл с именем {} не найден", messageDto.getMediaName());
+//            }
+//        }
+//
+//        return messageMapper.toMessageDto(savedMessage);
     }
 
     @Override
@@ -445,18 +465,30 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public MessageDto updateMessage(UUID id, MessageDto messageDto) {
+    public MessageDto updateMessage(UUID id, CreateMessageDto createMessageDto) {
         log.info("Обновление сообщения с ID: {}", id);
         Message message = messageRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Сообщение с ID " + id + " не найдено"));
 
-        message.setTitle(messageDto.getTitle());
-        message.setText(messageDto.getText());
-        message.setType(messageDto.getType());
-        message.setStatus(messageDto.getStatus());
-        message.setMarkDown(messageDto.getMarkDown());
-        message.setChannelId(messageDto.getChannelId());
+        Set<MediaToMessage> medias = new HashSet<>();
+
+        message.setTitle(createMessageDto.getTitle());
+        message.setText(createMessageDto.getText());
+        message.setType(createMessageDto.getType());
+        message.setStatus(createMessageDto.getStatus());
+        message.setMarkDown(createMessageDto.getMarkDown());
         message.setUpdatedAt(OffsetDateTime.now());
+        messageRepository.save(message);
+        List<Media> mediaList = findMediaByFileName(createMessageDto.getMediaName());
+        for (Media media : mediaList) {
+            MediaToMessage mediaToMessage = new MediaToMessage();
+            mediaToMessage.setMessage(message);
+            mediaToMessage.setMedia(media);
+            mediaToMessageRepository.save(mediaToMessage);
+            medias.add(mediaToMessage);
+        }
+
+        message.setMedias(medias);
 
         Message updatedMessage = messageRepository.save(message);
         return messageMapper.toMessageDto(updatedMessage);
@@ -496,6 +528,7 @@ public class MessageServiceImpl implements MessageService {
         return messageMapper.toMessageDto(savedMessage);
     }
 
+    @Deprecated
     @Override
     public MessageDto update(UUID id, MessageDto messageDto) {
         log.info("Updating message with id: {}", id);
@@ -597,28 +630,28 @@ public class MessageServiceImpl implements MessageService {
      * @param targetMessage целевое сообщение
      */
     private void duplicateMedia(Message sourceMessage, Message targetMessage) {
-        log.debug("Дублирование медиафайлов из сообщения {} в сообщение {}",
-                sourceMessage.getId(), targetMessage.getId());
+//        log.debug("Дублирование медиафайлов из сообщения {} в сообщение {}",
+//                sourceMessage.getId(), targetMessage.getId());
+//
+//        if (sourceMessage.getMedias() != null && !sourceMessage.getMedias().isEmpty()) {
+//            Set<Media> mediaSet = new HashSet<>();
 
-        if (sourceMessage.getMedias() != null && !sourceMessage.getMedias().isEmpty()) {
-            Set<Media> mediaSet = new HashSet<>();
-
-            for (Media sourceMedia : sourceMessage.getMedias()) {
+//            for (Media sourceMedia : sourceMessage.getMedias()) {
                 // Создаем новую запись в базе данных для медиафайла
-                Media newMedia = new Media();
-                newMedia.setMessage(targetMessage);
-                newMedia.setWorkspaceId(sourceMedia.getWorkspaceId());
-                newMedia.setFileName(sourceMedia.getFileName());
-                newMedia.setFileExtension(sourceMedia.getFileExtension());
+//                Media newMedia = new Media();
+//                newMedia.setMessage(targetMessage);
+//                newMedia.setWorkspaceId(sourceMedia.getWorkspaceId());
+//                newMedia.setFileName(sourceMedia.getFileName());
+//                newMedia.setFileExtension(sourceMedia.getFileExtension());
+//
+//                Media savedMedia = mediaRepository.save(newMedia);
+//                mediaSet.add(savedMedia);
+//            }
 
-                Media savedMedia = mediaRepository.save(newMedia);
-                mediaSet.add(savedMedia);
-            }
+//            targetMessage.setMedias(mediaSet);
+//            messageRepository.save(targetMessage);
 
-            targetMessage.setMedias(mediaSet);
-            messageRepository.save(targetMessage);
-
-            log.debug("Дублировано {} медиафайлов", mediaSet.size());
-        }
+//            log.debug("Дублировано {} медиафайлов", mediaSet.size());
+//        }
     }
 }

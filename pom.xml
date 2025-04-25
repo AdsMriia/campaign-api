@@ -133,11 +133,11 @@
             <scope>test</scope>
         </dependency>
 
-       <dependency>
-           <groupId>org.liquibase</groupId>
-           <artifactId>liquibase-core</artifactId>
-           <version>4.23.2</version>
-      </dependency>
+<!--       <dependency>-->
+<!--           <groupId>org.liquibase</groupId>-->
+<!--           <artifactId>liquibase-core</artifactId>-->
+<!--           <version>4.23.2</version>-->
+<!--      </dependency>-->
 
         <dependency>
             <groupId>io.swagger.core.v3</groupId>

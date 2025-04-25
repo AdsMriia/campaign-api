@@ -59,6 +59,6 @@ public class CreateMessageDto {
     /**
      * Имя медиа-файла.
      */
-    @JsonProperty("media_name")
-    private String mediaName;
+    @JsonProperty("media_names")
+    private List<String> mediaName;
 }

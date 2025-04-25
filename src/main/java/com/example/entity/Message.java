@@ -54,7 +54,7 @@ public class Message extends BaseEntity {
     private UUID channelId;
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<Media> medias = new HashSet<>();
+    private Set<MediaToMessage> medias = new HashSet<>();
 
     @OneToMany(mappedBy = "message", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Action> actions = new HashSet<>();
@@ -62,15 +62,15 @@ public class Message extends BaseEntity {
     @OneToMany(mappedBy = "message")
     private Set<CampaignCreative> campaigns = new HashSet<>();
 
-    public void addMedia(Media media) {
-        medias.add(media);
-        media.setMessage(this);
-    }
+//    public void addMedia(Media media) {
+//        medias.add(media);
+//        media.setMessage(this);
+//    }
 
-    public void removeMedia(Media media) {
-        medias.remove(media);
-        media.setMessage(null);
-    }
+//    public void removeMedia(Media media) {
+//        medias.remove(media);
+//        media.setMessage(null);
+//    }
 
     public void addAction(Action action) {
         actions.add(action);
@@ -131,13 +131,11 @@ public class Message extends BaseEntity {
             message.getActions().add(newAction);
         }
 
-        for (Media media : this.medias) {
-            Media newMedia = new Media();
-            newMedia.setMessage(message);
-            newMedia.setFileName(media.getFileName());
-            newMedia.setFileExtension(media.getFileExtension());
-            newMedia.setWorkspaceId(media.getWorkspaceId());
-            message.getMedias().add(newMedia);
+        for (MediaToMessage mediaToMessage : this.medias) {
+            MediaToMessage newMediaToMessage = new MediaToMessage();
+            newMediaToMessage.setMessage(message);
+            newMediaToMessage.setMedia(mediaToMessage.getMedia());
+            message.getMedias().add(newMediaToMessage);
         }
 
         return message;

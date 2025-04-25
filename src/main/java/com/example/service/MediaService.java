@@ -31,23 +31,23 @@ public interface MediaService {
      */
     MediaDto uploadMedia(MultipartFile file, UUID workspaceId);
 
-    /**
-     * Загружает медиа-файл и привязывает его к сообщению.
-     *
-     * @param file загружаемый файл
-     * @param workspaceId идентификатор рабочего пространства
-     * @param messageId идентификатор сообщения, к которому нужно привязать
-     * медиа (может быть null)
-     * @return информация о загруженном медиа-файле
-     */
-    MediaDto uploadMedia(MultipartFile file, UUID workspaceId, UUID messageId);
+//    /**
+//     * Загружает медиа-файл и привязывает его к сообщению.
+//     *
+//     * @param file загружаемый файл
+//     * @param workspaceId идентификатор рабочего пространства
+//     * @param messageId идентификатор сообщения, к которому нужно привязать
+//     * медиа (может быть null)
+//     * @return информация о загруженном медиа-файле
+//     */
+//    MediaDto uploadMedia(MultipartFile file, UUID workspaceId, UUID messageId);
 
     /**
      * Получает все медиа-файлы текущего пользователя.
      *
      * @return список медиа-файлов
      */
-    ResponseEntity<List<MediaDto>> getAllMy();
+    ResponseEntity<List<MediaDto>> getAll(UUID workspaceId);
 
     /**
      * Получает медиа-файлы для указанных рабочих пространств.

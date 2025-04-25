@@ -80,6 +80,10 @@ CREATE TABLE IF NOT EXISTS media (
 ALTER TABLE media ADD CONSTRAINT fk_media_message
     FOREIGN KEY (message_id) REFERENCES messages(id) ON DELETE CASCADE;
 
+--changeset nightbird78:rm_messageId_from_media
+--comment Удаление поля message_id из таблицы media
+ALTER TABLE media DROP COLUMN message_id;
+
 --changeset vladislav.mosuyk:create_actions_table
 --comment Создание таблицы actions для хранения действий (кнопок)
 CREATE TABLE IF NOT EXISTS actions (
@@ -148,4 +152,19 @@ ALTER TABLE campaign_to_subscribers ADD CONSTRAINT fk_campaign_to_subscribers_cr
 CREATE INDEX idx_campaign_to_subscribers_campaign_subscriber 
     ON campaign_to_subscribers(campaign_id, subscriber_id);
 CREATE INDEX idx_campaign_to_subscribers_retargeted 
-    ON campaign_to_subscribers(retargeted); 
+    ON campaign_to_subscribers(retargeted);
+
+--changeset vladislav.mosuyk:create_media_to_message_table
+--comment Создание таблицы связи медиа с сообщениями
+CREATE TABLE IF NOT EXISTS media_to_message (
+    id UUID PRIMARY KEY NOT NULL,
+    media_id UUID NOT NULL,
+    message_id UUID NOT NULL
+);
+
+--changeset vladislav.mosuyk:add_media_to_message_foreign_keys
+--comment Добавление внешних ключей для таблицы media_to_message
+ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_media
+    FOREIGN KEY (media_id) REFERENCES media(id);
+ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_message
+    FOREIGN KEY (message_id) REFERENCES messages(id);

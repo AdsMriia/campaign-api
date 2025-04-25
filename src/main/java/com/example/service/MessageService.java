@@ -49,11 +49,11 @@ public interface MessageService {
     /**
      * Создает новое сообщение.
      *
-     * @param markdown флаг использования markdown
+     * @param workspaceId идентификатор рабочего пространства
      * @param createMessageDto данные для создания
      * @return информация о созданном сообщении
      */
-    GetMessageDto create(boolean markdown, CreateMessageDto createMessageDto);
+    GetMessageDto create(CreateMessageDto createMessageDto, UUID workspaceId);
 
     /**
      * Удаляет сообщение.
@@ -106,10 +106,10 @@ public interface MessageService {
      * Обновляет сообщение.
      *
      * @param id идентификатор сообщения
-     * @param messageDto данные для обновления
+     * @param createMessageDto данные для обновления
      * @return обновленное сообщение
      */
-    MessageDto updateMessage(UUID id, MessageDto messageDto);
+    MessageDto updateMessage(UUID id, CreateMessageDto createMessageDto);
 
     /**
      * Удаляет сообщение.

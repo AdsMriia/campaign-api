@@ -29,7 +29,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping
+@RequestMapping("/workspace/{workspaceId}")
 @Tag(name = "Campaign API", description = "API для управления рекламными кампаниями")
 public interface CampaignController {
 

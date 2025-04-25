@@ -36,7 +36,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwt = authHeader.substring(7);
-        try {
+//        try {
             userDto = jwtService.validateToken(jwt);
             if (SecurityContextHolder.getContext().getAuthentication() == null) {
                 CustomUserDetails userDetails = new CustomUserDetails(userDto);
@@ -48,9 +48,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
                 SecurityContextHolder.getContext().setAuthentication(authToken);
             }
-        } catch (Exception e) {
-            log.error("JWT validation failed: {}", e.getMessage());
-        }
+//        } catch (Exception e) {
+//            log.error("JWT validation failed: {}", e.getMessage());
+//        }
 
         filterChain.doFilter(request, response);
     }

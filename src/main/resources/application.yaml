@@ -59,8 +59,6 @@ jwt:
 
 services:
   telegram: ${TELEGRAM_URL}
+  workspace: ${WORKSPACE_URL}
+  channel: ${CHANNEL_URL}
 #  workspace-api: ${WORKSPACE_API}
-
-channel:
-  service:
-    url: ${CHANNEL_SERVICE_URL}

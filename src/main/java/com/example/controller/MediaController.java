@@ -1,14 +1,11 @@
 package com.example.controller;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.model.dto.MediaDto;
@@ -23,7 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 @RestController
-@RequestMapping("/media")
+@RequestMapping("/workspace/{workspaceId}/media")
 @Tag(name = "Media API", description = "API для управления медиа-файлами")
 public interface MediaController {
 
@@ -79,11 +76,10 @@ public interface MediaController {
     )
     @PostMapping
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
-    MediaDto uploadMedia(@RequestParam("file") MultipartFile file);
+    MediaDto uploadMedia(@RequestParam("file") MultipartFile file, @PathVariable("workspaceId") UUID workspaceId);
 
     @GetMapping
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     @Operation(summary = "Получение своих медиа-файлов", description = "Возвращает список всех медиа-файлов текущего пользователя")
-    ResponseEntity<List<MediaDto>> getAllMy();
-
+    ResponseEntity<List<MediaDto>> getAll(@PathVariable UUID workspaceId);
 }

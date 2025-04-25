@@ -1,6 +1,7 @@
 package com.example.controller.impl;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,8 +23,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/media")
-@Tag(name = "Media API", description = "API для управления медиа-файлами")
 @Slf4j
 public class MediaControllerImpl implements MediaController {
 
@@ -31,16 +30,16 @@ public class MediaControllerImpl implements MediaController {
     private final UserProvider userProvider;
 
     @Override
-    public MediaDto uploadMedia(@RequestParam("file") MultipartFile file) {
+    public MediaDto uploadMedia(@RequestParam("file") MultipartFile file, @RequestParam("workspaceId") UUID workspaceId) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
 
-        return mediaService.uploadMedia(file, userProvider.getCurrentUser().getWorkspaceId());
+        return mediaService.uploadMedia(file, workspaceId);
     }
 
     @Override
-    public ResponseEntity<List<MediaDto>> getAllMy() {
+    public ResponseEntity<List<MediaDto>> getAll(UUID workspaceId) {
         log.info("Получен запрос на получение списка собственных медиафайлов");
-        return mediaService.getAllMy();
+        return mediaService.getAll(workspaceId);
     }
 
 }

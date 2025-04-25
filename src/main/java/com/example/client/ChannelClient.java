@@ -14,7 +14,7 @@ import com.example.config.FeignConfiguration;
 /**
  * Feign клиент для взаимодействия с сервисом каналов.
  */
-@FeignClient(name = "channel", url = "${channel.service.url}", configuration = FeignConfiguration.class)
+@FeignClient(name = "channel", url = "${services.channel}", configuration = FeignConfiguration.class)
 public interface ChannelClient {
 
     /**

@@ -22,8 +22,6 @@ import java.util.UUID;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/stats")
-@Tag(name = "Statistics API", description = "API для получения статистики и аналитики")
 @Slf4j
 public class StatsControllerImpl implements StatsController {
 
@@ -32,6 +30,7 @@ public class StatsControllerImpl implements StatsController {
 
     @Override
     public SimpleDate getDates(
+            @PathVariable UUID workspaceId,
             @RequestParam Double range,
             @RequestParam Double interval,
             @RequestParam String timezone) {
@@ -42,6 +41,7 @@ public class StatsControllerImpl implements StatsController {
 
     @Override
     public List<WebStatsDto> getChannelStats(
+            @PathVariable UUID workspaceId,
             @PathVariable("type") String type,
             @PathVariable("channelId") UUID channelId) {
         log.info("Получен запрос на получение статистики канала: тип={}, ID канала={}", type, channelId);
@@ -49,31 +49,40 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    public List<GroupedWebStats> getGroupedStats(@PathVariable("type") String type) {
+    public List<GroupedWebStats> getGroupedStats(
+            @PathVariable UUID workspaceId,
+            @PathVariable("type") String type) {
         log.info("Получен запрос на получение сгруппированной статистики по типу: {}", type);
         return statsService.getGroupedStats(type);
     }
 
     @Override
-    public List<WebStatsDto> getStatsById(@PathVariable("channelId") UUID id) {
+    public List<WebStatsDto> getStatsById(
+            @PathVariable UUID workspaceId,
+            @PathVariable("channelId") UUID id) {
         log.info("Получен запрос на получение статистики по ID канала: {}", id);
         return statsService.getStatsByChannelId(id);
     }
 
     @Override
-    public List<HistoryDto> getHistory(@PathVariable("statsId") UUID statsId) {
+    public List<HistoryDto> getHistory(
+            @PathVariable UUID workspaceId,
+            @PathVariable("statsId") UUID statsId) {
         log.info("Получен запрос на получение истории статистики с ID: {}", statsId);
         return statsService.getHistory(statsId);
     }
 
     @Override
-    public List<StatsDto> getStatsByChannelId(@PathVariable("channelId") Long id) {
+    public List<StatsDto> getStatsByChannelId(
+            @PathVariable UUID workspaceId,
+            @PathVariable("channelId") Long id) {
         log.info("Получен запрос на получение административной статистики по ID канала: {}", id);
         return statsService.getAdminStatsByChannelId(id);
     }
 
     @Override
     public List<ChartDto> getChart(
+            @PathVariable UUID workspaceId,
             @RequestParam MessageType type,
             @RequestParam List<Long> interval,
             @RequestParam Integer granularity) {
@@ -83,13 +92,16 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    public PollStatsDto getPollResults(@PathVariable("id") UUID pollId) {
+    public PollStatsDto getPollResults(
+            @PathVariable UUID workspaceId,
+            @PathVariable("id") UUID pollId) {
         log.info("Получен запрос на получение результатов опроса по ID: {}", pollId);
         return statsService.getPollResults(pollId);
     }
 
     @Override
     public Page<PollStatsDto> getPollResults(
+            @PathVariable UUID workspaceId,
             @RequestParam(value = "channelIds", required = false) List<UUID> channelIds,
             @RequestParam(value = "startDate", required = false) Long startDate,
             @RequestParam(value = "endDate", required = false) Long endDate,
@@ -104,6 +116,7 @@ public class StatsControllerImpl implements StatsController {
     }
     @Override
     public Page<RetargetStatsDto> getAllStats(
+            @PathVariable UUID workspaceId,
             Integer page,
             Integer size,
             Boolean asc,
