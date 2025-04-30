@@ -24,18 +24,6 @@ spring:
     banner-mode: off
     allow-bean-definition-overriding: true
 
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${SPRING_EMAIL_ADDRESS}
-    password: ${SPRING_EMAIL_PASSWORD}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-
 server:
   error:
     include-message: always
@@ -55,7 +43,6 @@ jwt:
   secret: ${SPRING_JWT_SECRET}
   hash:
     secret: ${SPRING_JWT_HASH_SECRET}
-  expiration: 86400000 # 24 hours
 
 services:
   telegram: ${TELEGRAM_URL}
