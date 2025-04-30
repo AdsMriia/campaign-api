@@ -30,9 +30,6 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String jwtSecret;
 
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
-
 //    public String generateToken(WebUserDto user) {
 //        Date now = new Date();
 //        Date expiryDate = new Date(now.getTime() + jwtExpiration);
