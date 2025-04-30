@@ -59,7 +59,7 @@ ${logs}"""
 
                             def logs = sh(script: "docker logs ${containerName}", returnStdout: true).trim()
 
-                            if (logs.contains("Started Main in ")) {
+                            if (logs.contains("Started Main in ") || logs.contains("Started Application in")) {
                                 sh "docker stop ${containerName}"
                                 sh "docker rm ${containerName}"
                                 sh 'docker image prune -f'
