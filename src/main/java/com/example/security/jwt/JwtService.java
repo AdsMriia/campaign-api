@@ -42,7 +42,7 @@ public class JwtService {
 //                .signWith(getSigningKey())
 //                .compact();
 //    }
-    public String getRoleIdFromToken(String token) {
+    public String getRoleFromToken(String token) {
         Claims claims = Jwts
                 .parser()
                 .verifyWith(getSigningKey())

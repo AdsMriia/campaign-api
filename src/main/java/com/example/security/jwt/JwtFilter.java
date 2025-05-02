@@ -75,13 +75,13 @@ public class JwtFilter extends OncePerRequestFilter {
         log.info("============================================");
 
         UUID workspaceIdUUID;
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        List<String> authorities = new ArrayList<>();
 
         if (request.getRequestURI().startsWith(contextPath + "/workspaces/")) {
             String workspaceId = request.getRequestURI().replace(contextPath + "/workspaces/", "").split("/")[0];
             try {
                 workspaceIdUUID = UUID.fromString(workspaceId);
-                authorities = workspaceClient.getPermissions(workspaceIdUUID, jwt).stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+                authorities = workspaceClient.getPermissions(workspaceIdUUID, jwt);
 
             } catch (Exception e) {
                 sendErrorResponse(response, HttpStatus.BAD_REQUEST, "Bad request", "Invalid workspace ID");
@@ -89,9 +89,11 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
+        authorities.add(jwtService.getRoleFromToken(jwt));
+
         try {
             WebUserDto userDto = jwtService.validateToken(jwt);
-            userDto.setRoles(workspaceClient.getPermissions(workspaceIdUUID, jwt));            //    userDto.setRoles(claims.get("roles", List.class));
+            userDto.setRoles(authorities);
 
             CustomUserDetails userDetails = new CustomUserDetails(userDto);
 
