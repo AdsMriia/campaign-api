@@ -1,13 +1,14 @@
 package com.example.client;
 
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.Map;
-import java.util.UUID;
 
 /**
  * Feign клиент для взаимодействия с сервисом Workspace. Позволяет получать
@@ -15,6 +16,11 @@ import java.util.UUID;
  */
 @FeignClient(name = "workspace", url = "${services.workspace}")
 public interface WorkspaceClient {
+
+    @GetMapping("/api/workspace/{workspaceId}/permissions")
+    List<String> getPermissions(
+            @PathVariable UUID workspaceId,
+            @RequestHeader("Authorization") String token);
 
     /**
      * Получает информацию о рабочем пространстве по ID.

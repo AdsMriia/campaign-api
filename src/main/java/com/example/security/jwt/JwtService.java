@@ -1,7 +1,15 @@
 package com.example.security.jwt;
 
+import java.util.UUID;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
 import com.example.exception.TokenValidationException;
 import com.example.model.dto.WebUserDto;
+
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,17 +19,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
-import net.bytebuddy.jar.asm.TypeReference;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
-import javax.crypto.spec.SecretKeySpec;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.util.Date;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @Slf4j
@@ -45,6 +42,16 @@ public class JwtService {
 //                .signWith(getSigningKey())
 //                .compact();
 //    }
+    public String getRoleIdFromToken(String token) {
+        Claims claims = Jwts
+                .parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
+
+        return claims.get("role", String.class);
+    }
 
     public WebUserDto validateToken(String token) {
         try {
@@ -57,8 +64,7 @@ public class JwtService {
             WebUserDto userDto = new WebUserDto();
             userDto.setEmail(claims.getSubject());
             userDto.setId(UUID.fromString(claims.get("userId", String.class)));
-//            userDto.setRoles(claims.get("roles", List.class));
-//            userDto.setWorkspaceId(UUID.fromString(claims.get("workspace_id", String.class)));
+            //    userDto.setWorkspaceId(UUID.fromString(claims.get("workspace_id", String.class)));
 //            userDto.setIsActive(true);
             userDto.setToken(token);
 

@@ -1,19 +1,25 @@
 package com.example.security.jwt;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.UUID;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.example.client.WorkspaceClient;
 import com.example.exception.TokenValidationException;
 import com.example.model.dto.WebUserDto;
 import com.example.security.CustomUserDetails;
@@ -36,6 +42,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
+    private final WorkspaceClient workspaceClient;
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -56,7 +65,6 @@ public class JwtFilter extends OncePerRequestFilter {
         final String authHeader = request.getHeader("Authorization");
         log.debug("Заголовок авторизации: {}", authHeader);
 
-
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Unauthorized", "No such token");
             return;
@@ -66,8 +74,24 @@ public class JwtFilter extends OncePerRequestFilter {
 
         log.info("============================================");
 
+        UUID workspaceIdUUID;
+        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+
+        if (request.getRequestURI().startsWith(contextPath + "/workspaces/")) {
+            String workspaceId = request.getRequestURI().replace(contextPath + "/workspaces/", "").split("/")[0];
+            try {
+                workspaceIdUUID = UUID.fromString(workspaceId);
+                authorities = workspaceClient.getPermissions(workspaceIdUUID, jwt).stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+
+            } catch (Exception e) {
+                sendErrorResponse(response, HttpStatus.BAD_REQUEST, "Bad request", "Invalid workspace ID");
+                return;
+            }
+        }
+
         try {
             WebUserDto userDto = jwtService.validateToken(jwt);
+            userDto.setRoles(workspaceClient.getPermissions(workspaceIdUUID, jwt));            //    userDto.setRoles(claims.get("roles", List.class));
 
             CustomUserDetails userDetails = new CustomUserDetails(userDto);
 
@@ -86,6 +110,7 @@ public class JwtFilter extends OncePerRequestFilter {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid token", e.getMessage());
         }
     }
+
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String error, String message) throws IOException {
         response.setStatus(status.value());
         response.setContentType("application/json");
