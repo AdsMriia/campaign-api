@@ -29,7 +29,7 @@ public class MediaControllerImpl implements MediaController {
     private final UserProvider userProvider;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public MediaDto uploadMedia(@RequestParam("file") MultipartFile file, @RequestParam("workspaceId") UUID workspaceId) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
 
@@ -37,7 +37,7 @@ public class MediaControllerImpl implements MediaController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public ResponseEntity<List<MediaDto>> getAll(UUID workspaceId) {
         log.info("Получен запрос на получение списка собственных медиафайлов");
         return mediaService.getAll(workspaceId);

@@ -34,14 +34,14 @@ public class ConstructorControllerImpl implements ConstructorController {
     private final MessageService messageService;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public GetMessageDto getById(@PathVariable("id") UUID id) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public Page<GetMessageDto> getAllByType(
             @RequestParam(required = false) MessageType type,
             @RequestParam(required = false) MessageStatus status,
@@ -53,14 +53,14 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public GetMessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(object, id);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public GetMessageDto create(
             @RequestParam("workspaceId") UUID workspaceId,
             @RequestBody @Valid CreateMessageDto createMessageDto) {
@@ -69,7 +69,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);

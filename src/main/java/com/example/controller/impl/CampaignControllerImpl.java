@@ -36,7 +36,7 @@ public class CampaignControllerImpl implements CampaignController {
     private final CampaignService campaignService;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public List<CampaignDto> campaignSubmit(@Valid @RequestBody SubmitABDto submitABDto, @RequestParam(required = false) String timezone) {
         //todo формирование бота в логике
         log.info("Получен запрос на создание кампании: {}, часовой пояс: {}", submitABDto, timezone);
@@ -55,21 +55,21 @@ public class CampaignControllerImpl implements CampaignController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public RetargetStatsDto getStats(@PathVariable("id") UUID campaignId) {
         log.info("Получение статистики для кампании с ID: {}", campaignId);
         return campaignService.getStats(campaignId);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public boolean stopRetarget(@PathVariable("id") UUID campaignId) {
         log.info("Остановка ретаргетинга для кампании с ID: {}", campaignId);
         return campaignService.stopRetarget(campaignId);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public Page<CampaignDto> getCampaigns(
             List<UUID> channelIds,
             Integer page,
@@ -87,28 +87,28 @@ public class CampaignControllerImpl implements CampaignController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public CampaignDto getCampaignById(@PathVariable("id") UUID campaignId) {
         log.info("Получение кампании по ID: {}", campaignId);
         return campaignService.getByCampaignId(campaignId);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public CampaignDto archiveCampaign(@PathVariable("id") UUID campaignId) {
         log.info("Архивирование кампании с ID: {}", campaignId);
         return campaignService.archiveCampaign(campaignId);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public List<ChannelCampaignDatesDto> getCampaignIntervals(@RequestParam List<UUID> channelIds) {
         log.info("Получение интервалов кампаний для каналов: {}", channelIds);
         return campaignService.getCampaignIntervalDate(channelIds);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
     public List<ExpectedRetargetDto> getExpectedRetarget(@RequestParam List<UUID> channelIds) {
         log.info("Получение ожидаемого количества ретаргетинга для каналов: {}", channelIds);
         return campaignService.maxSubCount(channelIds);
