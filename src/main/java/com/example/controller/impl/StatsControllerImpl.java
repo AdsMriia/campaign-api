@@ -1,21 +1,29 @@
 package com.example.controller.impl;
 
-import com.example.controller.StatsController;
-import com.example.model.MessageType;
-import com.example.model.dto.*;
-import com.example.service.CampaignService;
-import com.example.service.StatsService;
-import io.swagger.v3.oas.annotations.tags.Tag;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.UUID;
+
 import org.springframework.data.domain.Page;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.UUID;
+import com.example.controller.StatsController;
+import com.example.model.MessageType;
+import com.example.model.dto.ChartDto;
+import com.example.model.dto.GroupedWebStats;
+import com.example.model.dto.HistoryDto;
+import com.example.model.dto.PollStatsDto;
+import com.example.model.dto.RetargetStatsDto;
+import com.example.model.dto.SimpleDate;
+import com.example.model.dto.StatsDto;
+import com.example.model.dto.WebStatsDto;
+import com.example.service.CampaignService;
+import com.example.service.StatsService;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Контроллер для получения статистики и аналитики
@@ -29,6 +37,7 @@ public class StatsControllerImpl implements StatsController {
     private final CampaignService campaignService;
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public SimpleDate getDates(
             @PathVariable UUID workspaceId,
             @RequestParam Double range,
@@ -40,6 +49,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<WebStatsDto> getChannelStats(
             @PathVariable UUID workspaceId,
             @PathVariable("type") String type,
@@ -49,6 +59,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<GroupedWebStats> getGroupedStats(
             @PathVariable UUID workspaceId,
             @PathVariable("type") String type) {
@@ -57,6 +68,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<WebStatsDto> getStatsById(
             @PathVariable UUID workspaceId,
             @PathVariable("channelId") UUID id) {
@@ -65,6 +77,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<HistoryDto> getHistory(
             @PathVariable UUID workspaceId,
             @PathVariable("statsId") UUID statsId) {
@@ -73,6 +86,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<StatsDto> getStatsByChannelId(
             @PathVariable UUID workspaceId,
             @PathVariable("channelId") Long id) {
@@ -81,6 +95,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public List<ChartDto> getChart(
             @PathVariable UUID workspaceId,
             @RequestParam MessageType type,
@@ -92,6 +107,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public PollStatsDto getPollResults(
             @PathVariable UUID workspaceId,
             @PathVariable("id") UUID pollId) {
@@ -100,6 +116,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public Page<PollStatsDto> getPollResults(
             @PathVariable UUID workspaceId,
             @RequestParam(value = "channelIds", required = false) List<UUID> channelIds,
@@ -114,7 +131,9 @@ public class StatsControllerImpl implements StatsController {
                 channelIds, startDate, endDate, page, size, asc, sortedBy);
         return statsService.getPollResults(channelIds, endDate, startDate, page, size, asc, sortedBy);
     }
+
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public Page<RetargetStatsDto> getAllStats(
             @PathVariable UUID workspaceId,
             Integer page,

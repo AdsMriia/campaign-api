@@ -1,13 +1,12 @@
 package com.example.controller.impl;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,10 +15,8 @@ import com.example.model.MessageStatus;
 import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.GetMessageDto;
-import com.example.model.dto.MessageDto;
 import com.example.service.MessageService;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -37,12 +34,14 @@ public class ConstructorControllerImpl implements ConstructorController {
     private final MessageService messageService;
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public GetMessageDto getById(@PathVariable("id") UUID id) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public Page<GetMessageDto> getAllByType(
             @RequestParam(required = false) MessageType type,
             @RequestParam(required = false) MessageStatus status,
@@ -54,12 +53,14 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public GetMessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(object, id);
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public GetMessageDto create(
             @RequestParam("workspaceId") UUID workspaceId,
             @RequestBody @Valid CreateMessageDto createMessageDto) {
@@ -68,6 +69,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
+    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'OWNER')")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);
