@@ -96,6 +96,8 @@ ${logs}"""
                     -p 8083:8080 \
                     --env-file $ENV_FILE \
                     -v /opt/data/mriya/static/:/uploads \
+                    --label logging=promtail \
+                    --label logging_jobname=${CONTAINER_NAME} \
                     $DOCKER_IMAGE
                     """
                 }
