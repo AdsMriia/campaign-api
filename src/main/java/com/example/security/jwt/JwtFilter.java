@@ -71,14 +71,14 @@ public class JwtFilter extends OncePerRequestFilter {
 
         log.info("============================================");
 
-        UUID workspaceIdUUID;
+        UUID workspaceIdUUID = null;
         List<String> authorities = new ArrayList<>();
 
         if (request.getRequestURI().startsWith(contextPath + "/workspaces/")) {
             String workspaceId = request.getRequestURI().replace(contextPath + "/workspaces/", "").split("/")[0];
             try {
                 workspaceIdUUID = UUID.fromString(workspaceId);
-                authorities = workspaceClient.getPermissions(workspaceIdUUID, jwt);
+                authorities.addAll(workspaceClient.getPermissions(workspaceIdUUID, jwt));
 
             } catch (Exception e) {
                 sendErrorResponse(response, HttpStatus.BAD_REQUEST, "Bad request", "Invalid workspace ID");
@@ -90,6 +90,9 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             WebUserDto userDto = jwtService.validateToken(jwt);
+            if (workspaceIdUUID != null) {
+                userDto.setWorkspaceId(workspaceIdUUID);
+            }
             userDto.setRoles(authorities);
 
             CustomUserDetails userDetails = new CustomUserDetails(userDto);

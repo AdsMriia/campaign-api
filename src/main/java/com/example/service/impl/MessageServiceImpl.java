@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import com.example.entity.MediaToMessage;
 import com.example.model.dto.*;
 import com.example.repository.MediaToMessageRepository;
-import org.antlr.v4.runtime.misc.LogManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,7 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.web.bind.annotation.DeleteMapping;
 
 /**
  * Реализация сервиса для управления сообщениями. Предоставляет методы для
@@ -60,17 +58,17 @@ public class MessageServiceImpl implements MessageService {
     private final MediaToMessageRepository mediaToMessageRepository;
 
     @Override
-    public GetMessageDto getById(UUID id) {
+    public MessageDto getById(UUID id) {
         log.info("Получение сообщения по ID: {}", id);
 
         Message message = messageRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Сообщение с ID " + id + " не найдено"));
 
-        return messageMapper.toGetMessageDto(message);
+        return messageMapper.toMessageDto(message);
     }
 
     @Override
-    public Page<GetMessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size) {
+    public Page<MessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size) {
         log.info("Получение списка сообщений с параметрами: тип={}, статус={}, страница={}, размер={}",
                 type, status, page, size);
 
@@ -101,11 +99,11 @@ public class MessageServiceImpl implements MessageService {
             messagePage = messageRepository.findByWorkspaceId(workspaceId, pageRequest);
         }
 
-        return messagePage.map(messageMapper::toGetMessageDto);
+        return messagePage.map(messageMapper::toMessageDto);
     }
 
     @Override
-    public GetMessageDto update(CreateMessageDto messageDto, UUID id) {
+    public MessageDto update(UUID id, CreateMessageDto messageDto) {
         log.info("Обновление сообщения с ID: {}, данные: {}", id, messageDto);
 
         Message message = messageRepository.findById(id)
@@ -123,8 +121,8 @@ public class MessageServiceImpl implements MessageService {
         // Обновляем основные поля сообщения
         message.setTitle(messageDto.getTitle());
         message.setText(messageDto.getText());
-        message.setType(messageDto.getType());
-        message.setStatus(messageDto.getStatus());
+        message.setType(MessageType.TEXT);
+        message.setStatus(MessageStatus.DRAFT);
         message.setMarkDown(messageDto.getMarkDown());
         message.setUpdatedAt(OffsetDateTime.now());
 
@@ -176,11 +174,11 @@ public class MessageServiceImpl implements MessageService {
 
         Message updatedMessage = messageRepository.save(message);
 
-        return messageMapper.toGetMessageDto(updatedMessage);
+        return messageMapper.toMessageDto(updatedMessage);
     }
 
     @Override
-    public GetMessageDto create(CreateMessageDto createMessageDto, UUID workspaceId) {
+    public MessageDto create(CreateMessageDto createMessageDto, UUID workspaceId) {
         log.info("Создание нового сообщения: {}, markdown: {}", createMessageDto, createMessageDto.getMarkDown());
 
         // Получаем ID текущего пользователя и рабочего пространства
@@ -190,10 +188,8 @@ public class MessageServiceImpl implements MessageService {
         Message message = new Message();
         message.setTitle(createMessageDto.getTitle());
         message.setText(createMessageDto.getText());
-        message.setType(createMessageDto.getType());
-        message.setStatus(createMessageDto.getStatus() != null
-                ? createMessageDto.getStatus()
-                : MessageStatus.DRAFT);
+        message.setType(MessageType.TEXT);
+        message.setStatus(MessageStatus.DRAFT);
         // Используем значение markdown из параметра, если в DTO не указано
         message.setMarkDown(createMessageDto.getMarkDown());
         message.setWorkspaceId(workspaceId);
@@ -274,7 +270,7 @@ public class MessageServiceImpl implements MessageService {
         Message refreshedMessage = messageRepository.findById(savedMessage.getId())
                 .orElseThrow(() -> new NotFoundException("Сообщение не найдено после сохранения"));
 
-        GetMessageDto result = messageMapper.toGetMessageDto(refreshedMessage);
+        MessageDto result = messageMapper.toMessageDto(refreshedMessage);
         log.info("Сообщение успешно создано с ID: {}", result.getId());
         return result;
     }
@@ -464,35 +460,35 @@ public class MessageServiceImpl implements MessageService {
                 .map(messageMapper::toMessageDto);
     }
 
-    @Override
-    public MessageDto updateMessage(UUID id, CreateMessageDto createMessageDto) {
-        log.info("Обновление сообщения с ID: {}", id);
-        Message message = messageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Сообщение с ID " + id + " не найдено"));
-
-        Set<MediaToMessage> medias = new HashSet<>();
-
-        message.setTitle(createMessageDto.getTitle());
-        message.setText(createMessageDto.getText());
-        message.setType(createMessageDto.getType());
-        message.setStatus(createMessageDto.getStatus());
-        message.setMarkDown(createMessageDto.getMarkDown());
-        message.setUpdatedAt(OffsetDateTime.now());
-        messageRepository.save(message);
-        List<Media> mediaList = findMediaByFileName(createMessageDto.getMediaName());
-        for (Media media : mediaList) {
-            MediaToMessage mediaToMessage = new MediaToMessage();
-            mediaToMessage.setMessage(message);
-            mediaToMessage.setMedia(media);
-            mediaToMessageRepository.save(mediaToMessage);
-            medias.add(mediaToMessage);
-        }
-
-        message.setMedias(medias);
-
-        Message updatedMessage = messageRepository.save(message);
-        return messageMapper.toMessageDto(updatedMessage);
-    }
+//    @Override
+//    public MessageDto updateMessage(UUID id, CreateMessageDto createMessageDto) {
+//        log.info("Обновление сообщения с ID: {}", id);
+//        Message message = messageRepository.findById(id)
+//                .orElseThrow(() -> new NotFoundException("Сообщение с ID " + id + " не найдено"));
+//
+//        Set<MediaToMessage> medias = new HashSet<>();
+//
+//        message.setTitle(createMessageDto.getTitle());
+//        message.setText(createMessageDto.getText());
+//        message.setType(createMessageDto.getType());
+//        message.setStatus(createMessageDto.getStatus());
+//        message.setMarkDown(createMessageDto.getMarkDown());
+//        message.setUpdatedAt(OffsetDateTime.now());
+//        messageRepository.save(message);
+//        List<Media> mediaList = findMediaByFileName(createMessageDto.getMediaName());
+//        for (Media media : mediaList) {
+//            MediaToMessage mediaToMessage = new MediaToMessage();
+//            mediaToMessage.setMessage(message);
+//            mediaToMessage.setMedia(media);
+//            mediaToMessageRepository.save(mediaToMessage);
+//            medias.add(mediaToMessage);
+//        }
+//
+//        message.setMedias(medias);
+//
+//        Message updatedMessage = messageRepository.save(message);
+//        return messageMapper.toMessageDto(updatedMessage);
+//    }
 
     @Override
     public void delete(UUID id) {
@@ -528,31 +524,31 @@ public class MessageServiceImpl implements MessageService {
         return messageMapper.toMessageDto(savedMessage);
     }
 
-    @Deprecated
-    @Override
-    public MessageDto update(UUID id, MessageDto messageDto) {
-        log.info("Updating message with id: {}", id);
-
-        Message existingMessage = messageRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Message with id " + id + " not found"));
-
-        // Проверка, принадлежит ли сообщение текущему рабочему пространству
-        if (!existingMessage.getWorkspaceId().equals(webUserService.getCurrentWorkspaceId())) {
-            throw new AccessDeniedException("You don't have permission to update this message");
-        }
-
-        // Обновляем только разрешенные поля
-        existingMessage.setTitle(messageDto.getTitle());
-        existingMessage.setText(messageDto.getText());
-        existingMessage.setMarkDown(messageDto.getMarkDown());
-        existingMessage.setStatus(messageDto.getStatus());
-
-        // Сохраняем обновленное сообщение
-        Message updatedMessage = messageRepository.save(existingMessage);
-        log.info("Updated message with id: {}", updatedMessage.getId());
-
-        return messageMapper.toMessageDto(updatedMessage);
-    }
+//    @Deprecated
+//    @Override
+//    public MessageDto update(UUID id, MessageDto messageDto) {
+//        log.info("Updating message with id: {}", id);
+//
+//        Message existingMessage = messageRepository.findById(id)
+//                .orElseThrow(() -> new NotFoundException("Message with id " + id + " not found"));
+//
+//        // Проверка, принадлежит ли сообщение текущему рабочему пространству
+//        if (!existingMessage.getWorkspaceId().equals(webUserService.getCurrentWorkspaceId())) {
+//            throw new AccessDeniedException("You don't have permission to update this message");
+//        }
+//
+//        // Обновляем только разрешенные поля
+//        existingMessage.setTitle(messageDto.getTitle());
+//        existingMessage.setText(messageDto.getText());
+//        existingMessage.setMarkDown(messageDto.getMarkDown());
+//        existingMessage.setStatus(messageDto.getStatus());
+//
+//        // Сохраняем обновленное сообщение
+//        Message updatedMessage = messageRepository.save(existingMessage);
+//        log.info("Updated message with id: {}", updatedMessage.getId());
+//
+//        return messageMapper.toMessageDto(updatedMessage);
+//    }
 
     @Override
     public MessageDto duplicate(UUID id) {

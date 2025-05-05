@@ -1,6 +1,5 @@
 package com.example.controller;
 
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -16,9 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.model.MessageStatus;
-import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -48,7 +45,7 @@ public interface ConstructorController {
                         description = "Креатив успешно получен",
                         content = @Content(
                                 mediaType = "application/json",
-                                schema = @Schema(implementation = GetMessageDto.class)
+                                schema = @Schema(implementation = MessageDto.class)
                         )
                 ),
                 @ApiResponse(
@@ -62,7 +59,7 @@ public interface ConstructorController {
             }
     )
     @GetMapping("/{id}")
-    GetMessageDto getById(
+    MessageDto getById(
             @Parameter(description = "Идентификатор креатива", required = true)
             @PathVariable("id") UUID id);
 
@@ -81,9 +78,9 @@ public interface ConstructorController {
             }
     )
     @GetMapping
-    Page<GetMessageDto> getAllByType(
-            @Parameter(description = "Тип сообщения для фильтрации")
-            @RequestParam(required = false) MessageType type,
+    Page<MessageDto> getAllByType(
+//            @Parameter(description = "Тип сообщения для фильтрации")
+//            @RequestParam(required = false) MessageType type,
             @Parameter(description = "Статус сообщения для фильтрации")
             @RequestParam(required = false) MessageStatus status,
             @Parameter(description = "Номер страницы (начиная с 0)")
@@ -101,7 +98,7 @@ public interface ConstructorController {
                         description = "Креатив успешно обновлен",
                         content = @Content(
                                 mediaType = "application/json",
-                                schema = @Schema(implementation = GetMessageDto.class)
+                                schema = @Schema(implementation = MessageDto.class)
                         )
                 ),
                 @ApiResponse(
@@ -123,7 +120,7 @@ public interface ConstructorController {
             }
     )
     @PutMapping("/{id}")
-    GetMessageDto update(
+    MessageDto update(
             @Parameter(description = "Данные для обновления креатива", required = true)
             @RequestBody @Valid CreateMessageDto object,
             @Parameter(description = "Идентификатор креатива", required = true)
@@ -138,7 +135,7 @@ public interface ConstructorController {
                         description = "Креатив успешно создан",
                         content = @Content(
                                 mediaType = "application/json",
-                                schema = @Schema(implementation = GetMessageDto.class)
+                                schema = @Schema(implementation = MessageDto.class)
                         )
                 ),
                 @ApiResponse(
@@ -152,7 +149,7 @@ public interface ConstructorController {
             }
     )
     @PostMapping
-    GetMessageDto create(
+    MessageDto create(
             @Parameter(description = "Идентификатор рабочего пространства", required = true)
             @RequestParam UUID workspaceId,
             @Parameter(description = "Данные для создания креатива", required = true)

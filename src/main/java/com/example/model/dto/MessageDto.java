@@ -1,7 +1,6 @@
 package com.example.model.dto;
 
 import com.example.model.MessageStatus;
-import com.example.model.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
@@ -31,12 +30,6 @@ public class MessageDto {
      */
     @JsonProperty("title")
     private String title;
-
-    /**
-     * Тип сообщения.
-     */
-    @JsonProperty("type")
-    private MessageType type;
 
     /**
      * Статус сообщения.

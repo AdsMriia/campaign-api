@@ -1,15 +1,11 @@
 package com.example.model.dto;
 
-import com.example.model.MessageStatus;
-import com.example.model.MessageType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * DTO для создания нового сообщения.
@@ -33,16 +29,16 @@ public class CreateMessageDto {
     /**
      * Тип сообщения.
      */
-    @NotNull(message = "Message type cannot be null")
-    @JsonProperty("type")
-    private MessageType type;
+//    @NotNull(message = "Message type cannot be null")
+//    @JsonProperty("type")
+//    private MessageType type;
 
     /**
      * Статус сообщения.
      */
-    @NotNull(message = "Message status cannot be null")
-    @JsonProperty("status")
-    private MessageStatus status;
+//    @NotNull(message = "Message status cannot be null")
+//    @JsonProperty("status")
+//    private MessageStatus status;
 
     /**
      * Флаг использования markdown форматирования.

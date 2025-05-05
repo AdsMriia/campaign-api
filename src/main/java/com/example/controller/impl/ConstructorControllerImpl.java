@@ -12,9 +12,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.controller.ConstructorController;
 import com.example.model.MessageStatus;
-import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
+import com.example.model.dto.MessageDto;
 import com.example.service.MessageService;
 
 import jakarta.validation.Valid;
@@ -34,34 +33,34 @@ public class ConstructorControllerImpl implements ConstructorController {
     private final MessageService messageService;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
-    public GetMessageDto getById(@PathVariable("id") UUID id) {
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    public MessageDto getById(@PathVariable("id") UUID id) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
     }
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public Page<GetMessageDto> getAllByType(
-            @RequestParam(required = false) MessageType type,
+    public Page<MessageDto> getAllByType(
+//            @RequestParam(required = false) MessageType type,
             @RequestParam(required = false) MessageStatus status,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
         log.info("Получен запрос на получение списка креативов с параметрами: тип={}, статус={}, страница={}, размер={}",
-                type, status, page, size);
-        return messageService.getPageBy(type, status, page, size);
+                null, status, page, size);
+        return messageService.getPageBy(null, status, page, size);
     }
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public GetMessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
+    public MessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
-        return messageService.update(object, id);
+        return messageService.update(id, object);
     }
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public GetMessageDto create(
+    public MessageDto create(
             @RequestParam("workspaceId") UUID workspaceId,
             @RequestBody @Valid CreateMessageDto createMessageDto) {
         log.info("Получен запрос на создание креатива: {}, workspaceId: {}", createMessageDto, workspaceId);

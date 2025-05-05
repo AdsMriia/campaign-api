@@ -10,7 +10,6 @@ import org.springframework.data.domain.Pageable;
 import com.example.model.MessageStatus;
 import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
 
 /**
@@ -24,7 +23,7 @@ public interface MessageService {
      * @param id идентификатор сообщения
      * @return детальная информация о сообщении
      */
-    GetMessageDto getById(UUID id);
+    MessageDto getById(UUID id);
 
     /**
      * Получает страницу сообщений с фильтрацией.
@@ -35,16 +34,7 @@ public interface MessageService {
      * @param size размер страницы
      * @return страница с сообщениями
      */
-    Page<GetMessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size);
-
-    /**
-     * Обновляет сообщение.
-     *
-     * @param messageDto данные для обновления
-     * @param id идентификатор сообщения
-     * @return обновленная информация о сообщении
-     */
-    GetMessageDto update(CreateMessageDto messageDto, UUID id);
+    Page<MessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size);
 
     /**
      * Создает новое сообщение.
@@ -53,7 +43,7 @@ public interface MessageService {
      * @param createMessageDto данные для создания
      * @return информация о созданном сообщении
      */
-    GetMessageDto create(CreateMessageDto createMessageDto, UUID workspaceId);
+    MessageDto create(CreateMessageDto createMessageDto, UUID workspaceId);
 
     /**
      * Удаляет сообщение.
@@ -103,15 +93,6 @@ public interface MessageService {
     Page<MessageDto> getMessages(Pageable pageable);
 
     /**
-     * Обновляет сообщение.
-     *
-     * @param id идентификатор сообщения
-     * @param createMessageDto данные для обновления
-     * @return обновленное сообщение
-     */
-    MessageDto updateMessage(UUID id, CreateMessageDto createMessageDto);
-
-    /**
      * Удаляет сообщение.
      *
      * @param id идентификатор сообщения
@@ -141,7 +122,7 @@ public interface MessageService {
      * @param messageDto данные для обновления
      * @return обновленное сообщение
      */
-    MessageDto update(UUID id, MessageDto messageDto);
+    MessageDto update(UUID id, CreateMessageDto messageDto);
 
     /**
      * Создает дубликат сообщения.

@@ -10,7 +10,6 @@ import org.mapstruct.Named;
 
 import com.example.entity.Message;
 import com.example.model.dto.CreateMessageDto;
-import com.example.model.dto.GetMessageDto;
 import com.example.model.dto.MessageDto;
 
 /**
@@ -29,15 +28,15 @@ public interface MessageMapper {
     @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(message.getUpdatedAt()))")
     MessageDto toMessageDto(Message message);
 
-    /**
-     * Преобразует сущность Message в GetMessageDto с полной информацией.
-     *
-     * @param message сущность сообщения
-     * @return DTO с детальной информацией о сообщении
-     */
-    @Mapping(target = "createdAt", expression = "java(offsetDateTimeToLong(message.getCreatedAt()))")
-    @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(message.getUpdatedAt()))")
-    GetMessageDto toGetMessageDto(Message message);
+//    /**
+//     * Преобразует сущность Message в GetMessageDto с полной информацией.
+//     *
+//     * @param message сущность сообщения
+//     * @return DTO с детальной информацией о сообщении
+//     */
+//    @Mapping(target = "createdAt", expression = "java(offsetDateTimeToLong(message.getCreatedAt()))")
+//    @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(message.getUpdatedAt()))")
+//    MessageDto toGetMessageDto(Message message);
 
     @Mapping(target = "actions", ignore = true)
     @Mapping(target = "medias", ignore = true)
