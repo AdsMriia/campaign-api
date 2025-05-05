@@ -37,7 +37,7 @@ public class StatsControllerImpl implements StatsController {
     private final CampaignService campaignService;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public SimpleDate getDates(
             @PathVariable UUID workspaceId,
             @RequestParam Double range,
@@ -49,7 +49,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<WebStatsDto> getChannelStats(
             @PathVariable UUID workspaceId,
             @PathVariable("type") String type,
@@ -59,7 +59,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<GroupedWebStats> getGroupedStats(
             @PathVariable UUID workspaceId,
             @PathVariable("type") String type) {
@@ -68,7 +68,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<WebStatsDto> getStatsById(
             @PathVariable UUID workspaceId,
             @PathVariable("channelId") UUID id) {
@@ -77,7 +77,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<HistoryDto> getHistory(
             @PathVariable UUID workspaceId,
             @PathVariable("statsId") UUID statsId) {
@@ -86,7 +86,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<StatsDto> getStatsByChannelId(
             @PathVariable UUID workspaceId,
             @PathVariable("channelId") Long id) {
@@ -95,7 +95,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public List<ChartDto> getChart(
             @PathVariable UUID workspaceId,
             @RequestParam MessageType type,
@@ -107,7 +107,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public PollStatsDto getPollResults(
             @PathVariable UUID workspaceId,
             @PathVariable("id") UUID pollId) {
@@ -116,7 +116,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public Page<PollStatsDto> getPollResults(
             @PathVariable UUID workspaceId,
             @RequestParam(value = "channelIds", required = false) List<UUID> channelIds,
@@ -133,7 +133,7 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SUPER_ADMIN', 'SPECIAL_OWNER')")
+    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public Page<RetargetStatsDto> getAllStats(
             @PathVariable UUID workspaceId,
             Integer page,
