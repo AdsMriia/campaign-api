@@ -116,7 +116,6 @@ public class StatsControllerImpl implements StatsController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public Page<PollStatsDto> getPollResults(
             @PathVariable UUID workspaceId,
             @RequestParam(value = "channelIds", required = false) List<UUID> channelIds,
