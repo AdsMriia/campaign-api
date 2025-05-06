@@ -79,6 +79,16 @@ public class JwtFilter extends OncePerRequestFilter {
         // TODO: check where else there is a mismatch /workspace/ vs /workspaces/
         log.info("Request URI: {}", request.getRequestURI());
         log.info("to replace: {}", contextPath + "/workspace/");
+
+        WebUserDto userDto = null;
+
+        try {
+            userDto = jwtService.validateToken(jwt);
+        } catch (TokenValidationException e) {
+            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid token", e.getMessage());
+            return;
+        }
+
         if (request.getRequestURI().startsWith(contextPath + "/workspace/")) {
             String workspaceId = request.getRequestURI().replace(contextPath + "/workspace/", "").split("/")[0];
             log.info("Workspace ID: {}", workspaceId);
@@ -102,29 +112,24 @@ public class JwtFilter extends OncePerRequestFilter {
 
         authorities.add(jwtService.getRoleFromToken(jwt));
 
-        try {
-            WebUserDto userDto = jwtService.validateToken(jwt);
-            if (workspaceIdUUID != null) {
-                userDto.setWorkspaceId(workspaceIdUUID);
-            }
-            userDto.setRoles(authorities);
-
-            CustomUserDetails userDetails = new CustomUserDetails(userDto);
-
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    userDetails,
-                    jwt,
-                    userDetails.getAuthorities()
-            );
-
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            // Пропускаем все запросы без проверки, так как это заглушка
-            filterChain.doFilter(request, response);
-        } catch (TokenValidationException e) {
-            sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid token", e.getMessage());
+        if (workspaceIdUUID != null) {
+            userDto.setWorkspaceId(workspaceIdUUID);
         }
+        userDto.setRoles(authorities);
+
+        CustomUserDetails userDetails = new CustomUserDetails(userDto);
+
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                jwt,
+                userDetails.getAuthorities()
+        );
+
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+        // Пропускаем все запросы без проверки, так как это заглушка
+        filterChain.doFilter(request, response);
     }
 
     private void sendErrorResponse(HttpServletResponse response, HttpStatus status, String error, String message) throws IOException {
