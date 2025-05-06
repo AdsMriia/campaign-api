@@ -42,6 +42,8 @@ public class JwtFilter extends OncePerRequestFilter {
     private final WorkspaceClient workspaceClient;
     @Value("${server.servlet.context-path}")
     private String contextPath;
+    @Value("${services.workspace}")
+    private String workspaceService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -85,7 +87,9 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             try {
+                log.info("Getting permissions " + workspaceService);
                 authorities.addAll(workspaceClient.getPermissions(workspaceIdUUID, authHeader));
+                log.info("Permissions: {}", authorities);
             } catch (Exception e) {
                 sendErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", "Error while getting permissions");
                 return;
