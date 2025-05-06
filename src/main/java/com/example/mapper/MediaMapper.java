@@ -18,7 +18,7 @@ public interface MediaMapper {
      * @param media сущность медиафайла
      * @return DTO медиафайла
      */
-    @Mapping(target = "url", expression = "java(String.format(\"/api/v1/media/%s\", media.getFileName()))")
+    @Mapping(target = "url", expression = "java(String.format(\"/static/mriia/%s.%s\", media.getFileName(), media.getFileExtension()))")
     @Mapping(target = "size", ignore = true)
     MediaDto toMediaDto(Media media);
 
