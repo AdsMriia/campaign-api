@@ -27,7 +27,7 @@ public interface TdLibClient {
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/campaign/start")
+    @PostMapping("/campaign/start")
     ResponseEntity<String> startCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);
@@ -36,12 +36,9 @@ public interface TdLibClient {
      * Планирует запуск кампании на определенное время.
      *
      * @param authorization JWT токен авторизации
-     * @param campaignId ID кампании
-     * @param startTimestamp timestamp начала кампании
-     * @param timezone часовой пояс
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/audience/campaign/init")
+    @PostMapping("/audience/campaign/init")
     ResponseEntity<String> scheduleCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestBody CampaignDto campaignDto
@@ -54,7 +51,7 @@ public interface TdLibClient {
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/campaign/stop")
+    @PostMapping("/campaign/stop")
     ResponseEntity<String> stopCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);
@@ -69,7 +66,7 @@ public interface TdLibClient {
      * @param timezone часовой пояс
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/initialize/cycle")
+    @PostMapping("/initialize/cycle")
     ResponseEntity<String> initializeRetarget(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("channelId") UUID channelId,
@@ -84,7 +81,7 @@ public interface TdLibClient {
      * @param campaignId ID кампании
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/api/retarget/stop")
+    @PostMapping("/retarget/stop")
     ResponseEntity<String> stopRetarget(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);
@@ -96,7 +93,7 @@ public interface TdLibClient {
      * @param campaignId идентификатор кампании
      * @return ответ с информацией о статусе
      */
-    @PostMapping("/api/campaign/checkStatus")
+    @PostMapping("/campaign/checkStatus")
     ResponseEntity<String> checkStatus(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);
@@ -108,7 +105,7 @@ public interface TdLibClient {
      * @param campaignId идентификатор кампании
      * @return ответ со статистикой
      */
-    @PostMapping("/api/campaign/getStats")
+    @PostMapping("/campaign/getStats")
     ResponseEntity<String> getStats(
             @RequestHeader("Authorization") String authorization,
             @RequestParam("campaignId") UUID campaignId);

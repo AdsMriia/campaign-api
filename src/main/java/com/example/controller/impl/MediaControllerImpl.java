@@ -5,6 +5,7 @@ import java.util.UUID;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,21 +27,18 @@ import lombok.extern.slf4j.Slf4j;
 public class MediaControllerImpl implements MediaController {
 
     private final MediaService mediaService;
-    private final UserProvider userProvider;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public MediaDto uploadMedia(@RequestParam("file") MultipartFile file, @RequestParam("workspaceId") UUID workspaceId) {
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER'))")
+    public MediaDto uploadMedia(MultipartFile file, UUID workspacePathId, UUID workspaceQueryId) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
-
-        return mediaService.uploadMedia(file, workspaceId);
+        return mediaService.uploadMedia(file, workspaceQueryId != null ? workspaceQueryId : workspacePathId);
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER'))")
     public ResponseEntity<List<MediaDto>> getAll(UUID workspaceId) {
         log.info("Получен запрос на получение списка собственных медиафайлов");
         return mediaService.getAll(workspaceId);
     }
-
 }

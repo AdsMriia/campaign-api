@@ -38,16 +38,16 @@ public interface MediaController {
                     required = true
             ),
             responses = {
-                @ApiResponse(
-                        responseCode = "200",
-                        description = "Медиа-файл успешно загружен",
-                        content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = MediaDto.class),
-                                    examples = {
-                                        @ExampleObject(
-                                                value = """
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Медиа-файл успешно загружен",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = MediaDto.class),
+                                            examples = {
+                                                    @ExampleObject(
+                                                            value = """
                                                                     {
                                                                         "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
                                                                         "workspace_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
@@ -57,26 +57,29 @@ public interface MediaController {
                                                                         "size": 0
                                                                     }
                                                                     """
-                                        )
-                                    }
-                            )
-                        }
-                ),
-                @ApiResponse(
-                        responseCode = "400",
-                        description = "Некорректный запрос",
-                        content = {
-                            @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = String.class)
-                            )
-                        }
-                )
+                                                    )
+                                            }
+                                    )
+                            }
+                    ),
+                    @ApiResponse(
+                            responseCode = "400",
+                            description = "Некорректный запрос",
+                            content = {
+                                    @Content(
+                                            mediaType = "application/json",
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            }
+                    )
             }
     )
     @PostMapping
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
-    MediaDto uploadMedia(@RequestParam("file") MultipartFile file, @PathVariable("workspaceId") UUID workspaceId);
+    MediaDto uploadMedia(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable("workspaceId") UUID workspacePathId,
+            @RequestParam(name = "workspaceId", required = false) UUID workspaceQueryId);
 
     @GetMapping
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")

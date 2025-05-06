@@ -23,7 +23,7 @@ public interface ChannelClient {
      * @param id идентификатор канала
      * @return информация о канале
      */
-    @GetMapping("/api/channels/{id}")
+    @GetMapping("/channels/{id}")
     ResponseEntity<Object> getById(@RequestHeader("Authorization") String authorization, @PathVariable("id") UUID id);
 
     /**
@@ -33,7 +33,7 @@ public interface ChannelClient {
      * @param workspaceId идентификатор рабочего пространства
      * @return true, если канал существует, иначе false
      */
-    @GetMapping("/api/channels/exists")
+    @GetMapping("/channels/exists")
     boolean existsByIdAndWorkspaceId(@RequestParam("id") UUID id, @RequestParam("workspaceId") UUID workspaceId);
 
     /**
@@ -42,6 +42,6 @@ public interface ChannelClient {
      * @param channelId идентификатор канала
      * @return количество подписчиков
      */
-    @GetMapping("/api/channels/{channelId}/subscribers/count")
+    @GetMapping("/channels/{channelId}/subscribers/count")
     Long countSubscribersById(@PathVariable("channelId") UUID channelId);
 }
