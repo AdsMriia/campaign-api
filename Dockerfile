@@ -27,6 +27,8 @@ RUN apt-get update && apt-get install -y \
 # Копируем JAR из этапа сборки
 COPY --from=build /app/target/*.jar app.jar
 
+COPY tools/ffmpeg/ffmpeg /app/ffmpeg
+COPY tools/ffmpeg/ffprobe /app/ffprobe
 # Порт, который будет доступен извне
 EXPOSE 8080
 
