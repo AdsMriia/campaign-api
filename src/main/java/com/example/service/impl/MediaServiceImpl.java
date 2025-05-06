@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.OffsetDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -159,6 +160,12 @@ public class MediaServiceImpl implements MediaService {
 //        Media media = createMediaEntity(uuid, "." + outputFormat);
         Media media = new Media();
         media.setWorkspaceId(workspaceId);
+        media.setFileName(uuid);
+        media.setFileExtension(outputFormat);
+        media.setCreatedBy(userProvider.getCurrentUser().getId());
+        media.setUpdatedBy(userProvider.getCurrentUser().getId());
+        media.setCreatedAt(OffsetDateTime.now());
+        media.setUpdatedAt(OffsetDateTime.now());
         mediaRepository.save(media);
         System.out.println("Media entity successfully saved to the database. File name: " + media.getFileName());
 
