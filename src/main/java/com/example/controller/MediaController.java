@@ -75,14 +75,12 @@ public interface MediaController {
             }
     )
     @PostMapping
-    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     MediaDto uploadMedia(
             @org.springframework.web.bind.annotation.RequestBody MultipartFile file,
             @PathVariable("workspaceId") UUID workspacePathId,
             @RequestParam(name = "workspaceId", required = false) UUID workspaceQueryId);
 
     @GetMapping
-    @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     @Operation(summary = "Получение своих медиа-файлов", description = "Возвращает список всех медиа-файлов текущего пользователя")
     ResponseEntity<List<MediaDto>> getAll(@PathVariable UUID workspaceId);
 }

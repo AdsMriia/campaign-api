@@ -29,14 +29,14 @@ public class MediaControllerImpl implements MediaController {
     private final MediaService mediaService;
 
     @Override
-    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER'))")
+    @PreAuthorize("(hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')) || hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public MediaDto uploadMedia(MultipartFile file, UUID workspacePathId, UUID workspaceQueryId) {
         log.info("Получен запрос на загрузку медиафайла: {}", file.getOriginalFilename());
         return mediaService.uploadMedia(file, workspaceQueryId != null ? workspaceQueryId : workspacePathId);
     }
 
     @Override
-    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER'))")
+    @PreAuthorize("(hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')) || hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public ResponseEntity<List<MediaDto>> getAll(UUID workspaceId) {
         log.info("Получен запрос на получение списка собственных медиафайлов");
         return mediaService.getAll(workspaceId);
