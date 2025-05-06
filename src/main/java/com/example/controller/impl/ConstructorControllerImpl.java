@@ -44,6 +44,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public Page<MessageDto> getAllByType(
 //            @RequestParam(required = false) MessageType type,
+            @PathVariable UUID workspaceId,
             @RequestParam(required = false) MessageStatus status,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {

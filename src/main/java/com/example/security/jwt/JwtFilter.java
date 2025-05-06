@@ -77,8 +77,11 @@ public class JwtFilter extends OncePerRequestFilter {
         List<String> authorities = new ArrayList<>();
 
         // TODO: check where else there is a mismatch /workspace/ vs /workspaces/
+        log.info("Request URI: {}", request.getRequestURI());
+        log.info("to replace: {}", contextPath + "/workspace/");
         if (request.getRequestURI().startsWith(contextPath + "/workspace/")) {
             String workspaceId = request.getRequestURI().replace(contextPath + "/workspace/", "").split("/")[0];
+            log.info("Workspace ID: {}", workspaceId);
             try {
                 workspaceIdUUID = UUID.fromString(workspaceId);
             } catch (Exception e) {

@@ -81,6 +81,7 @@ public interface ConstructorController {
     Page<MessageDto> getAllByType(
 //            @Parameter(description = "Тип сообщения для фильтрации")
 //            @RequestParam(required = false) MessageType type,
+            @PathVariable UUID workspaceId,
             @Parameter(description = "Статус сообщения для фильтрации")
             @RequestParam(required = false) MessageStatus status,
             @Parameter(description = "Номер страницы (начиная с 0)")
