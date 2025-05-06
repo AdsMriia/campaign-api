@@ -74,14 +74,20 @@ public class JwtFilter extends OncePerRequestFilter {
         UUID workspaceIdUUID = null;
         List<String> authorities = new ArrayList<>();
 
-        if (request.getRequestURI().startsWith(contextPath + "/workspaces/")) {
-            String workspaceId = request.getRequestURI().replace(contextPath + "/workspaces/", "").split("/")[0];
+        // TODO: check where else there is a mismatch /workspace/ vs /workspaces/
+        if (request.getRequestURI().startsWith(contextPath + "/workspace/")) {
+            String workspaceId = request.getRequestURI().replace(contextPath + "/workspace/", "").split("/")[0];
             try {
                 workspaceIdUUID = UUID.fromString(workspaceId);
-                authorities.addAll(workspaceClient.getPermissions(workspaceIdUUID, jwt));
-
             } catch (Exception e) {
                 sendErrorResponse(response, HttpStatus.BAD_REQUEST, "Bad request", "Invalid workspace ID");
+                return;
+            }
+
+            try {
+                authorities.addAll(workspaceClient.getPermissions(workspaceIdUUID, authHeader));
+            } catch (Exception e) {
+                sendErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", "Error while getting permissions");
                 return;
             }
         }

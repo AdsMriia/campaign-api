@@ -40,7 +40,8 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    // TODO: Change all to this format hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public Page<MessageDto> getAllByType(
 //            @RequestParam(required = false) MessageType type,
             @RequestParam(required = false) MessageStatus status,

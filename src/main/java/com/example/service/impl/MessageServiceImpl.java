@@ -81,10 +81,12 @@ public class MessageServiceImpl implements MessageService {
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
-        // Получаем ID текущего рабочего пространства
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
-
         Page<Message> messagePage;
+        // Получаем ID текущего рабочего пространства
+        try {
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+            System.out.println("workspaceId: " + workspaceId);
+
 
         if (type != null && status != null) {
             messagePage = messageRepository.findByWorkspaceIdAndTypeAndStatus(
@@ -97,6 +99,10 @@ public class MessageServiceImpl implements MessageService {
                     workspaceId, status, pageRequest);
         } else {
             messagePage = messageRepository.findByWorkspaceId(workspaceId, pageRequest);
+            }
+        } catch (Exception e) {
+            log.error("Ошибка при получении ID текущего рабочего пространства: {}", e.getMessage(), e);
+            throw new RequestRejectedException("Ошибка при получении ID текущего рабочего пространства");
         }
 
         return messagePage.map(messageMapper::toMessageDto);
