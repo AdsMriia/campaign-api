@@ -77,7 +77,7 @@ public interface MediaController {
     @PostMapping
     @PreAuthorize("hasAuthority('POLL_BUILDER') && hasAuthority('MESSAGE_BUILDER')")
     MediaDto uploadMedia(
-            @RequestParam("file") MultipartFile file,
+            @org.springframework.web.bind.annotation.RequestBody MultipartFile file,
             @PathVariable("workspaceId") UUID workspacePathId,
             @RequestParam(name = "workspaceId", required = false) UUID workspaceQueryId);
 
