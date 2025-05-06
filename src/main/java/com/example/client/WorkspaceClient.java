@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(name = "workspace", url = "${services.workspace}")
 public interface WorkspaceClient {
 
-    @GetMapping("/api/workspace/{workspaceId}/permissions")
+    @GetMapping("/{workspaceId}/permissions")
     List<String> getPermissions(
             @PathVariable UUID workspaceId,
             @RequestHeader("Authorization") String token);
@@ -29,7 +29,7 @@ public interface WorkspaceClient {
      * @param authorization JWT токен авторизации
      * @return информация о рабочем пространстве
      */
-    @GetMapping("/api/workspaces/{workspaceId}")
+    @GetMapping("/{workspaceId}")
     Object getWorkspaceById(
             @PathVariable("workspaceId") UUID workspaceId,
             @RequestParam("format") String format,
@@ -44,7 +44,7 @@ public interface WorkspaceClient {
      * @param authorization JWT токен авторизации
      * @return результат проверки доступа
      */
-    @GetMapping("/api/workspaces/{workspaceId}/channels/{channelId}/access")
+    @GetMapping("/{workspaceId}/channels/{channelId}/access")
     Map<String, Object> checkChannelAccess(
             @PathVariable("workspaceId") UUID workspaceId,
             @PathVariable("channelId") UUID channelId,

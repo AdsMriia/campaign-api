@@ -94,6 +94,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 authorities.addAll(workspaceClient.getPermissions(workspaceIdUUID, authHeader));
                 log.info("Permissions: {}", authorities);
             } catch (Exception e) {
+                log.error("Error while getting permissions", e);
                 sendErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", "Error while getting permissions");
                 return;
             }
