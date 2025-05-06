@@ -53,6 +53,7 @@ public class ConstructorControllerImpl implements ConstructorController {
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+
     public MessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(id, object);
