@@ -108,7 +108,7 @@ public class CampaignControllerImpl implements CampaignController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public List<ExpectedRetargetDto> getExpectedRetarget(@RequestParam List<UUID> channelIds) {
         log.info("Получение ожидаемого количества ретаргетинга для каналов: {}", channelIds);
         return campaignService.maxSubCount(channelIds);

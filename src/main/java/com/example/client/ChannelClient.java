@@ -43,5 +43,5 @@ public interface ChannelClient {
      * @return количество подписчиков
      */
     @GetMapping("/channels/{channelId}/subscribers/count")
-    Long countSubscribersById(@PathVariable("channelId") UUID channelId);
+    Long countSubscribersById(@PathVariable("channelId") UUID channelId, @RequestHeader("Authorization") String authorization);
 }

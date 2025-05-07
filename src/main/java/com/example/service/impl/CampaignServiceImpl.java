@@ -91,7 +91,7 @@ public class CampaignServiceImpl implements CampaignService {
             //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
             //     continue;
             // }
-            ResponseEntity<Object> response = channelClient.getById(jwtService.generateApiToken(), channelId);
+            ResponseEntity<Object> response = channelClient.getById("Bearer " + jwtService.generateApiToken(), channelId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
@@ -176,8 +176,8 @@ public class CampaignServiceImpl implements CampaignService {
 
         // Преобразуем даты с учетом часового пояса, если указан
         ZoneId zoneId = timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
-        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate(), zoneId);
-        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate(), zoneId);
+        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate()*1000, zoneId);
+        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate()*1000, zoneId);
 
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
@@ -560,7 +560,7 @@ public class CampaignServiceImpl implements CampaignService {
 
         for (UUID channelId : channelIds) {
             // Получаем количество подписчиков для канала через Feign клиент
-            Long subscribersCount = channelClient.countSubscribersById(channelId);
+            Long subscribersCount = channelClient.countSubscribersById(channelId, "Bearer " + jwtService.generateApiToken());
 
             if (subscribersCount != null && subscribersCount > 0) {
                 ExpectedRetargetDto dto = new ExpectedRetargetDto();
