@@ -40,16 +40,15 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    // TODO: Change all to this format hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')
     @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public Page<MessageDto> getAllByType(
-            //            @RequestParam(required = false) MessageType type,
+            @PathVariable UUID workspaceId,
             @RequestParam(required = false) MessageStatus status,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
-        log.info("Получен запрос на получение списка креативов с параметрами: тип={}, статус={}, страница={}, размер={}",
-                null, status, page, size);
-        return messageService.getPageBy(null, status, page, size);
+        log.info("Получен запрос на получение списка креативов с параметрами: workspaceId={}, статус={}, страница={}, размер={}",
+                workspaceId, status, page, size);
+        return messageService.getPageBy(workspaceId, status, page, size);
     }
 
     @Override

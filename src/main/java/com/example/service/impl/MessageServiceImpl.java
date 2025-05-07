@@ -1,12 +1,14 @@
 package com.example.service.impl;
 
 import java.time.OffsetDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
-import com.example.entity.MediaToMessage;
-import com.example.model.dto.*;
-import com.example.repository.MediaToMessageRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import com.example.entity.Action;
 import com.example.entity.Media;
+import com.example.entity.MediaToMessage;
 import com.example.entity.Message;
 import com.example.exception.NotFoundException;
 import com.example.exception.RequestRejectedException;
@@ -23,8 +26,12 @@ import com.example.mapper.ActionMapper;
 import com.example.mapper.MessageMapper;
 import com.example.model.MessageStatus;
 import com.example.model.MessageType;
+import com.example.model.dto.ActionDto;
+import com.example.model.dto.CreateMessageDto;
+import com.example.model.dto.MessageDto;
 import com.example.repository.ActionRepository;
 import com.example.repository.MediaRepository;
+import com.example.repository.MediaToMessageRepository;
 import com.example.repository.MessageRepository;
 import com.example.security.UserProvider;
 import com.example.service.MediaService;
@@ -68,9 +75,9 @@ public class MessageServiceImpl implements MessageService {
     }
 
     @Override
-    public Page<MessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size) {
-        log.info("Получение списка сообщений с параметрами: тип={}, статус={}, страница={}, размер={}",
-                type, status, page, size);
+    public Page<MessageDto> getPageBy(UUID workspaceId, MessageStatus status, Integer page, Integer size) {
+        log.info("Получение списка сообщений с параметрами: workspaceId={}, статус={}, страница={}, размер={}",
+                workspaceId, status, page, size);
 
         if (page == null) {
             page = 0;
@@ -82,27 +89,10 @@ public class MessageServiceImpl implements MessageService {
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));
 
         Page<Message> messagePage;
-        // Получаем ID текущего рабочего пространства
-        try {
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
-            System.out.println("workspaceId: " + workspaceId);
-
-
-        if (type != null && status != null) {
-            messagePage = messageRepository.findByWorkspaceIdAndTypeAndStatus(
-                    workspaceId, type, status, pageRequest);
-        } else if (type != null) {
-            messagePage = messageRepository.findByWorkspaceIdAndType(
-                    workspaceId, type, pageRequest);
-        } else if (status != null) {
-            messagePage = messageRepository.findByWorkspaceIdAndStatus(
-                    workspaceId, status, pageRequest);
+        if (status != null) {
+            messagePage = messageRepository.findByWorkspaceIdAndStatus(workspaceId, status, pageRequest);
         } else {
             messagePage = messageRepository.findByWorkspaceId(workspaceId, pageRequest);
-            }
-        } catch (Exception e) {
-            log.error("Ошибка при получении ID текущего рабочего пространства: {}", e.getMessage(), e);
-            throw new RequestRejectedException("Ошибка при получении ID текущего рабочего пространства");
         }
 
         return messagePage.map(messageMapper::toMessageDto);
@@ -424,7 +414,9 @@ public class MessageServiceImpl implements MessageService {
 //        Message message = messageMapper.toMessage(messageDto);
 //        message.setCreatedAt(OffsetDateTime.now());
 //        message.setUpdatedAt(OffsetDateTime.now());
-////        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
+
+
+        ////        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
 //        message.setCreatedBy(userProvider.getCurrentUser().getId());
 //        Message savedMessage = messageRepository.save(message);
 //
@@ -495,7 +487,6 @@ public class MessageServiceImpl implements MessageService {
 //        Message updatedMessage = messageRepository.save(message);
 //        return messageMapper.toMessageDto(updatedMessage);
 //    }
-
     @Override
     public void delete(UUID id) {
         deleteMessage(id);
@@ -555,7 +546,6 @@ public class MessageServiceImpl implements MessageService {
 //
 //        return messageMapper.toMessageDto(updatedMessage);
 //    }
-
     @Override
     public MessageDto duplicate(UUID id) {
         log.info("Duplicating message with id: {}", id);
@@ -639,7 +629,7 @@ public class MessageServiceImpl implements MessageService {
 //            Set<Media> mediaSet = new HashSet<>();
 
 //            for (Media sourceMedia : sourceMessage.getMedias()) {
-                // Создаем новую запись в базе данных для медиафайла
+        // Создаем новую запись в базе данных для медиафайла
 //                Media newMedia = new Media();
 //                newMedia.setMessage(targetMessage);
 //                newMedia.setWorkspaceId(sourceMedia.getWorkspaceId());
@@ -649,10 +639,8 @@ public class MessageServiceImpl implements MessageService {
 //                Media savedMedia = mediaRepository.save(newMedia);
 //                mediaSet.add(savedMedia);
 //            }
-
 //            targetMessage.setMedias(mediaSet);
 //            messageRepository.save(targetMessage);
-
 //            log.debug("Дублировано {} медиафайлов", mediaSet.size());
 //        }
     }

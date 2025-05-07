@@ -8,7 +8,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 import com.example.model.MessageStatus;
-import com.example.model.MessageType;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.MessageDto;
 
@@ -28,13 +27,13 @@ public interface MessageService {
     /**
      * Получает страницу сообщений с фильтрацией.
      *
-     * @param type тип сообщения
+     * @param workspaceId идентификатор рабочего пространства
      * @param status статус сообщения
      * @param page номер страницы
      * @param size размер страницы
      * @return страница с сообщениями
      */
-    Page<MessageDto> getPageBy(MessageType type, MessageStatus status, Integer page, Integer size);
+    Page<MessageDto> getPageBy(UUID workspaceId, MessageStatus status, Integer page, Integer size);
 
     /**
      * Создает новое сообщение.
