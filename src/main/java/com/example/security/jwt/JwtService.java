@@ -1,5 +1,9 @@
 package com.example.security.jwt;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
+import java.util.Map;
 import java.util.UUID;
 
 import javax.crypto.SecretKey;
@@ -85,5 +89,18 @@ public class JwtService {
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
+    }
+
+    public String generateApiToken() {
+        Date date = Date.from(LocalDateTime.now().plusSeconds(10).atZone(ZoneId.systemDefault()).toInstant());
+        return Jwts.builder()
+                .subject("campaign-api")
+                .expiration(date)
+                .signWith(getSigningKey())
+                .claims(
+                        Map.of(
+                                "tokenType", "api-service"
+                        ))
+                .compact();
     }
 }

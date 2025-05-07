@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.example.security.jwt.JwtService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -70,6 +71,8 @@ public class CampaignServiceImpl implements CampaignService {
     private final TdLibClient tdLibClient;
     private final ChannelClient channelClient;
 
+    private final JwtService jwtService;
+
     @Override
     public List<CampaignDto> immediateSubmit(SubmitABDto submitABDto) {
         log.info("Создание немедленной кампании: {}", submitABDto);
@@ -88,7 +91,7 @@ public class CampaignServiceImpl implements CampaignService {
             //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
             //     continue;
             // }
-            ResponseEntity<Object> response = channelClient.getById(webUserService.getCurrentUser().getToken(), channelId);
+            ResponseEntity<Object> response = channelClient.getById(jwtService.generateApiToken(), channelId);
             if (response.getStatusCode() != HttpStatus.OK) {
                 log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
                 continue;
