@@ -2,13 +2,7 @@ package com.example.service.impl;
 
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 import com.example.model.dto.*;
 import com.example.security.jwt.JwtService;
@@ -69,7 +63,7 @@ public class CampaignServiceImpl implements CampaignService {
     private final JwtService jwtService;
 
     @Override
-    public List<CampaignDto> immediateSubmit(SubmitABDto submitABDto) {
+    public CampaignDto immediateSubmit(SubmitABDto submitABDto) {
         log.info("Создание немедленной кампании: {}", submitABDto);
         validateSubmitABDto(submitABDto);
 
@@ -80,68 +74,69 @@ public class CampaignServiceImpl implements CampaignService {
         UUID userId = webUserService.getCurrentUserId();
 
         // Для каждого канала создаем отдельную кампанию
-        for (UUID channelId : submitABDto.getChannelIds()) {
-            // Проверяем, что канал существует и принадлежит пользователю
-            // if (!channelClient.existsByIdAndWorkspaceId(channelId)) {
-            //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
-            //     continue;
-            // }
-            ResponseEntity<Object> response = channelClient.getById("Bearer " + jwtService.generateApiToken(), channelId);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
-                continue;
-            }
-
-            // Создаем новую кампанию
-            Campaign campaign = new Campaign();
-            campaign.setTitle(submitABDto.getTitle());
-            campaign.setStartDate(OffsetDateTime.now());
-            campaign.setCreatedBy(userId);
-            campaign.setCampaignType(CampaignType.IMMEDIATE);
-            campaign.setStatus(CampaignStatus.RUNNING);
-            campaign.setWorkspaceId(workspaceId);
-            campaign.setChannelId(channelId);
-            campaign.setIsArchived(false);
-            campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
-            campaign.setAudiencePercent(submitABDto.getAudiencePercent());
-
-            Campaign savedCampaign = campaignRepository.save(campaign);
-
-            // Создаем креативы для кампании
-            List<CampaignCreative> creatives = new ArrayList<>();
-            for (int i = 0; i < submitABDto.getPercents().size(); i++) {
-                UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
-                Message message = messageRepository.findById(messageId)
-                        .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
-
-                CampaignCreative creative = new CampaignCreative();
-                creative.setCampaign(savedCampaign);
-                creative.setMessage(message);
-                creative.setOrdinal(i);
-
-                // Если указаны проценты для A/B тестирования
-                if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
-                    creative.setPercent(submitABDto.getPercents().get(i).getPercent());
-                } else {
-                    // Равное распределение
-                    creative.setPercent(100 / submitABDto.getPercents().size());
-                }
-
-                creatives.add(campaignCreativeRepository.save(creative));
-            }
-
-            // Немедленная отправка сообщений через TdLib сервис
-            sendImmediateCampaign(savedCampaign.getId());
-
-            // Преобразуем в DTO и добавляем в результаты
-            results.add(campaignMapper.mapToDto(savedCampaign));
+//        for (UUID channelId : submitABDto.getChannelIds()) {
+        // Проверяем, что канал существует и принадлежит пользователю
+        // if (!channelClient.existsByIdAndWorkspaceId(channelId)) {
+        //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
+        //     continue;
+        // }
+        UUID channelId = submitABDto.getChannelId();
+        ResponseEntity<Object> response = channelClient.getById("Bearer " + jwtService.generateApiToken(), channelId);
+        if (response.getStatusCode() != HttpStatus.OK) {
+            log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
+            throw new NotFoundException("Канал с ID " + channelId + " не найден или не принадлежит текущему рабочему пространству");
         }
 
-        return results;
+        // Создаем новую кампанию
+        Campaign campaign = new Campaign();
+        campaign.setTitle(submitABDto.getTitle());
+        campaign.setStartDate(OffsetDateTime.now());
+        campaign.setCreatedBy(userId);
+        campaign.setCampaignType(CampaignType.IMMEDIATE);
+        campaign.setStatus(CampaignStatus.RUNNING);
+        campaign.setWorkspaceId(workspaceId);
+        campaign.setChannelId(channelId);
+        campaign.setIsArchived(false);
+        campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
+        campaign.setAudiencePercent(submitABDto.getAudiencePercent());
+
+        Campaign savedCampaign = campaignRepository.save(campaign);
+
+        // Создаем креативы для кампании
+        List<CampaignCreative> creatives = new ArrayList<>();
+        for (int i = 0; i < submitABDto.getPercents().size(); i++) {
+            UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
+            Message message = messageRepository.findById(messageId)
+                    .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
+
+            CampaignCreative creative = new CampaignCreative();
+            creative.setCampaign(savedCampaign);
+            creative.setMessage(message);
+            creative.setOrdinal(i);
+
+            // Если указаны проценты для A/B тестирования
+            if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
+                creative.setPercent(submitABDto.getPercents().get(i).getPercent());
+            } else {
+                // Равное распределение
+                creative.setPercent(100 / submitABDto.getPercents().size());
+            }
+
+            creatives.add(campaignCreativeRepository.save(creative));
+        }
+
+        // Немедленная отправка сообщений через TdLib сервис
+        sendImmediateCampaign(savedCampaign.getId());
+
+        // Преобразуем в DTO и добавляем в результаты
+//        results.add(campaignMapper.mapToDto(savedCampaign));
+//        }
+
+        return campaignMapper.mapToDto(savedCampaign);
     }
 
     @Override
-    public List<CampaignDto> campaignBasicSubmit(SubmitABDto submitABDto, String timezone) {
+    public CampaignDto campaignBasicSubmit(SubmitABDto submitABDto, String timezone) {
         log.info("Создание запланированной кампании: {}, часовой пояс: {}", submitABDto, timezone);
 
         // Проверяем входные данные
@@ -150,7 +145,7 @@ public class CampaignServiceImpl implements CampaignService {
             throw new IllegalArgumentException("StartDate и EndDate не могут быть пустыми для запланированных кампаний");
         }
 
-        if (campaignRepository.existsByTitle(submitABDto.getTitle())){
+        if (campaignRepository.existsByTitle(submitABDto.getTitle())) {
             throw new IllegalArgumentException("Кампания с таким названием уже существует");
         }
 
@@ -171,74 +166,74 @@ public class CampaignServiceImpl implements CampaignService {
 
         // Преобразуем даты с учетом часового пояса, если указан
         ZoneId zoneId = timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
-        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate()*1000, zoneId);
-        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate()*1000, zoneId);
+        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate() * 1000, zoneId);
+        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate() * 1000, zoneId);
 
         // Для каждого канала создаем отдельную кампанию
-        for (UUID channelId : submitABDto.getChannelIds()) {
-            // Проверяем, что канал существует и принадлежит пользователю
-            ResponseEntity<Object> response = channelClient.getById("Bearer " + webUserService.getCurrentUser().getToken(), channelId);
-            if (response.getStatusCode() != HttpStatus.OK) {
-                log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
-                continue;
-            }
-
-            // Создаем новую кампанию
-            Campaign campaign = new Campaign();
-            campaign.setTitle(submitABDto.getTitle());
-            campaign.setStartDate(startDate);
-            campaign.setEndDate(endDate);
-            campaign.setCreatedBy(userId);
-            campaign.setCampaignType(CampaignType.BASIC);
-            campaign.setStatus(CampaignStatus.SCHEDULED);
-            campaign.setWorkspaceId(workspaceId);
-            campaign.setChannelId(channelId);
-            campaign.setIsArchived(false);
-            campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
-            campaign.setAudiencePercent(submitABDto.getAudiencePercent());
-
-            Campaign savedCampaign = campaignRepository.save(campaign);
-
-            // Создаем креативы для кампании
-            List<CampaignCreative> creatives = new ArrayList<>();
-            log.info("submitABDto.getPercents(): {}", submitABDto.getPercents());
-
-            for (int i = 0; i < submitABDto.getPercents().size(); i++) {
-                UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
-                Message message = messageRepository.findById(messageId)
-                        .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
-
-                CampaignCreative creative = new CampaignCreative();
-                creative.setCampaign(savedCampaign);
-                creative.setMessage(message);
-                creative.setOrdinal(i);
-
-                // Если указаны проценты для A/B тестирования
-                if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
-                    creative.setPercent(submitABDto.getPercents().get(i).getPercent());
-                } else {
-                    // Равное распределение
-                    creative.setPercent(100 / submitABDto.getPercents().size());
-                }
-
-                creatives.add(campaignCreativeRepository.save(creative));
-            }
-
-            campaignCreativeRepository.saveAll(creatives);
-            savedCampaign.setCreatives(new HashSet<>(creatives));
-
-            // Планирование кампании в TdLib сервисе
-            CampaignDto campaignDto = campaignMapper.mapToDto(savedCampaign);
-            log.info("--------------------------------");
-            log.info("Планирование кампании: {}", campaignDto);
-            log.info("--------------------------------");
-            scheduleCampaign(campaignDto);
-
-            // Преобразуем в DTO и добавляем в результаты
-            results.add(campaignMapper.mapToDto(savedCampaign));
+//        for (UUID channelId : submitABDto.getChannelIds()) {
+        // Проверяем, что канал существует и принадлежит пользователю
+        ResponseEntity<Object> response = channelClient.getById("Bearer " + webUserService.getCurrentUser().getToken(), submitABDto.getChannelId());
+        if (response.getStatusCode() != HttpStatus.OK) {
+            log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", submitABDto.getChannelId());
+            throw new NotFoundException("Канал с ID " + submitABDto.getChannelId() + " не найден или не принадлежит текущему рабочему пространству");
         }
 
-        return results;
+        // Создаем новую кампанию
+        Campaign campaign = new Campaign();
+        campaign.setTitle(submitABDto.getTitle());
+        campaign.setStartDate(startDate);
+        campaign.setEndDate(endDate);
+        campaign.setCreatedBy(userId);
+        campaign.setCampaignType(CampaignType.BASIC);
+        campaign.setStatus(CampaignStatus.SCHEDULED);
+        campaign.setWorkspaceId(workspaceId);
+        campaign.setChannelId(submitABDto.getChannelId());
+        campaign.setIsArchived(false);
+        campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
+        campaign.setAudiencePercent(submitABDto.getAudiencePercent());
+
+        Campaign savedCampaign = campaignRepository.save(campaign);
+
+        // Создаем креативы для кампании
+        List<CampaignCreative> creatives = new ArrayList<>();
+        log.info("submitABDto.getPercents(): {}", submitABDto.getPercents());
+
+        for (int i = 0; i < submitABDto.getPercents().size(); i++) {
+            UUID messageId = submitABDto.getPercents().get(i).getCreativeId();
+            Message message = messageRepository.findById(messageId)
+                    .orElseThrow(() -> new NotFoundException("Сообщение с ID " + messageId + " не найдено"));
+
+            CampaignCreative creative = new CampaignCreative();
+            creative.setCampaign(savedCampaign);
+            creative.setMessage(message);
+            creative.setOrdinal(i);
+
+            // Если указаны проценты для A/B тестирования
+            if (submitABDto.getPercents() != null && !submitABDto.getPercents().isEmpty()) {
+                creative.setPercent(submitABDto.getPercents().get(i).getPercent());
+            } else {
+                // Равное распределение
+                creative.setPercent(100 / submitABDto.getPercents().size());
+            }
+
+            creatives.add(campaignCreativeRepository.save(creative));
+        }
+
+        campaignCreativeRepository.saveAll(creatives);
+        savedCampaign.setCreatives(new HashSet<>(creatives));
+
+        // Планирование кампании в TdLib сервисе
+        CampaignDto campaignDto = campaignMapper.mapToDto(savedCampaign);
+        log.info("--------------------------------");
+        log.info("Планирование кампании: {}", campaignDto);
+        log.info("--------------------------------");
+        scheduleCampaign(campaignDto);
+
+        // Преобразуем в DTO и добавляем в результаты
+        results.add(campaignMapper.mapToDto(savedCampaign));
+//        }
+
+        return campaignMapper.mapToDto(savedCampaign);
     }
 
     @Override
@@ -528,6 +523,13 @@ public class CampaignServiceImpl implements CampaignService {
         for (UUID channelId : channelIds) {
             ChannelCampaignDatesDto dto = new ChannelCampaignDatesDto();
             dto.setChannelId(channelId);
+            ResponseEntity<Object> response = channelClient.getById("Bearer " + jwtService.generateApiToken(), channelId);
+            if (!(response.getBody() instanceof Map)) {
+                log.error("Ошибка при получении информации о канале: {}", response.getBody());
+                throw new RuntimeException("Ошибка при получении информации о канале");
+            }
+            Map<String, Object> body = (Map<String, Object>) response.getBody();
+            dto.setChannelTitle(body.get("name").toString());
 
             // Получаем даты кампаний для канала
             List<Campaign> campaigns = campaignRepository.findCampaignDatesByChannelId(channelId);
@@ -774,7 +776,7 @@ public class CampaignServiceImpl implements CampaignService {
     /**
      * Обновляет статус кампании после ошибки.
      *
-     * @param campaignId ID кампании
+     * @param campaignId   ID кампании
      * @param errorMessage сообщение об ошибке
      */
     private void updateCampaignStatusAfterError(UUID campaignId, String errorMessage) {
