@@ -1,12 +1,14 @@
 package com.example.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
-
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import lombok.Data;
+
 /**
- * DTO для передачи информации о статистике ретаргетинга.
+ * DTO для передачи информации о статистике ретаргетинга и кликов по партнерским
+ * ссылкам.
  */
 @Data
 public class RetargetStatsDto {
@@ -76,4 +78,17 @@ public class RetargetStatsDto {
      */
     @JsonProperty("created_at")
     private Long createdAt;
+
+    /**
+     * Количество кликов по партнерским ссылкам.
+     */
+    @JsonProperty("partner_link_clicks")
+    private Long partnerLinkClicks;
+
+    /**
+     * Процент кликов по партнерским ссылкам от общего числа доставленных
+     * сообщений (CTR).
+     */
+    @JsonProperty("partner_link_ctr")
+    private Double partnerLinkCtr;
 }
