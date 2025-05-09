@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.UUID;
 
 import com.example.security.jwt.JwtService;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -26,6 +27,7 @@ import com.example.client.TdLibClient;
 import com.example.entity.Campaign;
 import com.example.entity.CampaignCreative;
 import com.example.entity.Message;
+import com.example.entity.PartnerLink;
 import com.example.entity.RetargetStats;
 import com.example.exception.FeignException;
 import com.example.exception.NotFoundException;
@@ -44,8 +46,10 @@ import com.example.model.dto.SubmitABDto;
 import com.example.repository.CampaignCreativeRepository;
 import com.example.repository.CampaignRepository;
 import com.example.repository.MessageRepository;
+import com.example.repository.PartnerLinkRepository;
 import com.example.repository.RetargetStatsRepository;
 import com.example.service.CampaignService;
+import com.example.service.PartnerLinkService;
 import com.example.service.WebUserService;
 import com.example.util.DateTimeUtil;
 
@@ -70,8 +74,9 @@ public class CampaignServiceImpl implements CampaignService {
     private final CampaignMapper campaignMapper;
     private final TdLibClient tdLibClient;
     private final ChannelClient channelClient;
-
+    private final PartnerLinkService partnerLinkService;
     private final JwtService jwtService;
+    private final PartnerLinkRepository partnerLinkRepository;
 
     @Override
     public List<CampaignDto> immediateSubmit(SubmitABDto submitABDto) {
@@ -111,6 +116,8 @@ public class CampaignServiceImpl implements CampaignService {
             campaign.setAudiencePercent(submitABDto.getAudiencePercent());
 
             Campaign savedCampaign = campaignRepository.save(campaign);
+
+            processPartnerLinks(campaignMapper.mapToDto(savedCampaign));
 
             // Создаем креативы для кампании
             List<CampaignCreative> creatives = new ArrayList<>();
@@ -155,7 +162,7 @@ public class CampaignServiceImpl implements CampaignService {
             throw new IllegalArgumentException("StartDate и EndDate не могут быть пустыми для запланированных кампаний");
         }
 
-        if (campaignRepository.existsByTitle(submitABDto.getTitle())){
+        if (campaignRepository.existsByTitle(submitABDto.getTitle())) {
             throw new IllegalArgumentException("Кампания с таким названием уже существует");
         }
 
@@ -176,8 +183,8 @@ public class CampaignServiceImpl implements CampaignService {
 
         // Преобразуем даты с учетом часового пояса, если указан
         ZoneId zoneId = timezone != null ? ZoneId.of(timezone) : ZoneId.systemDefault();
-        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate()*1000, zoneId);
-        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate()*1000, zoneId);
+        OffsetDateTime startDate = DateTimeUtil.toOffsetDateTime(submitABDto.getStartDate() * 1000, zoneId);
+        OffsetDateTime endDate = DateTimeUtil.toOffsetDateTime(submitABDto.getEndDate() * 1000, zoneId);
 
         // Для каждого канала создаем отдельную кампанию
         for (UUID channelId : submitABDto.getChannelIds()) {
@@ -234,6 +241,8 @@ public class CampaignServiceImpl implements CampaignService {
 
             // Планирование кампании в TdLib сервисе
             CampaignDto campaignDto = campaignMapper.mapToDto(savedCampaign);
+
+            processPartnerLinks(campaignDto);
             log.info("--------------------------------");
             log.info("Планирование кампании: {}", campaignDto);
             log.info("--------------------------------");
@@ -244,6 +253,41 @@ public class CampaignServiceImpl implements CampaignService {
         }
 
         return results;
+    }
+
+    /**
+     * Обрабатывает партнерские ссылки в сообщениях кампании Заменяет
+     * оригинальные ссылки на трекинговые шаблоны
+     */
+    private void processPartnerLinks(CampaignDto campaignDto) {
+        if (campaignDto.getMessages() == null) {
+            return;
+        }
+
+        for (MessageDto messageDto : campaignDto.getMessages()) {
+            if (messageDto.getActions() == null) {
+                continue;
+            }
+
+            messageDto.getActions().forEach(action -> {
+                // Если ссылка является внешней (не начинается с http://localhost или https://adsmriia.com)
+                if (action.getLink() != null && isExternalLink(action.getLink())) {
+                    // Создаем партнерскую ссылку
+                    PartnerLink partnerLink = partnerLinkService.createPartnerLink(
+                            action.getLink(),
+                            campaignDto.getWorkspaceId(),
+                            campaignDto.getCreatedBy(),
+                            campaignDto.getId()
+                    );
+
+                    // Заменяем оригинальную ссылку на трекинговый шаблон
+                    String trackingUrlTemplate = partnerLinkService.generateTrackingUrlTemplate(partnerLink.getId());
+                    action.setLink(trackingUrlTemplate);
+
+                    log.info("Заменена внешняя ссылка {} на трекинговую {}", partnerLink.getOriginalUrl(), trackingUrlTemplate);
+                }
+            });
+        }
     }
 
     @Override
@@ -282,7 +326,7 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Получение статистики для кампании с ID: {}", campaignId);
 
         Campaign campaign = campaignRepository.findById(campaignId)
-                .orElseThrow(() -> new NotFoundException("Кампания с ID " + campaignId + " не найдена"));
+                .orElseThrow(() -> new RuntimeException("Кампания с ID " + campaignId + " не найдена"));
 
         // Получение статистики из TdLib
         try {
@@ -299,12 +343,19 @@ public class CampaignServiceImpl implements CampaignService {
 
         List<RetargetStats> retargetStatsList = retargetStatsRepository.findByCampaignId(campaignId);
 
-        // Если статистики нет, возвращаем пустой объект
+        // Получаем статистику по партнерским ссылкам
+        Long partnerLinkClicks = partnerLinkRepository.getCampaignClicksCount(campaignId);
+        if (partnerLinkClicks == null) {
+            partnerLinkClicks = 0L;
+        }
+
+        // Если статистики нет, возвращаем объект только с данными о партнерских ссылках
         if (retargetStatsList.isEmpty()) {
             RetargetStatsDto emptyStats = new RetargetStatsDto();
             emptyStats.setCampaignId(campaignId);
             emptyStats.setCampaignTitle(campaign.getTitle());
             emptyStats.setChannelId(campaign.getChannelId());
+            emptyStats.setPartnerLinkClicks(partnerLinkClicks);
             return emptyStats;
         }
 
@@ -318,6 +369,7 @@ public class CampaignServiceImpl implements CampaignService {
             emptyStats.setCampaignId(campaignId);
             emptyStats.setCampaignTitle(campaign.getTitle());
             emptyStats.setChannelId(campaign.getChannelId());
+            emptyStats.setPartnerLinkClicks(partnerLinkClicks);
             return emptyStats;
         }
 
@@ -331,6 +383,15 @@ public class CampaignServiceImpl implements CampaignService {
         statsDto.setCampaignTitle(campaign.getTitle());
         statsDto.setChannelId(campaign.getChannelId());
         statsDto.setCreatedAt(DateTimeUtil.toEpochSeconds(latestStats.getCreatedAt()));
+
+        // Добавляем информацию о кликах по партнерским ссылкам
+        statsDto.setPartnerLinkClicks(partnerLinkClicks);
+
+        // Рассчитываем CTR для партнерских ссылок
+        if (latestStats.getDeliveredCount() != null && latestStats.getDeliveredCount() > 0) {
+            double ctr = (double) partnerLinkClicks / latestStats.getDeliveredCount() * 100;
+            statsDto.setPartnerLinkCtr(ctr);
+        }
 
         return statsDto;
     }
