@@ -80,7 +80,11 @@ public class CampaignServiceImpl implements CampaignService {
         //     log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
         //     continue;
         // }
-        UUID channelId = submitABDto.getChannelId();
+        if (submitABDto.getChannelIds().size() != 1) {
+            throw new IllegalArgumentException("submitABDto.getChannelIds().size() != 1");
+        }
+
+        UUID channelId = submitABDto.getChannelIds().get(0);
         ResponseEntity<Object> response = channelClient.getById("Bearer " + jwtService.generateApiToken(), channelId);
         if (response.getStatusCode() != HttpStatus.OK) {
             log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
@@ -172,10 +176,17 @@ public class CampaignServiceImpl implements CampaignService {
         // Для каждого канала создаем отдельную кампанию
 //        for (UUID channelId : submitABDto.getChannelIds()) {
         // Проверяем, что канал существует и принадлежит пользователю
-        ResponseEntity<Object> response = channelClient.getById("Bearer " + webUserService.getCurrentUser().getToken(), submitABDto.getChannelId());
+
+        if (submitABDto.getChannelIds().size() != 1) {
+            throw new IllegalArgumentException("submitABDto.getChannelIds().size() != 1");
+        }
+
+        UUID channelId = submitABDto.getChannelIds().get(0);
+
+        ResponseEntity<Object> response = channelClient.getById("Bearer " + webUserService.getCurrentUser().getToken(), channelId);
         if (response.getStatusCode() != HttpStatus.OK) {
-            log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", submitABDto.getChannelId());
-            throw new NotFoundException("Канал с ID " + submitABDto.getChannelId() + " не найден или не принадлежит текущему рабочему пространству");
+            log.error("Канал с ID {} не найден или не принадлежит текущему рабочему пространству", channelId);
+            throw new NotFoundException("Канал с ID " + channelId + " не найден или не принадлежит текущему рабочему пространству");
         }
 
         // Создаем новую кампанию
@@ -187,7 +198,7 @@ public class CampaignServiceImpl implements CampaignService {
         campaign.setCampaignType(CampaignType.BASIC);
         campaign.setStatus(CampaignStatus.SCHEDULED);
         campaign.setWorkspaceId(workspaceId);
-        campaign.setChannelId(submitABDto.getChannelId());
+        campaign.setChannelId(channelId);
         campaign.setIsArchived(false);
         campaign.setMaxRetargeted(submitABDto.getMaxRetargeted());
         campaign.setAudiencePercent(submitABDto.getAudiencePercent());
