@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import com.example.model.dto.*;
 import com.example.security.jwt.JwtService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -35,12 +36,6 @@ import com.example.exception.TdLibException;
 import com.example.mapper.CampaignMapper;
 import com.example.model.CampaignStatus;
 import com.example.model.CampaignType;
-import com.example.model.dto.CampaignDto;
-import com.example.model.dto.ChannelCampaignDatesDto;
-import com.example.model.dto.CreativePercentDto;
-import com.example.model.dto.ExpectedRetargetDto;
-import com.example.model.dto.RetargetStatsDto;
-import com.example.model.dto.SubmitABDto;
 import com.example.repository.CampaignCreativeRepository;
 import com.example.repository.CampaignRepository;
 import com.example.repository.MessageRepository;
@@ -535,16 +530,14 @@ public class CampaignServiceImpl implements CampaignService {
             dto.setChannelId(channelId);
 
             // Получаем даты кампаний для канала
-            List<Object[]> intervals = campaignRepository.findCampaignDatesByChannelId(channelId);
+            List<Campaign> campaigns = campaignRepository.findCampaignDatesByChannelId(channelId);
 
             // Преобразуем результаты в нужный формат
-            List<String> dateIntervals = new ArrayList<>();
-            for (Object[] interval : intervals) {
-                Integer year = ((Number) interval[0]).intValue();
-                Integer month = ((Number) interval[1]).intValue();
-                dateIntervals.add(year + "-" + (month < 10 ? "0" + month : month));
+            List<DatesDto> dateIntervals = new ArrayList<>();
+            for (Campaign campaign : campaigns) {
+                DatesDto dateDto = new DatesDto(campaign.getStartDate().toEpochSecond(), campaign.getEndDate().toEpochSecond());
+                dateIntervals.add(dateDto);
             }
-
             dto.setDates(dateIntervals);
             result.add(dto);
         }

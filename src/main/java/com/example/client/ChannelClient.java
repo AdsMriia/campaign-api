@@ -42,6 +42,6 @@ public interface ChannelClient {
      * @param channelId идентификатор канала
      * @return количество подписчиков
      */
-    @GetMapping("/channels/{channelId}/subscribers/count")
+    @GetMapping("/channels/{channelId}/members/count/retarget")
     Long countSubscribersById(@PathVariable("channelId") UUID channelId, @RequestHeader("Authorization") String authorization);
 }
