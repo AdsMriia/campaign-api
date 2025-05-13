@@ -112,7 +112,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                             String region = (String) ipInfo.get("region");
                             String timezone = (String) ipInfo.get("timezone");
                             
-                            log.info("IP геолокация: страна={}, регион={}, город={}, timezone={}",
+                            log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
                                     country, region, city, timezone);
 
                            UserAgent userAgent = new UserAgent();
