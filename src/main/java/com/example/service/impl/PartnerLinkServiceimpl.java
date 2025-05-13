@@ -92,6 +92,10 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
 
             // Сохраняем запись о клике
             clickEventRepository.save(clickEvent);
+            log.info("ClickEvent сохранен: " + clickEvent);
+            log.info("Запись о клике с расширенной информацией: partnerLinkId={}, userId={}, ipAddress={}, browser={}, os={}, device={}",
+                    partnerLinkId, userId, ipAddress, userAgentInfo.getBrowser(),
+                    userAgentInfo.getOperatingSystem(), userAgentInfo.getDeviceType());
 
             // Для обратной совместимости также сохраняем в старую таблицу
             recordClick(partnerLinkId, userId);
@@ -112,8 +116,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                             String region = (String) ipInfo.get("region");
                             String timezone = (String) ipInfo.get("timezone");
                             
-                            log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
-                                    country, region, city, timezone);
+                            
 
                            UserAgent userAgent = new UserAgent();
                            userAgent.setCountry(country);
@@ -121,15 +124,14 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                            userAgent.setRegion(region);
                            userAgent.setTimezone(timezone);
                            userAgentRepository.save(userAgent);
-                        
+
+                           log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
+                           country, region, city, timezone);
                         },
                         error -> log.error("Ошибка при получении информации об IP: {}", error.getMessage())
                     );
             }
 
-            log.info("Запись о клике с расширенной информацией: partnerLinkId={}, userId={}, ipAddress={}, browser={}, os={}, device={}",
-                    partnerLinkId, userId, ipAddress, userAgentInfo.getBrowser(),
-                    userAgentInfo.getOperatingSystem(), userAgentInfo.getDeviceType());
         } catch (Exception e) {
             log.error("Ошибка при записи о клике с расширенной информацией: {}", e.getMessage(), e);
             // Если произошла ошибка с новой таблицей, все равно пытаемся записать в старую

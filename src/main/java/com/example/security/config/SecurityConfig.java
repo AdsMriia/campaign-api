@@ -45,6 +45,7 @@ public class SecurityConfig {
                 "/v3/api-docs/**",
                 "/ping",
                 "/telegram/webhook/**",
+                "/partner-links/**",
                 "/ananas/**"
         )
                 .flatMap(p -> Stream.of(

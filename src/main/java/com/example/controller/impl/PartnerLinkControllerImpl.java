@@ -42,6 +42,8 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
         String userAgentString = request.getHeader("User-Agent");
         UserAgentInfo userAgentInfo = UserAgentParser.parseUserAgent(userAgentString);
 
+        log.info("User-Agent: " + userAgentString + "<----------------");
+
         log.info("Клик по партнерской ссылке: IP: {}, Browser: {}, OS: {}, Device: {}",
                 ipAddress,
                 userAgentInfo.getBrowser(),

@@ -176,7 +176,7 @@ CREATE TABLE IF NOT EXISTS partner_links (
     original_url VARCHAR(2048) NOT NULL,
     workspace_id UUID NOT NULL,
     created_by UUID NOT NULL,
-    campaign_id UUID NOT NULL,
+    campaign_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
@@ -223,3 +223,18 @@ ALTER TABLE click_events ADD CONSTRAINT fk_click_events_partner_link
 CREATE INDEX idx_click_events_partner_link ON click_events(partner_link_id);
 CREATE INDEX idx_click_events_user ON click_events(user_id);
 CREATE INDEX idx_click_events_created_at ON click_events(created_at);
+
+--changeset vladislav.mosuyk:create_user_agent_table
+--comment Создание таблицы user_agent для хранения информации о геолокации пользователей
+CREATE TABLE IF NOT EXISTS user_agent (
+    id UUID PRIMARY KEY NOT NULL,
+    city VARCHAR(100),
+    country VARCHAR(100),
+    region VARCHAR(100),
+    timezone VARCHAR(50)
+);
+
+--changeset vladislav.mosuyk:create_user_agent_indexes
+--comment Создание индексов для таблицы user_agent
+CREATE INDEX idx_user_agent_country ON user_agent(country);
+CREATE INDEX idx_user_agent_city ON user_agent(city);
