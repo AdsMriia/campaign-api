@@ -168,3 +168,58 @@ ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_media
     FOREIGN KEY (media_id) REFERENCES media(id);
 ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_message
     FOREIGN KEY (message_id) REFERENCES messages(id);
+
+--changeset vladislav.mosuyk:create_partner_links_table
+--comment Создание таблицы partner_links для хранения партнерских ссылок
+CREATE TABLE IF NOT EXISTS partner_links (
+    id UUID PRIMARY KEY NOT NULL,
+    original_url VARCHAR(2048) NOT NULL,
+    workspace_id UUID NOT NULL,
+    created_by UUID NOT NULL,
+    campaign_id UUID NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+--changeset vladislav.mosuyk:add_partner_links_foreign_keys
+--comment Добавление внешних ключей для таблицы partner_links
+ALTER TABLE partner_links ADD CONSTRAINT fk_partner_links_campaign
+    FOREIGN KEY (campaign_id) REFERENCES campaigns(id);
+
+--changeset vladislav.mosuyk:create_partner_link_clicks_table
+--comment Создание таблицы partner_link_clicks для хранения кликов по партнерским ссылкам
+CREATE TABLE IF NOT EXISTS partner_link_clicks (
+    id UUID PRIMARY KEY NOT NULL,
+    partner_link_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    clicked_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+--changeset vladislav.mosuyk:add_partner_link_clicks_foreign_keys
+--comment Добавление внешних ключей для таблицы partner_link_clicks
+ALTER TABLE partner_link_clicks ADD CONSTRAINT fk_partner_link_clicks_partner_link
+    FOREIGN KEY (partner_link_id) REFERENCES partner_links(id);
+
+--changeset vladislav.mosuyk:create_click_events_table
+--comment Создание таблицы click_events для хранения детальной информации о кликах
+CREATE TABLE IF NOT EXISTS click_events (
+    id UUID PRIMARY KEY NOT NULL,
+    partner_link_id UUID NOT NULL,
+    user_id UUID NOT NULL,
+    ip_address VARCHAR(45),
+    browser VARCHAR(100),
+    browser_version VARCHAR(50),
+    operating_system VARCHAR(100),
+    device_type VARCHAR(50),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
+
+--changeset vladislav.mosuyk:add_click_events_foreign_keys
+--comment Добавление внешних ключей для таблицы click_events
+ALTER TABLE click_events ADD CONSTRAINT fk_click_events_partner_link
+    FOREIGN KEY (partner_link_id) REFERENCES partner_links(id);
+
+--changeset vladislav.mosuyk:create_click_events_indexes
+--comment Создание индексов для таблицы click_events
+CREATE INDEX idx_click_events_partner_link ON click_events(partner_link_id);
+CREATE INDEX idx_click_events_user ON click_events(user_id);
+CREATE INDEX idx_click_events_created_at ON click_events(created_at);

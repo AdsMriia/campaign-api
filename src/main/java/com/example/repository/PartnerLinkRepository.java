@@ -21,5 +21,6 @@ public interface PartnerLinkRepository extends JpaRepository<PartnerLink, UUID> 
     @Query("SELECT COUNT(plc) FROM PartnerLinkClick plc WHERE plc.partnerLink.campaign.id = :campaignId")
     Long getCampaignClicksCount(UUID campaignId);
 
+    @Query("SELECT pl FROM PartnerLink pl WHERE pl.campaign.id = :campaignId")
     List<PartnerLink> findByCampaignId(UUID campaignId);
 }

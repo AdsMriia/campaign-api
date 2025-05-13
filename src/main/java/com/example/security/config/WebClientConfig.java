@@ -8,7 +8,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Mono;
 
-@Configuration
 public class WebClientConfig {
 
     @Bean

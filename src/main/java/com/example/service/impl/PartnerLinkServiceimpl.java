@@ -51,7 +51,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         partnerLink.setOriginalUrl(originalUrl);
         partnerLink.setWorkspaceId(workspaceId);
         partnerLink.setCreatedBy(createdBy);
-        partnerLink.setCampaignId(campaign);
+        partnerLink.setCampaign(campaign);
         return partnerLinkRepository.save(partnerLink);
     }
 

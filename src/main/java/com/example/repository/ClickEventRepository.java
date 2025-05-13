@@ -38,6 +38,6 @@ public interface ClickEventRepository extends JpaRepository<ClickEvent, UUID> {
      * @param campaignId ID кампании
      * @return количество кликов
      */
-    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.partnerLink.campaignId = :campaignId")
+    @Query("SELECT COUNT(c) FROM ClickEvent c WHERE c.partnerLink.campaign.id = :campaignId")
     Long countByCampaignId(@Param("campaignId") UUID campaignId);
 }

@@ -10,6 +10,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import org.hibernate.grammars.hql.HqlParser;
+
 import com.example.security.jwt.JwtService;
 
 import org.springframework.data.domain.Page;
@@ -37,6 +39,7 @@ import com.example.exception.TdLibException;
 import com.example.mapper.CampaignMapper;
 import com.example.model.CampaignStatus;
 import com.example.model.CampaignType;
+import com.example.model.dto.CampaignCreativeDto;
 import com.example.model.dto.CampaignDto;
 import com.example.model.dto.ChannelCampaignDatesDto;
 import com.example.model.dto.CreativePercentDto;
@@ -242,6 +245,7 @@ public class CampaignServiceImpl implements CampaignService {
             // Планирование кампании в TdLib сервисе
             CampaignDto campaignDto = campaignMapper.mapToDto(savedCampaign);
 
+            
             processPartnerLinks(campaignDto);
             log.info("--------------------------------");
             log.info("Планирование кампании: {}", campaignDto);
@@ -260,18 +264,18 @@ public class CampaignServiceImpl implements CampaignService {
      * оригинальные ссылки на трекинговые шаблоны
      */
     private void processPartnerLinks(CampaignDto campaignDto) {
-        if (campaignDto.getMessages() == null) {
+        if (campaignDto.getCreatives() == null) {
             return;
         }
 
-        for (MessageDto messageDto : campaignDto.getMessages()) {
-            if (messageDto.getActions() == null) {
+        for (CampaignCreativeDto creativeDto : campaignDto.getCreatives()) {
+            if (creativeDto.getMessage() == null) {
                 continue;
             }
 
-            messageDto.getActions().forEach(action -> {
+            creativeDto.getMessage().getActions().forEach(action -> {
                 // Если ссылка является внешней (не начинается с http://localhost или https://adsmriia.com)
-                if (action.getLink() != null && isExternalLink(action.getLink())) {
+                if (action.getLink() != null && !action.getLink().isEmpty()) {
                     // Создаем партнерскую ссылку
                     PartnerLink partnerLink = partnerLinkService.createPartnerLink(
                             action.getLink(),
