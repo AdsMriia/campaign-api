@@ -274,7 +274,7 @@ public class MediaServiceImpl implements MediaService {
 
 //        UUID workspaceId = webUserService.getCurrentWorkspaceId();
 
-        List<Map<String, Object>> workspaces = (List<Map<String, Object>>) workspaceClient.getWorkspaceById(workspaceId, "FLAT", userProvider.getCurrentUserToken());
+        List<Map<String, Object>> workspaces = (List<Map<String, Object>>) workspaceClient.getWorkspaceById(workspaceId, "FLAT", "Bearer " + userProvider.getCurrentUserToken());
 
         log.info(workspaces.toString());
 
@@ -303,8 +303,8 @@ public class MediaServiceImpl implements MediaService {
     /**
      * Обрабатывает файл, включая конвертацию в нужный формат.
      *
-     * @param inputPath путь к входному файлу
-     * @param fileId уникальный идентификатор файла
+     * @param inputPath    путь к входному файлу
+     * @param fileId       уникальный идентификатор файла
      * @param outputFormat выходной формат
      * @return путь к обработанному файлу
      * @throws IOException при ошибках ввода-вывода

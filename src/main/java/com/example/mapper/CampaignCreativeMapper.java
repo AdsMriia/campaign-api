@@ -5,6 +5,9 @@ import org.mapstruct.Mapping;
 
 import com.example.entity.CampaignCreative;
 import com.example.model.dto.CampaignCreativeDto;
+import org.mapstruct.Named;
+
+import java.time.OffsetDateTime;
 
 @Mapper(componentModel = "spring", uses = {MessageMapper.class})
 public interface CampaignCreativeMapper {

@@ -230,7 +230,7 @@ public class MessageServiceImpl implements MessageService {
                 // Используем helper метод для добавления в Set
                 addActionToMessage(savedMessage, savedAction);
             }
-            log.debug("Добавлено {} действий к сообщению", createMessageDto.getActions().size());
+            log.info("Добавлено {} действий к сообщению", createMessageDto.getActions().size());
         }
 
         // Добавляем медиа
@@ -246,6 +246,7 @@ public class MessageServiceImpl implements MessageService {
                         mediaToMessage.setMessage(message);
                         mediaToMessage.setMedia(media);
                         mediaToMessageRepository.save(mediaToMessage);
+                        log.info("Успешно привязан медиафайл к сообщению по имени {}", createMessageDto.getMediaName());
                         addMediaToMessage(savedMessage, mediaToMessage);
                     }
 //                    Media media = mediaList.get(0);
