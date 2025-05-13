@@ -32,17 +32,17 @@ public class UserAgentParser {
                 .browser(browser.getName())
                 .browserVersion(userAgent.getBrowserVersion() != null ? userAgent.getBrowserVersion().getVersion() : "Unknown")
                 .operatingSystem(os.getName())
-                .deviceType(getDeviceType(os))
+                // .deviceType(os.getDeviceType().toString())
                 .build();
     }
 
-    private static String getDeviceType(OperatingSystem os) {
-        if (os.isMobileDevice()) {
-            return "Mobile";
-        } else {
-            return "Desktop/Other";
-        }
-    }
+    // private static String getDeviceType(OperatingSystem os) {
+    //     if (os.isMobileDevice()) {
+    //         return "Mobile";
+    //     } else {
+    //         return "Desktop/Other";
+    //     }
+    // }
 
     @Data
     @Builder
