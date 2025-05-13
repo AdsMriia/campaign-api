@@ -1,34 +1,47 @@
 package com.example.service.impl;
 
-import com.example.dto.CreatePartnerLinkRequest;
-import com.example.dto.PartnerLinkResponse;
-import com.example.entity.Campaign;
-import com.example.entity.PartnerLink;
-import com.example.entity.PartnerLinkClick;
-import com.example.model.CreatePartnerLinkRequestDto;
-import com.example.model.PartnerLinkResponseDto;
-import com.example.repository.CampaignRepository;
-import com.example.repository.PartnerLinkClickRepository;
-import com.example.repository.PartnerLinkRepository;
-import com.example.service.PartnerLinkService;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
-import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
+import com.example.entity.Campaign;
+import com.example.entity.ClickEvent;
+import com.example.entity.PartnerLink;
+import com.example.entity.PartnerLinkClick;
+import com.example.entity.UserAgent;
+import com.example.repository.CampaignRepository;
+import com.example.repository.ClickEventRepository;
+import com.example.repository.PartnerLinkClickRepository;
+import com.example.repository.PartnerLinkRepository;
+import com.example.repository.UserAgentRepository;
+import com.example.service.PartnerLinkService;
+import com.example.util.UserAgentParser.UserAgentInfo;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PartnerLinkServiceimpl implements PartnerLinkService {
 
     private final PartnerLinkRepository partnerLinkRepository;
     private final PartnerLinkClickRepository clickRepository;
     private final CampaignRepository campaignRepository;
+    private final ClickEventRepository clickEventRepository;
+    private final WebClient webClient;
+    private final UserAgentRepository userAgentRepository;
 
+    @Override
     @Transactional
     public PartnerLink createPartnerLink(String originalUrl, UUID workspaceId, UUID createdBy, UUID campaignId) {
         Campaign campaign = campaignRepository.findById(campaignId)
@@ -42,16 +55,14 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         return partnerLinkRepository.save(partnerLink);
     }
 
+    @Override
     @Transactional
     public String generateTrackingUrlTemplate(UUID partnerLinkId) {
-        return String.format("https://adsmriia.com/mriia/ads/%s?userId={userId}", partnerLinkId);
+        // {userId} - заменяется на id пользователя только это делать в ТГ
+        return String.format("https://adsmriia.com/api/campaign/partner-links/%s/redirect/{userId}", partnerLinkId);
     }
 
-    @Transactional
-    public String generateTrackingUrl(UUID partnerLinkId, UUID userId) {
-        return String.format("https://adsmriia.com/mriia/ads/%s?userId=%s", partnerLinkId, userId);
-    }
-
+    @Override
     @Transactional
     public void recordClick(UUID partnerLinkId, UUID userId) {
         PartnerLink partnerLink = getPartnerLink(partnerLinkId);
@@ -61,22 +72,130 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         clickRepository.save(click);
     }
 
+    @Override
+    @Transactional
+    public void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo) {
+        try {
+            // Получаем партнерскую ссылку
+            PartnerLink partnerLink = getPartnerLink(partnerLinkId);
+
+            // Создаем объект для записи о клике
+            ClickEvent clickEvent = ClickEvent.builder()
+                    .partnerLink(partnerLink)
+                    .userId(userId)
+                    .ipAddress(ipAddress)
+                    .browser(userAgentInfo.getBrowser())
+                    .browserVersion(userAgentInfo.getBrowserVersion())
+                    .operatingSystem(userAgentInfo.getOperatingSystem())
+                    .deviceType(userAgentInfo.getDeviceType())
+                    .build();
+
+            // Сохраняем запись о клике
+            clickEventRepository.save(clickEvent);
+
+            // Для обратной совместимости также сохраняем в старую таблицу
+            recordClick(partnerLinkId, userId);
+
+            // Асинхронно получаем информацию об IP-адресе
+            if (ipAddress != null && !ipAddress.isEmpty()) {
+                parseIpAddress(ipAddress)
+                    .subscribe(
+                        ipInfo -> {
+                            log.info("IP информация: {}", ipInfo);
+                            
+                            // Здесь можно обновить запись о клике с дополнительной информацией
+                            // Например, добавить страну, город, координаты и т.д.
+                            // Но для этого нужно добавить соответствующие поля в сущность ClickEvent
+                            
+                            String country = (String) ipInfo.get("country");
+                            String city = (String) ipInfo.get("city");
+                            String region = (String) ipInfo.get("region");
+                            String timezone = (String) ipInfo.get("timezone");
+                            
+                            log.info("IP геолокация: страна={}, регион={}, город={}, timezone={}",
+                                    country, region, city, timezone);
+
+                           UserAgent userAgent = new UserAgent();
+                           userAgent.setCountry(country);
+                           userAgent.setCity(city);
+                           userAgent.setRegion(region);
+                           userAgent.setTimezone(timezone);
+                           userAgentRepository.save(userAgent);
+                        
+                        },
+                        error -> log.error("Ошибка при получении информации об IP: {}", error.getMessage())
+                    );
+            }
+
+            log.info("Запись о клике с расширенной информацией: partnerLinkId={}, userId={}, ipAddress={}, browser={}, os={}, device={}",
+                    partnerLinkId, userId, ipAddress, userAgentInfo.getBrowser(),
+                    userAgentInfo.getOperatingSystem(), userAgentInfo.getDeviceType());
+        } catch (Exception e) {
+            log.error("Ошибка при записи о клике с расширенной информацией: {}", e.getMessage(), e);
+            // Если произошла ошибка с новой таблицей, все равно пытаемся записать в старую
+            recordClick(partnerLinkId, userId);
+        }
+    }
+
+    /**
+     * Получает информацию об IP-адресе через сервис ipinfo.io
+     * 
+     * @param ipAddress IP-адрес
+     * @return Mono с информацией об IP-адресе в виде Map
+     */
+    public Mono<Map<String, Object>> parseIpAddress(String ipAddress) {
+        if (ipAddress == null || ipAddress.isEmpty()) {
+            return Mono.empty();
+        }
+        
+        // // Удаляем порт, если он есть в IP-адресе (например, 192.168.1.1:8080)
+        // String cleanIp = ipAddress.contains(":") ? ipAddress.split(":")[0] : ipAddress;
+        
+        // // Проверяем, что IP-адрес не локальный
+        // if (cleanIp.startsWith("127.") || cleanIp.startsWith("192.168.") || 
+        //     cleanIp.startsWith("10.") || cleanIp.equals("localhost")) {
+        //     log.debug("Локальный IP-адрес, пропускаем запрос к ipinfo.io: {}", cleanIp);
+        //     return Mono.empty();
+        // }
+        
+        String url = "https://ipinfo.io/" + ipAddress + "/json";
+        
+        return webClient.get()
+                .uri(url)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .doOnSuccess(response -> log.debug("Получена информация об IP {}: {}", ipAddress, response))
+                .doOnError(e -> log.error("Ошибка при запросе информации об IP {}: {}", ipAddress, e.getMessage()))
+                .onErrorResume(WebClientResponseException.class, e -> {
+                    log.error("HTTP ошибка при запросе к ipinfo.io: {} {}", e.getStatusCode(), e.getStatusText());
+                    return Mono.empty();
+                })
+                .onErrorResume(e -> {
+                    log.error("Непредвиденная ошибка при запросе к ipinfo.io: {}", e.getMessage());
+                    return Mono.empty();
+                });
+    }
+
+    @Override
     @Transactional(readOnly = true)
     public PartnerLink getPartnerLink(UUID id) {
         return partnerLinkRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Partner link not found"));
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Long getClicksCount(UUID partnerLinkId) {
         return partnerLinkRepository.getClicksCount(partnerLinkId);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Long getUserClicksCount(UUID partnerLinkId, UUID userId) {
         return partnerLinkRepository.getUserClicksCount(partnerLinkId, userId);
     }
 
+    @Override
     @Transactional(readOnly = true)
     public Long getCampaignClicksCount(UUID campaignId) {
         return partnerLinkRepository.getCampaignClicksCount(campaignId);

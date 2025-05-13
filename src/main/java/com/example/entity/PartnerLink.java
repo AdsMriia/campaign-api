@@ -59,9 +59,4 @@ public class PartnerLink {
     @CreationTimestamp
     private OffsetDateTime createdAt;
 
-    /**
-     * Количество кликов по ссылке.
-     */
-    @Column(name = "click_count")
-    private Long clickCount = 0L;
 }
