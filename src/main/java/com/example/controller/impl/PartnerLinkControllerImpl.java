@@ -40,11 +40,9 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
 
         // Парсим User-Agent
         String userAgentString = request.getHeader("User-Agent");
-        if (!(userAgentString.contains("Discordbot") || userAgentString.contains("TelegramBot")
-                || userAgentString.contains("TwitterBot"))) {
+        if (!(userAgentString.toLowerCase().contains("discordbot") || userAgentString.toLowerCase().contains("telegrambot")
+                || userAgentString.toLowerCase().contains("twitterbot") || userAgentString.toLowerCase().contains("curl"))) {
             UserAgentInfo userAgentInfo = UserAgentParser.parseUserAgent(userAgentString);
-
-            log.info("User-Agent: " + userAgentString + "<----------------");
 
             log.info("Клик по партнерской ссылке: IP: {}, Browser: {}, OS: {}, Device: {}",
                     ipAddress,
