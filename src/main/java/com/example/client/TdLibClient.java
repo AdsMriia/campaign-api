@@ -38,7 +38,7 @@ public interface TdLibClient {
      * @param authorization JWT токен авторизации
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/audience/campaign/init")
+    @PostMapping("/campaign/init")
     ResponseEntity<String> scheduleCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestBody CampaignDto campaignDto

@@ -213,9 +213,8 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID>, JpaSp
      * @param channelId идентификатор канала
      * @return список объектов с годом и месяцем
      */
-    @Query("SELECT DISTINCT EXTRACT(YEAR FROM c.startDate) as year, EXTRACT(MONTH FROM c.startDate) as month "
-            + "FROM Campaign c WHERE c.channelId = :channelId ORDER BY year DESC, month DESC")
-    List<Object[]> findCampaignDatesByChannelId(@Param("channelId") UUID channelId);
+    @Query("SELECT c FROM Campaign c WHERE c.channelId = :channelId ORDER BY c.startDate DESC")
+    List<Campaign> findCampaignDatesByChannelId(@Param("channelId") UUID channelId);
 
     List<Campaign> findByCampaignTypeAndStatusAndStartDateBeforeAndEndDateAfter(
             CampaignType campaignType, CampaignStatus status, OffsetDateTime now, OffsetDateTime endDate);

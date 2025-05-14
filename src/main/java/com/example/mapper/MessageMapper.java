@@ -3,7 +3,14 @@ package com.example.mapper;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.example.entity.Media;
+import com.example.entity.MediaToMessage;
+import com.example.model.dto.MediaDto;
+import org.mapstruct.Context;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.Named;
@@ -11,12 +18,16 @@ import org.mapstruct.Named;
 import com.example.entity.Message;
 import com.example.model.dto.CreateMessageDto;
 import com.example.model.dto.MessageDto;
+import org.springframework.beans.factory.annotation.Autowired;
 
 /**
  * Маппер для преобразования между сущностью Message и DTO объектами.
  */
 @Mapper(componentModel = "spring", uses = {MediaMapper.class, ActionMapper.class})
-public interface MessageMapper {
+public abstract class MessageMapper {
+
+    @Autowired
+    protected MediaMapper mediaMapper;
 
     /**
      * Преобразует сущность Message в MessageDto.
@@ -26,7 +37,8 @@ public interface MessageMapper {
      */
     @Mapping(target = "createdAt", expression = "java(offsetDateTimeToLong(message.getCreatedAt()))")
     @Mapping(target = "updatedAt", expression = "java(offsetDateTimeToLong(message.getUpdatedAt()))")
-    MessageDto toMessageDto(Message message);
+    @Mapping(target = "medias", expression = "java(mapMediaToMessageSet(message.getMedias()))")
+    public abstract MessageDto toMessageDto(Message message);
 
 //    /**
 //     * Преобразует сущность Message в GetMessageDto с полной информацией.
@@ -48,7 +60,7 @@ public interface MessageMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "workspaceId", ignore = true)
-    Message toMessage(CreateMessageDto createMessageDto);
+    public abstract Message toMessage(CreateMessageDto createMessageDto);
 
     @Mapping(target = "actions", ignore = true)
     @Mapping(target = "medias", ignore = true)
@@ -58,7 +70,7 @@ public interface MessageMapper {
     @Mapping(target = "createdAt", expression = "java(longToOffsetDateTime(dto.getCreatedAt()))")
     @Mapping(target = "updatedAt", expression = "java(longToOffsetDateTime(dto.getUpdatedAt()))")
     @Mapping(target = "updatedBy", ignore = true)
-    Message toMessage(MessageDto dto);
+    public abstract Message toMessage(MessageDto dto);
 
     /**
      * Преобразует OffsetDateTime в Long (эпоха в секундах).
@@ -68,7 +80,7 @@ public interface MessageMapper {
      * null
      */
     @Named("offsetDateTimeToLong")
-    default Long offsetDateTimeToLong(OffsetDateTime dateTime) {
+    Long offsetDateTimeToLong(OffsetDateTime dateTime) {
         return dateTime != null ? dateTime.toEpochSecond() : null;
     }
 
@@ -79,7 +91,16 @@ public interface MessageMapper {
      * @return объект OffsetDateTime или null, если epochSeconds равен null
      */
     @Named("longToOffsetDateTime")
-    default OffsetDateTime longToOffsetDateTime(Long epochSeconds) {
+    OffsetDateTime longToOffsetDateTime(Long epochSeconds) {
         return epochSeconds != null ? OffsetDateTime.ofInstant(Instant.ofEpochSecond(epochSeconds), ZoneOffset.UTC) : null;
+    }
+
+    List<MediaDto> mapMediaToMessageSet(Set<MediaToMessage> mediaToMessages) {
+        if (mediaToMessages == null) return null;
+
+        return mediaToMessages.stream()
+                .map(MediaToMessage::getMedia)
+                .map(mediaMapper::toMediaDto)
+                .collect(Collectors.toList());
     }
 }

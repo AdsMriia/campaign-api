@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:h2:file:./testdb;AUTO_SERVER=TRUE
+    driverClassName: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: none
+  liquibase:
+    enabled: false
+  sql:
+    init:
+      mode: never
+  mail:
+    host: smtp.anyway.com
+    port: 587
+    username: anyway@anyway.com
+    password: anyway
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+server:
+  servlet:
+    context-path: /api
+jwt:
+  secret: 771836751d90bfcc9205e73173691f01cc81a813ee5ebfb02441aa90a37aeb2b
+  hash:
+    secret: b7b157a5315825d7e326ccbe915613bf8d4494666989b1f3e4d0e56a2b030ed9
+services:
+  channel: http://localhost:8080/plug
+  telegram: http://localhost:8080/plug
+  workspace: http://localhost:8080/plug

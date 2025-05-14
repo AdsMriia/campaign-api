@@ -28,5 +28,6 @@ public class ChannelCampaignDatesDto {
      * Список интервалов дат кампаний в формате "YYYY-MM".
      */
     @JsonProperty("dates")
-    private List<String> dates;
+    private List<DatesDto> dates;
 }
+

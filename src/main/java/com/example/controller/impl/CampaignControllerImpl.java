@@ -37,7 +37,7 @@ public class CampaignControllerImpl implements CampaignController {
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public List<CampaignDto> campaignSubmit(@Valid @RequestBody SubmitABDto submitABDto, @RequestParam(required = false) String timezone) {
+    public CampaignDto campaignSubmit(@Valid @RequestBody SubmitABDto submitABDto, @RequestParam(required = false) String timezone) {
         //todo формирование бота в логике
         log.info("Получен запрос на создание кампании: {}, часовой пояс: {}", submitABDto, timezone);
 

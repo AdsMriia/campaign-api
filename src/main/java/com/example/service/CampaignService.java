@@ -32,7 +32,7 @@ public interface CampaignService {
      * @param submitABDto данные для создания кампании
      * @return список созданных кампаний
      */
-    List<CampaignDto> immediateSubmit(SubmitABDto submitABDto);
+    CampaignDto immediateSubmit(SubmitABDto submitABDto);
 
     /**
      * Создает и отправляет обычную кампанию.
@@ -41,7 +41,7 @@ public interface CampaignService {
      * @param timezone часовой пояс
      * @return список созданных кампаний
      */
-    List<CampaignDto> campaignBasicSubmit(SubmitABDto submitABDto, String timezone);
+    CampaignDto campaignBasicSubmit(SubmitABDto submitABDto, String timezone);
 
     /**
      * Запускает ретаргетинг для кампании.

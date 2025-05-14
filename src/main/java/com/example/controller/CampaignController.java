@@ -56,7 +56,7 @@ public interface CampaignController {
             }
     )
     @PostMapping("/submit")
-    List<CampaignDto> campaignSubmit(
+    CampaignDto campaignSubmit(
             @Parameter(description = "Данные для создания A/B кампании", required = true)
             @Valid @RequestBody SubmitABDto submitABDto,
             @Parameter(description = "Временная зона для планирования кампании")
