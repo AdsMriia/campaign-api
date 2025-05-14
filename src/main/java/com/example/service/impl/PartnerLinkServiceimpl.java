@@ -89,6 +89,17 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         try {
             // Получаем партнерскую ссылку
             PartnerLink partnerLink = getPartnerLink(partnerLinkId);
+            // Создаем объект UserAgent сразу, а не в асинхронном коде
+            UserAgent userAgent = new UserAgent();
+            userAgent.setLanguage(getDeviceLanguage(request));
+            userAgent.setBrowser(userAgentInfo.getBrowser());
+            userAgent.setBrowserVersion(userAgentInfo.getBrowserVersion());
+            userAgent.setOperatingSystem(userAgentInfo.getOperatingSystem());
+            userAgent.setDeviceType(userAgentInfo.getDeviceType());
+
+            // Сохраняем UserAgent и получаем сохраненный объект с ID
+            UserAgent savedUserAgent = userAgentRepository.save(userAgent);
+            log.info("UserAgent сохранен: " + savedUserAgent);
 
             // Создаем объект для записи о клике
             ClickEvent clickEvent = ClickEvent.builder()
@@ -122,17 +133,14 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                                     String region = (String) ipInfo.get("region");
                                     String timezone = (String) ipInfo.get("timezone");
 
-                                    UserAgent userAgent = new UserAgent();
-                                    userAgent.setCountry(country);
-                                    userAgent.setCity(city);
-                                    userAgent.setRegion(region);
-                                    userAgent.setTimezone(timezone);
-                                    userAgent.setLanguage(getDeviceLanguage(request));
-                                    userAgent.setBrowser(userAgentInfo.getBrowser());
-                                    userAgent.setBrowserVersion(userAgentInfo.getBrowserVersion());
-                                    userAgent.setOperatingSystem(userAgentInfo.getOperatingSystem());
-                                    userAgent.setDeviceType(userAgentInfo.getDeviceType());
-                                    userAgentRepository.save(userAgent);
+                                    // Обновляем существующий UserAgent с геоданными
+                                    savedUserAgent.setCountry(country);
+                                    savedUserAgent.setCity(city);
+                                    savedUserAgent.setRegion(region);
+                                    savedUserAgent.setTimezone(timezone);
+                                    userAgentRepository.save(savedUserAgent);
+
+                                    log.info("UserAgent обновлен с геоданными: " + savedUserAgent);
 
                                     log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
                                             country, region, city, timezone);
