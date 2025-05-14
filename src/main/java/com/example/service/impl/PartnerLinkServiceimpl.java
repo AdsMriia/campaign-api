@@ -1,8 +1,5 @@
 package com.example.service.impl;
 
-import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -25,6 +22,7 @@ import com.example.repository.UserAgentRepository;
 import com.example.service.PartnerLinkService;
 import com.example.util.UserAgentParser.UserAgentInfo;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
@@ -74,7 +72,20 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
 
     @Override
     @Transactional
-    public void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo) {
+    public String getDeviceLanguage(HttpServletRequest request) {
+        String deviceLanguage = request.getHeader("Accept-Language");
+
+        if (deviceLanguage == null || deviceLanguage.isEmpty()) {
+            return "Unknown";
+        }
+        deviceLanguage = deviceLanguage.split(",")[0];
+
+        return deviceLanguage;
+    }
+
+    @Override
+    @Transactional
+    public void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request) {
         try {
             // Получаем партнерскую ссылку
             PartnerLink partnerLink = getPartnerLink(partnerLinkId);
@@ -84,10 +95,6 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                     .partnerLink(partnerLink)
                     .userId(userId)
                     .ipAddress(ipAddress)
-                    .browser(userAgentInfo.getBrowser())
-                    .browserVersion(userAgentInfo.getBrowserVersion())
-                    .operatingSystem(userAgentInfo.getOperatingSystem())
-                    .deviceType(userAgentInfo.getDeviceType())
                     .build();
 
             // Сохраняем запись о клике
@@ -103,33 +110,35 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
             // Асинхронно получаем информацию об IP-адресе
             if (ipAddress != null && !ipAddress.isEmpty()) {
                 parseIpAddress(ipAddress)
-                    .subscribe(
-                        ipInfo -> {
-                            log.info("IP информация: {}", ipInfo);
-                            
-                            // Здесь можно обновить запись о клике с дополнительной информацией
-                            // Например, добавить страну, город, координаты и т.д.
-                            // Но для этого нужно добавить соответствующие поля в сущность ClickEvent
-                            
-                            String country = (String) ipInfo.get("country");
-                            String city = (String) ipInfo.get("city");
-                            String region = (String) ipInfo.get("region");
-                            String timezone = (String) ipInfo.get("timezone");
-                            
-                            
+                        .subscribe(
+                                ipInfo -> {
+                                    log.info("IP информация: {}", ipInfo);
 
-                           UserAgent userAgent = new UserAgent();
-                           userAgent.setCountry(country);
-                           userAgent.setCity(city);
-                           userAgent.setRegion(region);
-                           userAgent.setTimezone(timezone);
-                           userAgentRepository.save(userAgent);
+                                    // Здесь можно обновить запись о клике с дополнительной информацией
+                                    // Например, добавить страну, город, координаты и т.д.
+                                    // Но для этого нужно добавить соответствующие поля в сущность ClickEvent
+                                    String country = (String) ipInfo.get("country");
+                                    String city = (String) ipInfo.get("city");
+                                    String region = (String) ipInfo.get("region");
+                                    String timezone = (String) ipInfo.get("timezone");
 
-                           log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
-                           country, region, city, timezone);
-                        },
-                        error -> log.error("Ошибка при получении информации об IP: {}", error.getMessage())
-                    );
+                                    UserAgent userAgent = new UserAgent();
+                                    userAgent.setCountry(country);
+                                    userAgent.setCity(city);
+                                    userAgent.setRegion(region);
+                                    userAgent.setTimezone(timezone);
+                                    userAgent.setLanguage(getDeviceLanguage(request));
+                                    userAgent.setBrowser(userAgentInfo.getBrowser());
+                                    userAgent.setBrowserVersion(userAgentInfo.getBrowserVersion());
+                                    userAgent.setOperatingSystem(userAgentInfo.getOperatingSystem());
+                                    userAgent.setDeviceType(userAgentInfo.getDeviceType());
+                                    userAgentRepository.save(userAgent);
+
+                                    log.info("IP геолокация: country={}, region={}, city={}, timezone={}",
+                                            country, region, city, timezone);
+                                },
+                                error -> log.error("Ошибка при получении информации об IP: {}", error.getMessage())
+                        );
             }
 
         } catch (Exception e) {
@@ -141,7 +150,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
 
     /**
      * Получает информацию об IP-адресе через сервис ipinfo.io
-     * 
+     *
      * @param ipAddress IP-адрес
      * @return Mono с информацией об IP-адресе в виде Map
      */
@@ -149,23 +158,22 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         if (ipAddress == null || ipAddress.isEmpty()) {
             return Mono.empty();
         }
-        
+
         // // Удаляем порт, если он есть в IP-адресе (например, 192.168.1.1:8080)
         // String cleanIp = ipAddress.contains(":") ? ipAddress.split(":")[0] : ipAddress;
-        
         // // Проверяем, что IP-адрес не локальный
         // if (cleanIp.startsWith("127.") || cleanIp.startsWith("192.168.") || 
         //     cleanIp.startsWith("10.") || cleanIp.equals("localhost")) {
         //     log.debug("Локальный IP-адрес, пропускаем запрос к ipinfo.io: {}", cleanIp);
         //     return Mono.empty();
         // }
-        
         String url = "https://ipinfo.io/" + ipAddress + "/json";
-        
+
         return webClient.get()
                 .uri(url)
                 .retrieve()
-                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {})
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                })
                 .doOnSuccess(response -> log.debug("Получена информация об IP {}: {}", ipAddress, response))
                 .doOnError(e -> log.error("Ошибка при запросе информации об IP {}: {}", ipAddress, e.getMessage()))
                 .onErrorResume(WebClientResponseException.class, e -> {

@@ -5,11 +5,13 @@ import java.util.UUID;
 import com.example.entity.PartnerLink;
 import com.example.util.UserAgentParser.UserAgentInfo;
 
-public interface PartnerLinkService {
+import jakarta.servlet.http.HttpServletRequest;
 
+public interface PartnerLinkService {
 
     /**
      * Создает партнерскую ссылку
+     *
      * @param originalUrl исходный URL
      * @param workspaceId ID рабочей области
      * @param createdBy ID пользователя, создавшего ссылку
@@ -35,6 +37,14 @@ public interface PartnerLinkService {
     void recordClick(UUID partnerLinkId, UUID userId);
 
     /**
+     * Получает язык устройства из заголовка Accept-Language
+     *
+     * @param request HTTP запрос
+     * @return язык устройства
+     */
+    String getDeviceLanguage(HttpServletRequest request);
+
+    /**
      * Записывает информацию о клике по партнерской ссылке с данными об IP и
      * User-Agent
      *
@@ -43,7 +53,7 @@ public interface PartnerLinkService {
      * @param ipAddress IP-адрес пользователя
      * @param userAgentInfo информация о браузере и устройстве пользователя
      */
-    void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo);
+    void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request);
 
     /**
      * Получает партнерскую ссылку по ID
@@ -62,7 +72,8 @@ public interface PartnerLinkService {
     Long getClicksCount(UUID partnerLinkId);
 
     /**
-     * Получает количество кликов по партнерской ссылке для конкретного пользователя
+     * Получает количество кликов по партнерской ссылке для конкретного
+     * пользователя
      *
      * @param partnerLinkId ID партнерской ссылки
      * @param userId ID пользователя

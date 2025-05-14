@@ -56,30 +56,6 @@ public class ClickEvent {
     private String ipAddress;
 
     /**
-     * Браузер пользователя.
-     */
-    @Column(name = "browser", length = 100)
-    private String browser;
-
-    /**
-     * Версия браузера.
-     */
-    @Column(name = "browser_version", length = 50)
-    private String browserVersion;
-
-    /**
-     * Операционная система пользователя.
-     */
-    @Column(name = "operating_system", length = 100)
-    private String operatingSystem;
-
-    /**
-     * Тип устройства пользователя (Mobile, Desktop, etc.).
-     */
-    @Column(name = "device_type", length = 50)
-    private String deviceType;
-
-    /**
      * Дата и время клика.
      */
     @CreationTimestamp

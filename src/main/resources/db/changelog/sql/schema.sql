@@ -238,3 +238,18 @@ CREATE TABLE IF NOT EXISTS user_agent (
 --comment Создание индексов для таблицы user_agent
 CREATE INDEX idx_user_agent_country ON user_agent(country);
 CREATE INDEX idx_user_agent_city ON user_agent(city);
+
+--changeset vladislav.mosuyk:add_new_fields_to_user_agent
+--comment Добавление новых полей в таблицу user_agent
+ALTER TABLE user_agent ADD COLUMN language VARCHAR(50);
+ALTER TABLE user_agent ADD COLUMN browser VARCHAR(100);
+ALTER TABLE user_agent ADD COLUMN browser_version VARCHAR(50);
+ALTER TABLE user_agent ADD COLUMN operating_system VARCHAR(100);
+ALTER TABLE user_agent ADD COLUMN device_type VARCHAR(50);
+
+--changeset vladislav.mosuyk:remove_duplicate_fields_from_click_events
+--comment Удаление дублирующихся полей из таблицы click_events
+ALTER TABLE click_events DROP COLUMN browser;
+ALTER TABLE click_events DROP COLUMN browser_version;
+ALTER TABLE click_events DROP COLUMN operating_system;
+ALTER TABLE click_events DROP COLUMN device_type;

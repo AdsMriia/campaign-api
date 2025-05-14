@@ -40,18 +40,21 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
 
         // Парсим User-Agent
         String userAgentString = request.getHeader("User-Agent");
-        UserAgentInfo userAgentInfo = UserAgentParser.parseUserAgent(userAgentString);
+        if (!(userAgentString.contains("Discordbot") || userAgentString.contains("TelegramBot")
+                || userAgentString.contains("TwitterBot"))) {
+            UserAgentInfo userAgentInfo = UserAgentParser.parseUserAgent(userAgentString);
 
-        log.info("User-Agent: " + userAgentString + "<----------------");
+            log.info("User-Agent: " + userAgentString + "<----------------");
 
-        log.info("Клик по партнерской ссылке: IP: {}, Browser: {}, OS: {}, Device: {}",
-                ipAddress,
-                userAgentInfo.getBrowser(),
-                userAgentInfo.getOperatingSystem(),
-                userAgentInfo.getDeviceType());
+            log.info("Клик по партнерской ссылке: IP: {}, Browser: {}, OS: {}, Device: {}",
+                    ipAddress,
+                    userAgentInfo.getBrowser(),
+                    userAgentInfo.getOperatingSystem(),
+                    userAgentInfo.getDeviceType());
 
-        // Записываем информацию о клике с деталями
-        partnerLinkService.recordClickWithDetails(id, userId, ipAddress, userAgentInfo);
+            // Записываем информацию о клике с деталями
+            partnerLinkService.recordClickWithDetails(id, userId, ipAddress, userAgentInfo, request);
+        }
 
         // Получаем оригинальный URL для редиректа
         String originalUrl = partnerLinkService.getPartnerLink(id).getOriginalUrl();
