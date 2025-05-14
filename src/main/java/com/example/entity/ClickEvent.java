@@ -50,12 +50,6 @@ public class ClickEvent {
     private UUID userId;
 
     /**
-     * IP-адрес пользователя.
-     */
-    @Column(name = "ip_address", length = 45)
-    private String ipAddress;
-
-    /**
      * Дата и время клика.
      */
     @CreationTimestamp

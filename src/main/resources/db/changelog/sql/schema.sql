@@ -253,3 +253,6 @@ ALTER TABLE click_events DROP COLUMN browser;
 ALTER TABLE click_events DROP COLUMN browser_version;
 ALTER TABLE click_events DROP COLUMN operating_system;
 ALTER TABLE click_events DROP COLUMN device_type;
+-- changeset vladislav.mosuyk:remove ip_address from click_events
+-- comment Удаление поля ip_address из таблицы click_events
+ALTER TABLE click_events DROP COLUMN ip_address;

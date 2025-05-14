@@ -105,7 +105,6 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
             ClickEvent clickEvent = ClickEvent.builder()
                     .partnerLink(partnerLink)
                     .userId(userId)
-                    .ipAddress(ipAddress)
                     .build();
 
             // Сохраняем запись о клике
