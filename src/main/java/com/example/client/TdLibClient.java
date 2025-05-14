@@ -3,7 +3,6 @@ package com.example.client;
 import java.util.UUID;
 
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -39,7 +38,7 @@ public interface TdLibClient {
      * @param authorization JWT токен авторизации
      * @return ResponseEntity с результатом операции
      */
-    @PostMapping("/audience/campaign/init")
+    @PostMapping("/campaign/init")
     ResponseEntity<String> scheduleCampaign(
             @RequestHeader("Authorization") String authorization,
             @RequestBody CampaignDto campaignDto
