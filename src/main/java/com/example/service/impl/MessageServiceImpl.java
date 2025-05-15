@@ -82,7 +82,7 @@ public class MessageServiceImpl implements MessageService {
         if (page == null) {
             page = 0;
         }
-        if (size == null || size == 0) {
+        if (size == null || size == 0 || size == -1) {
             long s = messageRepository.countByWorkspaceId(workspaceId);
             if (s > 0) {
                 size = (int) s;
