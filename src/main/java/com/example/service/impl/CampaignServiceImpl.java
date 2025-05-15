@@ -515,11 +515,19 @@ public class CampaignServiceImpl implements CampaignService {
         log.info("Получение списка кампаний с параметрами: channelIds={}, page={}, status={}, size={}, asc={}, sort={}, isArchived={}",
                 channelIds, page, status, size, asc, sort, isArchived);
 
+        // Получаем ID текущего рабочего пространства
+        UUID workspaceId = webUserService.getCurrentWorkspaceId();
+
         if (page == null) {
             page = 0;
         }
-        if (size == null) {
-            size = 10;
+        if (size == null || size == 0 || size == -1) {
+            long s = campaignRepository.countByWorkspaceId(workspaceId);
+            if (s > 0) {
+                size = (int) s;
+            } else {
+                size = 10;
+            }
         }
         if (asc == null) {
             asc = false;
@@ -530,9 +538,6 @@ public class CampaignServiceImpl implements CampaignService {
 
         Direction direction = asc ? Direction.ASC : Direction.DESC;
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(direction, sort));
-
-        // Получаем ID текущего рабочего пространства
-        UUID workspaceId = webUserService.getCurrentWorkspaceId();
 
         // Создаем запрос с фильтрами
         Page<Campaign> campaignsPage;

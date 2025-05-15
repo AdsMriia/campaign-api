@@ -227,4 +227,7 @@ public interface CampaignRepository extends JpaRepository<Campaign, UUID>, JpaSp
     List<Object[]> findDistinctCampaignIntervals(@Param("workspaceId") UUID workspaceId);
 
     boolean existsByTitleAndWorkspaceId(String title, UUID workspaceId);
+
+    @Query("SELECT COUNT(c) FROM Campaign c WHERE c.workspaceId = :workspaceId")
+    long countByWorkspaceId(UUID workspaceId);
 }
