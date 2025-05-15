@@ -174,7 +174,7 @@ ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_message
 CREATE TABLE IF NOT EXISTS partner_links (
     id UUID PRIMARY KEY NOT NULL,
     original_url VARCHAR(2048) NOT NULL,
-    workspace_id UUID,
+    workspace_id UUID NOT NULL,
     created_by UUID NOT NULL,
     campaign_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
@@ -256,3 +256,7 @@ ALTER TABLE click_events DROP COLUMN device_type;
 -- changeset vladislav.mosuyk:remove ip_address from click_events
 -- comment Удаление поля ip_address из таблицы click_events
 ALTER TABLE click_events DROP COLUMN ip_address;
+
+--changeset vladislav.mosuyk:remove_not_null_from_partner_links
+--comment Удаление NOT NULL constraint из поля workspace_id в таблице partner_links
+ALTER TABLE partner_links ALTER COLUMN workspace_id DROP NOT NULL;
