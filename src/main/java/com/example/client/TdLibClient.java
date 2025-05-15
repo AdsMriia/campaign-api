@@ -48,8 +48,7 @@ public interface TdLibClient {
     );
 
 
-    @GetMapping("/users/telegram/{telegramUserId}")
-    WebUserDtoShort getUserByTelegramId(@PathVariable("telegramUserId") Long telegramUserId);
+   
 
 
     /**
