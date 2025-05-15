@@ -48,5 +48,5 @@ services:
   telegram: ${TELEGRAM_URL}
   workspace: ${WORKSPACE_URL}
   channel: ${CHANNEL_URL}
-  security: http://security-api:8080/api
+  security: http://security-api:8080
 #  workspace-api: ${WORKSPACE_API}
