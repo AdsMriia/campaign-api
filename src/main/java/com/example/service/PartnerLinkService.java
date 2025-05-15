@@ -2,7 +2,10 @@ package com.example.service;
 
 import java.util.UUID;
 
+import org.springframework.http.ResponseEntity;
+
 import com.example.entity.PartnerLink;
+import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.util.UserAgentParser.UserAgentInfo;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -62,6 +65,15 @@ public interface PartnerLinkService {
      * @return партнерская ссылка
      */
     PartnerLink getPartnerLink(UUID id);
+
+    /**
+     * Создает партнерскую ссылку для Jarvis
+     *
+     * @param link оригинальная ссылка
+     * @param userId ID пользователя
+     * @return DTO с данными созданной партнерской ссылки
+     */
+    PartnerLinkJarvisDto createPartnerLinkJarvis(String link, UUID userId);
 
     /**
      * Получает количество кликов по партнерской ссылке

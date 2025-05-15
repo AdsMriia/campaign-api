@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import com.example.model.CampaignLinkStats;
 import com.example.model.LinkStats;
+import com.example.model.dto.PartnerLinkJarvisDto;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,6 +44,32 @@ public interface PartnerLinkController {
             @Parameter(description = "Идентификатор пользователя, который кликнул по ссылке", required = true)
             @RequestParam UUID userId,
             HttpServletRequest request
+    );
+
+    @Operation(
+            summary = "Получение данных партнерской ссылки для Jarvis",
+            description = "Возвращает данные партнерской ссылки для интеграции с Jarvis"
+    )
+    @ApiResponses(value = {
+        @ApiResponse(
+                responseCode = "200",
+                description = "Данные успешно получены",
+                content = @Content(
+                        mediaType = "application/json",
+                        schema = @Schema(implementation = PartnerLinkJarvisDto.class)
+                )
+        ),
+        @ApiResponse(
+                responseCode = "404",
+                description = "Партнерская ссылка не найдена",
+                content = @Content
+        )
+    })
+    ResponseEntity<PartnerLinkJarvisDto> createPartnerLinkJarvis(
+            @Parameter(description = "Оригинальная ссылка", required = true)
+            @RequestParam String link,
+            @Parameter(description = "Идентификатор пользователя", required = true)
+            @RequestParam UUID userId
     );
 
     @Operation(
@@ -94,4 +121,6 @@ public interface PartnerLinkController {
             @Parameter(description = "Идентификатор кампании", required = true)
             @PathVariable UUID campaignId
     );
+
+    
 }

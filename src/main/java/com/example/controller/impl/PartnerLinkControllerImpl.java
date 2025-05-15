@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.controller.PartnerLinkController;
 import com.example.model.CampaignLinkStats;
 import com.example.model.LinkStats;
+import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.service.PartnerLinkService;
 import com.example.util.UserAgentParser;
 import com.example.util.UserAgentParser.UserAgentInfo;
@@ -60,6 +62,15 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .header("Location", originalUrl)
                 .build();
+    }
+
+    @Override
+    @PostMapping("/create")
+    public ResponseEntity<PartnerLinkJarvisDto> createPartnerLinkJarvis(
+            @RequestParam String link,
+            @RequestParam UUID userId) {
+        PartnerLinkJarvisDto dto = partnerLinkService.createPartnerLinkJarvis(link, userId);
+        return ResponseEntity.ok(dto);
     }
 
     @Override

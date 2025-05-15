@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -14,6 +15,7 @@ import com.example.entity.ClickEvent;
 import com.example.entity.PartnerLink;
 import com.example.entity.PartnerLinkClick;
 import com.example.entity.UserAgent;
+import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.repository.CampaignRepository;
 import com.example.repository.ClickEventRepository;
 import com.example.repository.PartnerLinkClickRepository;
@@ -216,5 +218,23 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
     @Transactional(readOnly = true)
     public Long getCampaignClicksCount(UUID campaignId) {
         return partnerLinkRepository.getCampaignClicksCount(campaignId);
+    }
+
+    @Override
+    public PartnerLinkJarvisDto createPartnerLinkJarvis(String link, UUID userId) {
+        PartnerLink partnerLink = new PartnerLink();
+        partnerLink.setOriginalUrl(link);
+        partnerLink.setCreatedBy(userId);
+        partnerLink.setWorkspaceId(null);
+        partnerLink.setCampaign(null);
+
+        partnerLinkRepository.save(partnerLink);
+
+        PartnerLinkJarvisDto partnerLinkJarvisDto = new PartnerLinkJarvisDto();
+        
+        partnerLinkJarvisDto.setId(partnerLink.getId());
+        partnerLinkJarvisDto.setOriginalUrl(partnerLink.getOriginalUrl());
+
+        return partnerLinkJarvisDto;
     }
 }
