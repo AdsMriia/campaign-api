@@ -231,7 +231,6 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         PartnerLink partnerLink = new PartnerLink();
         partnerLink.setOriginalUrl(link);
 
-        // Получаем userId из Telegram
         WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
         partnerLink.setCreatedBy(user.getId());
         partnerLink.setWorkspaceId(null);
