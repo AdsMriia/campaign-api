@@ -125,8 +125,8 @@ public class JwtFilter extends OncePerRequestFilter {
         UUID workspaceIdUUID = null;
         List<String> authorities = new ArrayList<>();
 
-        if (requestURI.startsWith(contextPath + "/workspaces/")) {
-            String workspaceId = requestURI.replace(contextPath + "/workspaces/", "").split("/")[0];
+        if (requestURI.startsWith(contextPath + "/workspace/")) {
+            String workspaceId = requestURI.replace(contextPath + "/workspace/", "").split("/")[0];
             try {
                 workspaceIdUUID = UUID.fromString(workspaceId);
             } catch (Exception e) {
