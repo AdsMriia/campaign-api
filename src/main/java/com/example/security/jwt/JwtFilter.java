@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -78,11 +79,11 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             if ("api-service".equals(jwtService.getTokenType(jwt))) {
-                setApiDetailsToSecurityContextHolder(jwt);
+                setApiDetailsToSecurityContextHolder(jwt, request);
             } else if (!"access".equals(jwtService.getTokenType(jwt))) {
                 throw new InvalidTokenException("Invalid access token");
             } else {
-                setCustomUserDetailsToSecurityContextHolder(authHeader, requestURI, response);
+                setCustomUserDetailsToSecurityContextHolder(authHeader, requestURI, request, response);
             }
         } catch (TokenException te) {
             sendErrorResponse(response, HttpStatus.UNAUTHORIZED, "Invalid token", te.getMessage());
@@ -107,15 +108,17 @@ public class JwtFilter extends OncePerRequestFilter {
         return mapper.writeValueAsString(object);
     }
 
-    private void setApiDetailsToSecurityContextHolder(String token) {
+    private void setApiDetailsToSecurityContextHolder(String token, HttpServletRequest request) {
         WebUserDto webUser = new WebUserDto(null, "api-service",token, null, List.of("api-service"));
         UserDetails customUserDetails = new CustomUserDetails(webUser);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(customUserDetails,
                 token, Set.of(new SimpleGrantedAuthority("api-service")));
+
+        auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(auth);
     }
-    private void setCustomUserDetailsToSecurityContextHolder(String authHeader, String requestURI, HttpServletResponse response) throws IOException {
+    private void setCustomUserDetailsToSecurityContextHolder(String authHeader, String requestURI, HttpServletRequest request, HttpServletResponse response) throws IOException {
         final String jwt = authHeader.split(" ")[1];
         UUID userId = jwtService.getUserIdFromToken(jwt);
 
@@ -149,6 +152,7 @@ public class JwtFilter extends OncePerRequestFilter {
                 jwt,
                 userDetails.getAuthorities()
         );
+        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
 }
