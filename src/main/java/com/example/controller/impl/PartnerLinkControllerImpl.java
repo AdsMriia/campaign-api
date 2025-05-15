@@ -68,8 +68,8 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
     @PostMapping("/create")
     public ResponseEntity<PartnerLinkJarvisDto> createPartnerLinkJarvis(
             @RequestParam String link,
-            @RequestParam UUID userId) {
-        PartnerLinkJarvisDto dto = partnerLinkService.createPartnerLinkJarvis(link, userId);
+            @RequestParam Long telegramUserId) {
+        PartnerLinkJarvisDto dto = partnerLinkService.createPartnerLinkJarvis(link, telegramUserId);
         return ResponseEntity.ok(dto);
     }
 

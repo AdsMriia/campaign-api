@@ -10,12 +10,14 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import com.example.client.TdLibClient;
 import com.example.entity.Campaign;
 import com.example.entity.ClickEvent;
 import com.example.entity.PartnerLink;
 import com.example.entity.PartnerLinkClick;
 import com.example.entity.UserAgent;
 import com.example.model.dto.PartnerLinkJarvisDto;
+import com.example.model.dto.WebUserDtoShort;
 import com.example.repository.CampaignRepository;
 import com.example.repository.ClickEventRepository;
 import com.example.repository.PartnerLinkClickRepository;
@@ -40,6 +42,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
     private final ClickEventRepository clickEventRepository;
     private final WebClient webClient;
     private final UserAgentRepository userAgentRepository;
+    private final TdLibClient tdLibClient;
 
     @Override
     @Transactional
@@ -221,10 +224,13 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
     }
 
     @Override
-    public PartnerLinkJarvisDto createPartnerLinkJarvis(String link, UUID userId) {
+    public PartnerLinkJarvisDto createPartnerLinkJarvis(String link, Long telegramUserId) {
         PartnerLink partnerLink = new PartnerLink();
         partnerLink.setOriginalUrl(link);
-        partnerLink.setCreatedBy(userId);
+
+        // Получаем userId из Telegram
+        WebUserDtoShort user = tdLibClient.getUserByTelegramId(telegramUserId);
+        partnerLink.setCreatedBy(user.getId());
         partnerLink.setWorkspaceId(null);
         partnerLink.setCampaign(null);
 

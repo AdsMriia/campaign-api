@@ -73,7 +73,7 @@ public interface PartnerLinkService {
      * @param userId ID пользователя
      * @return DTO с данными созданной партнерской ссылки
      */
-    PartnerLinkJarvisDto createPartnerLinkJarvis(String link, UUID userId);
+    PartnerLinkJarvisDto createPartnerLinkJarvis(String link, Long telegramUserId);
 
     /**
      * Получает количество кликов по партнерской ссылке

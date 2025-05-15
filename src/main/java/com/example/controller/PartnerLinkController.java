@@ -69,7 +69,7 @@ public interface PartnerLinkController {
             @Parameter(description = "Оригинальная ссылка", required = true)
             @RequestParam String link,
             @Parameter(description = "Идентификатор пользователя", required = true)
-            @RequestParam UUID userId
+            @RequestParam Long telegramUserId
     );
 
     @Operation(
