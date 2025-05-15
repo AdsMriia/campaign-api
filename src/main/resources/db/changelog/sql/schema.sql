@@ -174,7 +174,7 @@ ALTER TABLE media_to_message ADD CONSTRAINT fk_media_to_message_message
 CREATE TABLE IF NOT EXISTS partner_links (
     id UUID PRIMARY KEY NOT NULL,
     original_url VARCHAR(2048) NOT NULL,
-    workspace_id UUID NOT NULL,
+    workspace_id UUID,
     created_by UUID NOT NULL,
     campaign_id UUID,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL

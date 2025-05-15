@@ -19,7 +19,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 
-@Tag(name = "Партнерские ссылки", description = "API для управления партнерскими ссылками и отслеживания статистики кликов")
+@Tag(name = "Partner links API", description = "API для управления партнерскими ссылками и отслеживания статистики кликов")
 public interface PartnerLinkController {
 
     @Operation(
