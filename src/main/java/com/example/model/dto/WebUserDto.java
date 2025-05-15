@@ -29,6 +29,6 @@ public class WebUserDto {
     @JsonProperty("workspace_id")
     private UUID workspaceId;
 
-//    @JsonProperty("roles")
-//    private List<String> roles;
+    @JsonProperty("roles")
+    private List<String> roles;
 }

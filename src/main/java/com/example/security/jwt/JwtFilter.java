@@ -108,7 +108,7 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private void setApiDetailsToSecurityContextHolder(String token) {
-        WebUserDto webUser = new WebUserDto(null, "api-service",token, null);
+        WebUserDto webUser = new WebUserDto(null, "api-service",token, null, List.of("api-service"));
         UserDetails customUserDetails = new CustomUserDetails(webUser);
 
         UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(customUserDetails,
@@ -120,7 +120,7 @@ public class JwtFilter extends OncePerRequestFilter {
         UUID userId = jwtService.getUserIdFromToken(jwt);
 
         UUID workspaceIdUUID = null;
-        List<SimpleGrantedAuthority> authorities = new ArrayList<>();
+        List<String> authorities = new ArrayList<>();
 
         if (requestURI.startsWith(contextPath + "/workspaces/")) {
             String workspaceId = requestURI.replace(contextPath + "/workspaces/", "").split("/")[0];
@@ -132,22 +132,22 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
             try {
-                authorities = workspaceClient.getPermissions(workspaceIdUUID, authHeader).stream().map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+                authorities = workspaceClient.getPermissions(workspaceIdUUID, authHeader);
             } catch (Exception e) {
                 log.error("Ошибка при получении прав пользователя: {}", e.getMessage());
                 sendErrorResponse(response, HttpStatus.INTERNAL_SERVER_ERROR, "Internal server error", "Error while getting permissions");
                 return;
             }
         }
-        WebUserDto userDto = new WebUserDto(userId, jwtService.getEmailFromToken(jwt), jwt, workspaceIdUUID);
+        authorities.add(jwtService.getRoleFromToken(jwt));
 
+        WebUserDto userDto = new WebUserDto(userId, jwtService.getEmailFromToken(jwt), jwt, workspaceIdUUID, authorities);
         CustomUserDetails userDetails = new CustomUserDetails(userDto);
-        authorities.add(new SimpleGrantedAuthority(jwtService.getRoleFromToken(jwt)));
 
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 userDetails,
                 jwt,
-                authorities
+                userDetails.getAuthorities()
         );
         SecurityContextHolder.getContext().setAuthentication(authToken);
     }
