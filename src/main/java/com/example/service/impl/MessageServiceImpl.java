@@ -82,8 +82,13 @@ public class MessageServiceImpl implements MessageService {
         if (page == null) {
             page = 0;
         }
-        if (size == null) {
-            size = 10;
+        if (size == null || size == 0) {
+            long s = messageRepository.countByWorkspaceId(workspaceId);
+            if (s > 0) {
+                size = (int) s;
+            } else {
+                size = 10;
+            }
         }
 
         PageRequest pageRequest = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "updatedAt"));

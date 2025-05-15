@@ -26,10 +26,10 @@ public class CustomUserDetails implements UserDetails {
      */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // return new ArrayList<>();
-       return webUserDto.getRoles().stream()
-               .map(SimpleGrantedAuthority::new)
-               .collect(Collectors.toList());
+         return new ArrayList<>();
+//       return webUserDto.getRoles().stream()
+//               .map(SimpleGrantedAuthority::new)
+//               .collect(Collectors.toList());
     }
 
     @Override
@@ -39,7 +39,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return webUserDto.getUsername();
+        return null;
     }
 
     /**

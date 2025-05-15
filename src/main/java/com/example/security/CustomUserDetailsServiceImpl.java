@@ -30,7 +30,7 @@ public class CustomUserDetailsServiceImpl {
         userDto.setId(userId);
         userDto.setEmail(email);
         // todo
-        userDto.setRoles(new ArrayList<>());
+//        userDto.setRoles(new ArrayList<>());
         return new CustomUserDetails(userDto);
     }
 }

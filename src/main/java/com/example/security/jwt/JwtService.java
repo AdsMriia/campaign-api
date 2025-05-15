@@ -107,4 +107,19 @@ public class JwtService {
             throw new TokenValidationException("JWT token is invalid");
         }
     }
+
+    public String getTokenType(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        return claims.get("tokenType", String.class);
+    }
+
+    public UUID getUserIdFromToken(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        return UUID.fromString(claims.get("userId", String.class));
+    }
+
+    public String getEmailFromToken(String jwt) {
+        Claims claims = extractAllClaims(jwt);
+        return claims.getSubject();
+    }
 }

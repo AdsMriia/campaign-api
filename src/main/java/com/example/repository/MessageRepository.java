@@ -41,5 +41,8 @@ public interface MessageRepository extends JpaRepository<Message, UUID>, JpaSpec
 
     Page<Message> findByWorkspaceId(UUID workspaceId, Pageable pageable);
 
+    @Query("SELECT COUNT(m) FROM Message m WHERE m.workspaceId = :workspaceId")
+    long countByWorkspaceId(UUID workspaceId);
+
     Message findByTelegramId(Integer telegramId);
 }
