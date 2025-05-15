@@ -144,6 +144,8 @@ public class JwtFilter extends OncePerRequestFilter {
         }
         authorities.add(jwtService.getRoleFromToken(jwt));
 
+        log.info("authorities:" + authorities.toString());
+
         WebUserDto userDto = new WebUserDto(userId, jwtService.getEmailFromToken(jwt), jwt, workspaceIdUUID, authorities);
         CustomUserDetails userDetails = new CustomUserDetails(userDto);
 
