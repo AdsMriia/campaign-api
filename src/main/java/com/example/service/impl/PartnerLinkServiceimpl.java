@@ -4,19 +4,18 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import com.example.client.SecurityClient;
-import com.example.client.TdLibClient;
 import com.example.entity.Campaign;
 import com.example.entity.ClickEvent;
 import com.example.entity.PartnerLink;
 import com.example.entity.PartnerLinkClick;
 import com.example.entity.UserAgent;
+import com.example.model.dto.CreateJarvisUserDto;
 import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.model.dto.WebUserDtoShort;
 import com.example.repository.CampaignRepository;
@@ -231,15 +230,30 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         PartnerLink partnerLink = new PartnerLink();
         partnerLink.setOriginalUrl(link);
 
-        WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
-        partnerLink.setCreatedBy(user.getId());
+        try {
+            WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
+            partnerLink.setCreatedBy(user.getId());
+        } catch (WebClientResponseException e) {
+            if (e.getStatusCode().value() == 404) {
+                log.warn("Пользователь с telegramUserId={} не найден. Создание Jarvis пользователя", telegramUserId);
+                securityClient.createJarvisUser(telegramUserId, "Bearer " + jwtService.generateApiToken());
+                // Оставляем createdBy равным null для случая, когда пользователь не найден
+            } else {
+                log.error("Ошибка при получении данных пользователя: {} {}", e.getStatusCode(), e.getMessage());
+                throw new RuntimeException("Ошибка при получении данных пользователя: " + e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            log.error("Непредвиденная ошибка при создании партнерской ссылки: {}", e.getMessage(), e);
+            throw new RuntimeException("Ошибка при создании партнерской ссылки", e);
+        }
+
         partnerLink.setWorkspaceId(null);
         partnerLink.setCampaign(null);
 
         partnerLinkRepository.save(partnerLink);
 
         PartnerLinkJarvisDto partnerLinkJarvisDto = new PartnerLinkJarvisDto();
-        
+
         partnerLinkJarvisDto.setId(partnerLink.getId());
         partnerLinkJarvisDto.setOriginalUrl(partnerLink.getOriginalUrl());
 
