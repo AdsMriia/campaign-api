@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -228,31 +229,50 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
     public PartnerLinkJarvisDto createPartnerLinkJarvis(String link, Long telegramUserId) {
         PartnerLink partnerLink = new PartnerLink();
         partnerLink.setOriginalUrl(link);
-
+        
         try {
             WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
             partnerLink.setCreatedBy(user.getId());
-        } catch (WebClientResponseException e) {
-            if (e.getStatusCode().value() == 404) {
+        } catch (Exception e) {
+            // Проверяем, является ли это ошибкой 404 от Feign клиента
+            if (e.toString().contains("FeignException$NotFound") || e.toString().contains("[404]")) {
                 log.warn("Пользователь с telegramUserId={} не найден. Создание Jarvis пользователя", telegramUserId);
-                securityClient.createJarvisUser(telegramUserId, "Bearer " + jwtService.generateApiToken());
-                // Оставляем createdBy равным null для случая, когда пользователь не найден
+                
+                try {
+                    ResponseEntity<String> response = securityClient.createJarvisUser(telegramUserId, "Bearer " + jwtService.generateApiToken());
+                    
+                    log.info("Ответ от сервиса создания пользователя: {}", response.getStatusCode().value());
+                    
+                    if (response.getStatusCode().value() == 201) {
+                        log.info("Пользователь Jarvis успешно создан для telegramUserId={}", telegramUserId);
+                        
+                        // Повторная попытка получить пользователя после создания
+                        try {
+                            WebUserDtoShort createdUser = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
+                            partnerLink.setCreatedBy(createdUser.getId());
+                        } catch (Exception ex) {
+                            log.error("Не удалось получить созданного пользователя: {}", ex.getMessage());
+                        }
+                    } else {
+                        log.error("Ошибка при создании пользователя: статус {}", response.getStatusCode().value());
+                    }
+                } catch (Exception createError) {
+                    log.error("Ошибка при попытке создать пользователя: {}", createError.getMessage());
+                }
+                // Если не удалось получить или создать пользователя, createdBy остается null
             } else {
-                log.error("Ошибка при получении данных пользователя: {} {}", e.getStatusCode(), e.getMessage());
+                log.error("Ошибка при получении данных пользователя: {}", e.getMessage());
                 throw new RuntimeException("Ошибка при получении данных пользователя: " + e.getMessage(), e);
             }
-        } catch (Exception e) {
-            log.error("Непредвиденная ошибка при создании партнерской ссылки: {}", e.getMessage(), e);
-            throw new RuntimeException("Ошибка при создании партнерской ссылки", e);
         }
-
+        
         partnerLink.setWorkspaceId(null);
         partnerLink.setCampaign(null);
 
         partnerLinkRepository.save(partnerLink);
 
         PartnerLinkJarvisDto partnerLinkJarvisDto = new PartnerLinkJarvisDto();
-
+        
         partnerLinkJarvisDto.setId(partnerLink.getId());
         partnerLinkJarvisDto.setOriginalUrl(partnerLink.getOriginalUrl());
 
