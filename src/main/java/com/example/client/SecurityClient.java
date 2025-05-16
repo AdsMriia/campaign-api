@@ -13,8 +13,8 @@ public interface SecurityClient {
             @PathVariable Long telegramId,
             @RequestHeader("Authorization") String token);
 
-    @PostMapping("/api/clients/create")
+    @PostMapping("/api/clients/create/{telegramUserId}")
     ResponseEntity<String> createJarvisUser(
-            @RequestBody Long telegramUserId,
+            @PathVariable Long telegramUserId,
             @RequestHeader("Authorization") String token);
 } 
