@@ -15,7 +15,6 @@ import com.example.entity.ClickEvent;
 import com.example.entity.PartnerLink;
 import com.example.entity.PartnerLinkClick;
 import com.example.entity.UserAgent;
-import com.example.model.dto.CreateJarvisUserDto;
 import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.model.dto.WebUserDtoShort;
 import com.example.repository.CampaignRepository;
