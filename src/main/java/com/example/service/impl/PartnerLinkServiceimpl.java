@@ -245,25 +245,32 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                     
                     if (response.getStatusCode().value() == 201) {
                         log.info("Пользователь Jarvis успешно создан для telegramUserId={}", telegramUserId);
-                        
-                        // Повторная попытка получить пользователя после создания
                         try {
+                            // Добавляем небольшую задержку для синхронизации
+                            Thread.sleep(500);
                             WebUserDtoShort createdUser = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
                             partnerLink.setCreatedBy(createdUser.getId());
                         } catch (Exception ex) {
                             log.error("Не удалось получить созданного пользователя: {}", ex.getMessage());
+                            throw new RuntimeException("Не удалось получить созданного пользователя", ex);
                         }
                     } else {
                         log.error("Ошибка при создании пользователя: статус {}", response.getStatusCode().value());
+                        throw new RuntimeException("Ошибка при создании пользователя: статус " + response.getStatusCode().value());
                     }
                 } catch (Exception createError) {
                     log.error("Ошибка при попытке создать пользователя: {}", createError.getMessage());
+                    throw new RuntimeException("Ошибка при попытке создать пользователя", createError);
                 }
-                // Если не удалось получить или создать пользователя, createdBy остается null
             } else {
                 log.error("Ошибка при получении данных пользователя: {}", e.getMessage());
                 throw new RuntimeException("Ошибка при получении данных пользователя: " + e.getMessage(), e);
             }
+        }
+        
+        // Проверяем, установлено ли обязательное поле перед сохранением
+        if (partnerLink.getCreatedBy() == null) {
+            throw new RuntimeException("Невозможно создать партнерскую ссылку без указания создателя");
         }
         
         partnerLink.setWorkspaceId(null);
