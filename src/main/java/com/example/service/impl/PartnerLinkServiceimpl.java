@@ -242,10 +242,10 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                     
                     log.info("Ответ от сервиса создания пользователя: {}", response.getStatusCode().value());
                     
-                    if (response.getStatusCode().value() == 201) {
+                    if (response.getStatusCode().value() == 200) {
                         log.info("Пользователь Jarvis успешно создан для telegramUserId={}", telegramUserId);
                         try {
-                            Thread.sleep(500);
+                            // Thread.sleep(500);
                             WebUserDtoShort createdUser = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
                             partnerLink.setCreatedBy(createdUser.getId());
                         } catch (Exception ex) {
