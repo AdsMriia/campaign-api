@@ -234,7 +234,6 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
             WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
             partnerLink.setCreatedBy(user.getId());
         } catch (Exception e) {
-            // Проверяем, является ли это ошибкой 404 от Feign клиента
             if (e.toString().contains("FeignException$NotFound") || e.toString().contains("[404]")) {
                 log.warn("Пользователь с telegramUserId={} не найден. Создание Jarvis пользователя", telegramUserId);
                 
@@ -246,7 +245,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                     if (response.getStatusCode().value() == 201) {
                         log.info("Пользователь Jarvis успешно создан для telegramUserId={}", telegramUserId);
                         try {
-                            Thread.sleep(500);
+                            // Thread.sleep(500);
                             WebUserDtoShort createdUser = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
                             partnerLink.setCreatedBy(createdUser.getId());
                         } catch (Exception ex) {
@@ -267,7 +266,6 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
             }
         }
         
-        // Проверяем, установлено ли обязательное поле перед сохранением
         if (partnerLink.getCreatedBy() == null) {
             throw new RuntimeException("Невозможно создать партнерскую ссылку без указания создателя");
         }
