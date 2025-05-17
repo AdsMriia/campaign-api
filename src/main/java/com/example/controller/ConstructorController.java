@@ -129,7 +129,7 @@ public interface ConstructorController {
             @Parameter(description = "Идентификатор креатива", required = true)
             @PathVariable("id") UUID id,
             @Parameter(description = "Идентификатор рабочего пространства", required = true)
-            @RequestParam UUID workspaceId);
+            @PathVariable("workspaceId") UUID workspaceId);
 
     @Operation(
             summary = "Создание креатива",
@@ -184,7 +184,7 @@ public interface ConstructorController {
             @Parameter(description = "Идентификатор креатива", required = true)
             @PathVariable("id") UUID id,
             @Parameter(description = "Идентификатор рабочего пространства", required = true)
-            @RequestParam UUID workspaceId);
+            @PathVariable("workspaceId") UUID workspaceId);
 
 //    @Operation(
 //            summary = "Получение креативов по рабочим пространствам",
