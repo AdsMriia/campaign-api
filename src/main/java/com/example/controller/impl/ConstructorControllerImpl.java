@@ -35,7 +35,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public MessageDto getById(@PathVariable("id") UUID id,
-            @PathVariable(required = false) UUID workspaceId) {
+            @PathVariable("workspaceId") UUID workspaceId) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
     }
@@ -43,7 +43,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public Page<MessageDto> getAllByType(
-            @PathVariable UUID workspaceId,
+            @PathVariable("workspaceId") UUID workspaceId,
             @RequestParam(required = false) MessageStatus status,
             @RequestParam(value = "page", required = false, defaultValue = "0") Integer page,
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
@@ -56,7 +56,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public MessageDto update(@RequestBody @Valid CreateMessageDto object,
             @PathVariable("id") UUID id,
-            @PathVariable(required = false) UUID workspaceId) {
+            @PathVariable("workspaceId") UUID workspaceId) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(id, object);
     }
@@ -73,7 +73,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id,
-            @PathVariable(required = false) UUID workspaceId) {
+            @PathVariable("workspaceId") UUID workspaceId) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);
         return ResponseEntity.noContent().build();
