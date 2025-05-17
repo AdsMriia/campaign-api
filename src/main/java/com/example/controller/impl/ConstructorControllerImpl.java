@@ -49,7 +49,6 @@ public class ConstructorControllerImpl implements ConstructorController {
             @RequestParam(value = "size", required = false, defaultValue = "10") Integer size) {
         log.info("Получен запрос на получение списка креативов с параметрами: workspaceId={}, статус={}, страница={}, размер={}",
                 workspaceId, status, page, size);
-
         return messageService.getPageBy(workspaceId, status, page, size);
     }
 
