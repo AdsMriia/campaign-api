@@ -33,7 +33,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     private final MessageService messageService;
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public MessageDto getById(@PathVariable("id") UUID id) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
@@ -52,7 +52,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
 
     public MessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
@@ -60,7 +60,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public MessageDto create(
             @RequestParam("workspaceId") UUID workspaceId,
             @RequestBody @Valid CreateMessageDto createMessageDto) {
@@ -69,7 +69,7 @@ public class ConstructorControllerImpl implements ConstructorController {
     }
 
     @Override
-    @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
+    @PreAuthorize("hasAuthority('SPECIAL:SUPER_ADMIN') || hasAuthority('SPECIAL:OWNER')")
     public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);
