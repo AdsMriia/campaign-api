@@ -269,3 +269,10 @@ ALTER TABLE click_events DROP COLUMN ip_address;
 --changeset vladislav.mosuyk:remove_not_null_from_partner_links
 --comment Удаление NOT NULL constraint из поля workspace_id в таблице partner_links
 ALTER TABLE partner_links ALTER COLUMN workspace_id DROP NOT NULL;
+
+--changeset vladislav.mosuyk:remove_user_id_from_click_events
+--comment Удаление поля user_id из таблицы click_events 
+ALTER TABLE click_events DROP COLUMN user_id;
+--changeset vladislav.mosuyk:add_user_id_to_click_events
+--comment Добавление поля user_id в таблицу click_events
+ALTER TABLE click_events ADD COLUMN user_id BIGINT;
