@@ -61,7 +61,9 @@ public interface ConstructorController {
     @GetMapping("/{id}")
     MessageDto getById(
             @Parameter(description = "Идентификатор креатива", required = true)
-            @PathVariable("id") UUID id);
+            @PathVariable("id") UUID id,
+            @Parameter(description = "Идентификатор рабочего пространства", required = true)
+            @RequestParam UUID workspaceId);
 
     @Operation(
             summary = "Получение списка креативов",
@@ -79,8 +81,8 @@ public interface ConstructorController {
     )
     @GetMapping
     Page<MessageDto> getAllByType(
-//            @Parameter(description = "Тип сообщения для фильтрации")
-//            @RequestParam(required = false) MessageType type,
+            //            @Parameter(description = "Тип сообщения для фильтрации")
+            //            @RequestParam(required = false) MessageType type,
             @PathVariable UUID workspaceId,
             @Parameter(description = "Статус сообщения для фильтрации")
             @RequestParam(required = false) MessageStatus status,
@@ -125,7 +127,9 @@ public interface ConstructorController {
             @Parameter(description = "Данные для обновления креатива", required = true)
             @RequestBody @Valid CreateMessageDto object,
             @Parameter(description = "Идентификатор креатива", required = true)
-            @PathVariable("id") UUID id);
+            @PathVariable("id") UUID id,
+            @Parameter(description = "Идентификатор рабочего пространства", required = true)
+            @RequestParam UUID workspaceId);
 
     @Operation(
             summary = "Создание креатива",
@@ -178,7 +182,9 @@ public interface ConstructorController {
     @DeleteMapping("/{id}")
     ResponseEntity<Void> delete(
             @Parameter(description = "Идентификатор креатива", required = true)
-            @PathVariable("id") UUID id);
+            @PathVariable("id") UUID id,
+            @Parameter(description = "Идентификатор рабочего пространства", required = true)
+            @RequestParam UUID workspaceId);
 
 //    @Operation(
 //            summary = "Получение креативов по рабочим пространствам",

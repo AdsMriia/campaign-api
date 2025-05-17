@@ -34,7 +34,8 @@ public class ConstructorControllerImpl implements ConstructorController {
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public MessageDto getById(@PathVariable("id") UUID id) {
+    public MessageDto getById(@PathVariable("id") UUID id,
+            @RequestParam(required = false) UUID workspaceId) {
         log.info("Получен запрос на получение креатива с ID: {}", id);
         return messageService.getById(id);
     }
@@ -53,7 +54,9 @@ public class ConstructorControllerImpl implements ConstructorController {
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public MessageDto update(@RequestBody @Valid CreateMessageDto object, @PathVariable("id") UUID id) {
+    public MessageDto update(@RequestBody @Valid CreateMessageDto object,
+            @PathVariable("id") UUID id,
+            @RequestParam(required = false) UUID workspaceId) {
         log.info("Получен запрос на обновление креатива с ID: {}, новые данные: {}", id, object);
         return messageService.update(id, object);
     }
@@ -69,7 +72,8 @@ public class ConstructorControllerImpl implements ConstructorController {
 
     @Override
     @PreAuthorize("hasAnyAuthority('SPECIAL:SUPER_ADMIN', 'SPECIAL:OWNER')")
-    public ResponseEntity<Void> delete(@PathVariable("id") UUID id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") UUID id,
+            @RequestParam(required = false) UUID workspaceId) {
         log.info("Получен запрос на удаление креатива с ID: {}", id);
         messageService.delete(id);
         return ResponseEntity.noContent().build();
