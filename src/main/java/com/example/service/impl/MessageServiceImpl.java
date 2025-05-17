@@ -115,10 +115,6 @@ public class MessageServiceImpl implements MessageService {
             throw new RequestRejectedException("Нельзя обновить сообщение в статусе ACTIVE");
         }
 
-        // Удаляем существующие действия и медиа
-        actionRepository.deleteAllByMessageId(id);
-        mediaToMessageRepository.deleteAllByMessage(message);
-
         // Обновляем основные поля сообщения
         message.setTitle(messageDto.getTitle());
         message.setText(messageDto.getText());
@@ -127,9 +123,12 @@ public class MessageServiceImpl implements MessageService {
         message.setMarkDown(messageDto.getMarkDown());
         message.setUpdatedAt(OffsetDateTime.now());
 
+        // Очищаем существующие действия и медиа через сам объект
+        message.getActions().clear();
+        message.getMedias().clear();
+
         // Добавляем новые действия
         if (messageDto.getActions() != null && !messageDto.getActions().isEmpty()) {
-            Set<Action> actions = new HashSet<>();
             for (int i = 0; i < messageDto.getActions().size(); i++) {
                 ActionDto actionDto = messageDto.getActions().get(i);
 
@@ -139,38 +138,24 @@ public class MessageServiceImpl implements MessageService {
                 action.setLink(actionDto.getLink());
                 action.setOrdinal(i);
 
-                actions.add(actionRepository.save(action));
+                message.getActions().add(action);
             }
-            message.setActions(actions);
-        } else {
-            message.setActions(new HashSet<>());
         }
 
-        // Добавляем новые медиа
+        // Аналогично с медиа
         if (messageDto.getMediaName() != null && !messageDto.getMediaName().isEmpty()) {
-            Set<MediaToMessage> medias = new HashSet<>();
             List<Media> mediaList = findMediaByFileName(messageDto.getMediaName());
 
             if (!mediaList.isEmpty()) {
-
                 for (Media media : mediaList) {
                     MediaToMessage mediaToMessage = new MediaToMessage();
                     mediaToMessage.setMessage(message);
                     mediaToMessage.setMedia(media);
-                    mediaToMessageRepository.save(mediaToMessage);
-                    medias.add(mediaToMessage);
+                    message.getMedias().add(mediaToMessage);
                 }
-
-//                Media media = mediaList.get(0);
-//                media.setMessage(message);
-//                medias.add(mediaRepository.save(media));
-                message.setMedias(medias);
             } else {
                 log.warn("Медиафайл с именем {} не найден", messageDto.getMediaName());
-                message.setMedias(new HashSet<>());
             }
-        } else {
-            message.setMedias(new HashSet<>());
         }
 
         Message updatedMessage = messageRepository.save(message);
@@ -421,8 +406,9 @@ public class MessageServiceImpl implements MessageService {
 //        message.setCreatedAt(OffsetDateTime.now());
 //        message.setUpdatedAt(OffsetDateTime.now());
 
+    
 
-        ////        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
+    ////        message.setWorkspaceId(userProvider.getCurrentUser().getWorkspaceId());
 //        message.setCreatedBy(userProvider.getCurrentUser().getId());
 //        Message savedMessage = messageRepository.save(message);
 //
