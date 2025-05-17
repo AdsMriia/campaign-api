@@ -35,7 +35,8 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
     @GetMapping("/{id}/redirect")
     public ResponseEntity<Void> handleClick(
             @PathVariable UUID id,
-            @RequestParam UUID userId,
+            @RequestParam Long userId,
+            @RequestParam Long botId,
             HttpServletRequest request) {
         // Получаем IP-адрес
         String ipAddress = getClientIpAddress(request);
@@ -53,7 +54,7 @@ public class PartnerLinkControllerImpl implements PartnerLinkController {
                     userAgentInfo.getDeviceType());
 
             // Записываем информацию о клике с деталями
-            partnerLinkService.recordClickWithDetails(id, userId, ipAddress, userAgentInfo, request);
+            partnerLinkService.recordClickWithDetails(id, userId, botId, ipAddress, userAgentInfo, request);
         }
 
         // Получаем оригинальный URL для редиректа

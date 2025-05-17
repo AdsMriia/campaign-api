@@ -42,7 +42,9 @@ public interface PartnerLinkController {
             @Parameter(description = "Идентификатор партнерской ссылки", required = true)
             @PathVariable UUID id,
             @Parameter(description = "Идентификатор пользователя, который кликнул по ссылке", required = true)
-            @RequestParam UUID userId,
+            @RequestParam Long userId,
+            @Parameter(description = "Идентификатор бота, который кликнул по ссылке", required = false)
+            @RequestParam Long botId,
             HttpServletRequest request
     );
 

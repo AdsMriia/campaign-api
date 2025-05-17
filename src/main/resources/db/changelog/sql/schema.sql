@@ -247,6 +247,15 @@ ALTER TABLE user_agent ADD COLUMN browser_version VARCHAR(50);
 ALTER TABLE user_agent ADD COLUMN operating_system VARCHAR(100);
 ALTER TABLE user_agent ADD COLUMN device_type VARCHAR(50);
 
+--changeset vladislav.mosuyk:add_bot_id_to_partner_link_clicks
+--comment Добавление поля bot_id в таблицу partner_link_clicks
+ALTER TABLE partner_link_clicks ADD COLUMN bot_id BIGINT;
+
+--changeset vladislav.mosuyk:add_bot_id_to_partner_links_clicks
+--comment Добавление поля bot_id в таблицу partner_links_clicks
+ALTER TABLE partner_link_clicks DROP COLUMN user_id;
+ALTER TABLE partner_link_clicks ADD COLUMN user_id BIGINT;
+
 --changeset vladislav.mosuyk:remove_duplicate_fields_from_click_events
 --comment Удаление дублирующихся полей из таблицы click_events
 ALTER TABLE click_events DROP COLUMN browser;

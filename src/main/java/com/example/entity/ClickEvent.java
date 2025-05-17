@@ -47,7 +47,7 @@ public class ClickEvent {
      * Идентификатор пользователя, совершившего клик.
      */
     @Column(name = "user_id", nullable = false)
-    private UUID userId;
+    private Long userId;
 
     /**
      * Дата и время клика.

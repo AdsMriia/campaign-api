@@ -32,8 +32,11 @@ public class PartnerLinkClick {
     private PartnerLink partnerLink;
 
     @Column(nullable = false)
-    private UUID userId;
+    private Long userId;
 
     @CreationTimestamp
     private OffsetDateTime clickedAt;
+
+    @Column(name = "bot_id")
+    private Long botId;
 }

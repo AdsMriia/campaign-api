@@ -2,8 +2,6 @@ package com.example.service;
 
 import java.util.UUID;
 
-import org.springframework.http.ResponseEntity;
-
 import com.example.entity.PartnerLink;
 import com.example.model.dto.PartnerLinkJarvisDto;
 import com.example.util.UserAgentParser.UserAgentInfo;
@@ -36,8 +34,9 @@ public interface PartnerLinkService {
      *
      * @param partnerLinkId ID партнерской ссылки
      * @param userId ID пользователя
+     * @param botId ID бота
      */
-    void recordClick(UUID partnerLinkId, UUID userId);
+    void recordClick(UUID partnerLinkId, Long userId, Long botId);
 
     /**
      * Получает язык устройства из заголовка Accept-Language
@@ -56,7 +55,7 @@ public interface PartnerLinkService {
      * @param ipAddress IP-адрес пользователя
      * @param userAgentInfo информация о браузере и устройстве пользователя
      */
-    void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request);
+    void recordClickWithDetails(UUID partnerLinkId, Long userId, Long botId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request);
 
     /**
      * Получает партнерскую ссылку по ID

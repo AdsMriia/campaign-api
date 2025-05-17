@@ -69,11 +69,12 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
 
     @Override
     @Transactional
-    public void recordClick(UUID partnerLinkId, UUID userId) {
+    public void recordClick(UUID partnerLinkId, Long userId, Long botId) {
         PartnerLink partnerLink = getPartnerLink(partnerLinkId);
         PartnerLinkClick click = new PartnerLinkClick();
         click.setPartnerLink(partnerLink);
         click.setUserId(userId);
+        click.setBotId(botId);
         clickRepository.save(click);
     }
 
@@ -92,7 +93,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
 
     @Override
     @Transactional
-    public void recordClickWithDetails(UUID partnerLinkId, UUID userId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request) {
+    public void recordClickWithDetails(UUID partnerLinkId, Long userId, Long botId, String ipAddress, UserAgentInfo userAgentInfo, HttpServletRequest request) {
         try {
             // Получаем партнерскую ссылку
             PartnerLink partnerLink = getPartnerLink(partnerLinkId);
@@ -122,7 +123,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                     userAgentInfo.getOperatingSystem(), userAgentInfo.getDeviceType());
 
             // Для обратной совместимости также сохраняем в старую таблицу
-            recordClick(partnerLinkId, userId);
+            recordClick(partnerLinkId, userId, botId);
 
             // Асинхронно получаем информацию об IP-адресе
             if (ipAddress != null && !ipAddress.isEmpty()) {
@@ -158,7 +159,7 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
         } catch (Exception e) {
             log.error("Ошибка при записи о клике с расширенной информацией: {}", e.getMessage(), e);
             // Если произошла ошибка с новой таблицей, все равно пытаемся записать в старую
-            recordClick(partnerLinkId, userId);
+            recordClick(partnerLinkId, userId, botId);
         }
     }
 
@@ -229,23 +230,22 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
     public PartnerLinkJarvisDto createPartnerLinkJarvis(String link, Long telegramUserId) {
         PartnerLink partnerLink = new PartnerLink();
         partnerLink.setOriginalUrl(link);
-        
+
         try {
             WebUserDtoShort user = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
             partnerLink.setCreatedBy(user.getId());
         } catch (Exception e) {
             if (e.toString().contains("FeignException$NotFound") || e.toString().contains("[404]")) {
                 log.warn("Пользователь с telegramUserId={} не найден. Создание Jarvis пользователя", telegramUserId);
-                
+
                 try {
                     ResponseEntity<String> response = securityClient.createJarvisUser(telegramUserId, "Bearer " + jwtService.generateApiToken());
-                    
+
                     log.info("Ответ от сервиса создания пользователя: {}", response.getStatusCode().value());
-                    
+
                     if (response.getStatusCode().value() == 200) {
                         log.info("Пользователь Jarvis успешно создан для telegramUserId={}", telegramUserId);
                         try {
-                            // Thread.sleep(500);
                             WebUserDtoShort createdUser = securityClient.getClientId(telegramUserId, "Bearer " + jwtService.generateApiToken());
                             partnerLink.setCreatedBy(createdUser.getId());
                         } catch (Exception ex) {
@@ -265,18 +265,18 @@ public class PartnerLinkServiceimpl implements PartnerLinkService {
                 throw new RuntimeException("Ошибка при получении данных пользователя: " + e.getMessage(), e);
             }
         }
-        
+
         if (partnerLink.getCreatedBy() == null) {
             throw new RuntimeException("Невозможно создать партнерскую ссылку без указания создателя");
         }
-        
+
         partnerLink.setWorkspaceId(null);
         partnerLink.setCampaign(null);
 
         partnerLinkRepository.save(partnerLink);
 
         PartnerLinkJarvisDto partnerLinkJarvisDto = new PartnerLinkJarvisDto();
-        
+
         partnerLinkJarvisDto.setId(partnerLink.getId());
         partnerLinkJarvisDto.setOriginalUrl(partnerLink.getOriginalUrl());
 
